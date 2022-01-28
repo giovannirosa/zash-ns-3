@@ -1,0 +1,22 @@
+{
+  "files.associations": {
+    "iostream": "cpp",
+    "random": "cpp",
+    "typeinfo": "cpp",
+    "ostream": "cpp",
+    "chrono": "cpp",
+    "cwchar": "cpp",
+    "list": "cpp",
+    "fstream": "cpp",
+    "functional": "cpp",
+    "initializer_list": "cpp",
+    "iosfwd": "cpp",
+    "istream": "cpp",
+    "ratio": "cpp",
+    "sstream": "cpp",
+    "type_traits": "cpp",
+    "utility": "cpp",
+    "array": "cpp",
+    "string_view": "cpp"
+  }
+}
