@@ -137,6 +137,7 @@ class MarkovChain {
         cout << "transitionMatrix size = " << transitionMatrix.size() << endl;
         cout << "transitionMatrix address = " << &transitionMatrix << endl;
         for (TransitionCol *tcol : transitionMatrix) {
+            cout << "---------------------------------" << endl;
             cout << "tcol address = " << tcol << endl;
             showTransitionCol(tcol);
         }
@@ -223,13 +224,11 @@ int main() {
     vector<int> currentState = {0, 1, 0, 1};
     vector<int> lastState = {0, 1, 1, 1};
     vector<int> lastState2 = {0, 1, 1, 0};
-    markovChain.showMatrix(false);
     markovChain.buildTransition(currentState, lastState);
-    markovChain.showMatrix(false);
     markovChain.buildTransition(currentState, lastState);
+    markovChain.buildTransition(lastState2, lastState);
+    markovChain.buildTransition(lastState, currentState);
     markovChain.showMatrix(false);
-    // markovChain.buildTransition(lastState2, lastState);
-    // markovChain.buildTransition(lastState, currentState);
 
     cout << "Prob: " << markovChain.getProbability(currentState, lastState) << endl;
     return 0;

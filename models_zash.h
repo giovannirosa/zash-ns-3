@@ -1,5 +1,5 @@
-#include <iostream>
 #include <ctime>
+#include <iostream>
 
 using namespace std;
 
@@ -21,10 +21,10 @@ class Context {
 
 class Ontology {
    public:
-    UserLevel userLevel;
-    DeviceClass deviceClass;
-    vector<Action> capabilities;
-    Ontology(UserLevel ul, DeviceClass dc, vector<Action> c) {
+    vector<int> userLevel;
+    vector<int> deviceClass;
+    vector<vector<int>> capabilities;
+    Ontology(vector<int> ul, vector<int> dc, vector<vector<int>> c) {
         userLevel = ul;
         deviceClass = dc;
         capabilities = c;
@@ -74,6 +74,7 @@ class Request {
     User user;
     Context context;
     Action action;
+    Request() {}
     Request(int i, Device d, User u, Context c, Action a) {
         id = i;
         device = d;

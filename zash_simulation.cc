@@ -60,6 +60,7 @@
 
 // Created files
 #include "models_zash.h"
+#include "audit.h"
 // #include "ns3/statistics.h"
 // #include "ns3/status-on.h"
 // #include "ns3/stealth-on-off.h"
@@ -114,13 +115,85 @@ void ZASHSimulation(uint32_t nNodes, string simDate, uint32_t fixNodeNumber,
     // }
     NS_LOG_INFO("ZASH - Setting parameters...");
 
-    vector<User> users = { User(1, UserLevel.ADMIN, Age.ADULT),
-                           User(2, UserLevel.ADULT, Age.ADULT),
-                           User(3, UserLevel.CHILD, Age.TEEN),
-                           User(4, UserLevel.CHILD, Age.KID),
-                           User(5, UserLevel.VISITOR, Age.ADULT) };
+    vector<User> users = {
+        User(1, UserLevel.ADMIN, Age.ADULT),
+        User(2, UserLevel.ADULT, Age.ADULT),
+        User(3, UserLevel.CHILD, Age.TEEN),
+        User(4, UserLevel.CHILD, Age.KID),
+        User(5, UserLevel.VISITOR, Age.ADULT)};
 
-    vector<Device> devices = {}
+    vector<Device> devices = {
+        Device(1, "Wardrobe", DeviceClass.NONCRITICAL, Room.BEDROOM, true),            // wardrobe
+        Device(2, "TV", DeviceClass.NONCRITICAL, Room.LIVINGROOM, true),               // tv
+        Device(3, "Oven", DeviceClass.CRITICAL, Room.KITCHEN, true),                   // oven
+        Device(4, "Office Light", DeviceClass.NONCRITICAL, Room.OFFICE, true),         // officeLight
+        Device(5, "Office Door Lock", DeviceClass.CRITICAL, Room.OFFICE, true),        // officeDoorLock
+        Device(6, "Office Door", DeviceClass.NONCRITICAL, Room.OFFICE, true),          // officeDoor
+        Device(7, "Office Carpet", DeviceClass.NONCRITICAL, Room.OFFICE, false),       // officeCarp
+        Device(8, "Office", DeviceClass.NONCRITICAL, Room.OFFICE, false),              // office
+        Device(9, "Main Door Lock", DeviceClass.CRITICAL, Room.HOUSE, true),           // mainDoorLock
+        Device(10, "Main Door", DeviceClass.NONCRITICAL, Room.HOUSE, true),            // mainDoor
+        Device(11, "Living Light", DeviceClass.NONCRITICAL, Room.LIVINGROOM, true),    // livingLight
+        Device(12, "Living Carpet", DeviceClass.NONCRITICAL, Room.LIVINGROOM, false),  // livingCarp
+        Device(13, "Kitchen Light", DeviceClass.NONCRITICAL, Room.KITCHEN, true),      // kitchenLight
+        Device(14, "Kitchen Door Lock", DeviceClass.CRITICAL, Room.KITCHEN, true),     // kitchenDoorLock
+        Device(15, "Kitchen Door", DeviceClass.NONCRITICAL, Room.KITCHEN, true),       // kitchenDoor
+        Device(16, "Kitchen Carpet", DeviceClass.NONCRITICAL, Room.KITCHEN, false),    // kitchenCarp
+        Device(17, "Hallway Light", DeviceClass.NONCRITICAL, Room.HOUSE, true),        // hallwayLight
+        Device(18, "Fridge", DeviceClass.CRITICAL, Room.KITCHEN, true),                // fridge
+        Device(19, "Couch", DeviceClass.NONCRITICAL, Room.LIVINGROOM, false),          // couch
+        Device(20, "Bedroom Light", DeviceClass.NONCRITICAL, Room.BEDROOM, true),      // bedroomLight
+        Device(21, "Bedroom Door Lock", DeviceClass.CRITICAL, Room.BEDROOM, true),     // bedroomDoorLock
+        Device(22, "Bedroom Door", DeviceClass.NONCRITICAL, Room.BEDROOM, true),       // bedroomDoor
+        Device(23, "Bedroom Carpet", DeviceClass.NONCRITICAL, Room.BEDROOM, false),    // bedroomCarp
+        Device(24, "Bed Table Lamp", DeviceClass.NONCRITICAL, Room.BEDROOM, true),     // bedTableLamp
+        Device(25, "Bed", DeviceClass.NONCRITICAL, Room.BEDROOM, false),               // bed
+        Device(26, "Bathroom Light", DeviceClass.NONCRITICAL, Room.BATHROOM, true),    // bathroomLight
+        Device(27, "Bathroom Door Lock", DeviceClass.CRITICAL, Room.BATHROOM, true),   // bathroomDoorLock
+        Device(28, "Bathroom Door", DeviceClass.NONCRITICAL, Room.BATHROOM, true),     // bathroomDoor
+        Device(29, "Bathroom Carpet", DeviceClass.NONCRITICAL, Room.BATHROOM, false)   // bathroomCarp
+    };
+
+    vector<vector<int>> visitorCriticalCap = {};
+    Ontology visitorCritical = Ontology(UserLevel.VISITOR, DeviceClass.CRITICAL, visitorCriticalCap);
+
+    vector<vector<int>> childCriticalCap = {Action.VIEW};
+    childCriticalCap.insert(childCriticalCap.end(), visitorCriticalCap.begin(), visitorCriticalCap.end());
+    Ontology childCritical = Ontology(UserLevel.CHILD, DeviceClass.CRITICAL, childCriticalCap);
+
+    vector<vector<int>> adultCriticalCap = {Action.CONTROL};
+    adultCriticalCap.insert(adultCriticalCap.end(), childCriticalCap.begin(), childCriticalCap.end());
+    Ontology adultCritical = Ontology(UserLevel.ADULT, DeviceClass.CRITICAL, adultCriticalCap);
+
+    vector<vector<int>> adminCriticalCap = {Action.MANAGE};
+    adminCriticalCap.insert(adminCriticalCap.end(), adultCriticalCap.begin(), adultCriticalCap.end());
+    Ontology adminCritical = Ontology(UserLevel.ADMIN, DeviceClass.CRITICAL, adminCriticalCap);
+
+    vector<vector<int>> visitorNonCriticalCap = {Action.VIEW, Action.CONTROL};
+    Ontology visitorNonCritical = Ontology(UserLevel.VISITOR, DeviceClass.CRITICAL, visitorNonCriticalCap);
+
+    vector<vector<int>> childNonCriticalCap = {};
+    childNonCriticalCap.insert(childNonCriticalCap.end(), visitorNonCriticalCap.begin(), visitorNonCriticalCap.end());
+    Ontology childCritical = Ontology(UserLevel.CHILD, DeviceClass.CRITICAL, childNonCriticalCap);
+
+    vector<vector<int>> adultNonCriticalCap = {Action.MANAGE};
+    adultNonCriticalCap.insert(adultNonCriticalCap.end(), childNonCriticalCap.begin(), childNonCriticalCap.end());
+    Ontology adultCritical = Ontology(UserLevel.ADULT, DeviceClass.CRITICAL, adultNonCriticalCap);
+
+    vector<vector<int>> adminNonCriticalCap = {};
+    adminNonCriticalCap.insert(adminNonCriticalCap.end(), adultNonCriticalCap.begin(), adultNonCriticalCap.end());
+    Ontology adminCritical = Ontology(UserLevel.ADMIN, DeviceClass.CRITICAL, adminNonCriticalCap);
+
+    vector<Ontology> ontologies = { visitorCritical,
+                                    childCritical,
+                                    adultCritical,
+                                    adminCritical,
+                                    visitorNonCritical,
+                                    childNonCritical,
+                                    adultNonCritical,
+                                    adminNonCritical };
+
+    AuditComponent auditModule;
 
     double start = 0.0;
     double stop = 900.0;
@@ -134,15 +207,15 @@ void ZASHSimulation(uint32_t nNodes, string simDate, uint32_t fixNodeNumber,
     vector<int> fixedNodes;
     vector<int> fixedEmergTimes;
     // Fixed Nodes and Emergency times depending on Mode
-    if (runMode == 'S') {
-        fixedNodes = {52, 37, 70};  // 480s
-        fixedEmergTimes = {480};
-    } else {
-        // fixedNodes = {0, 5, /*90s*/ 13, 16, /*110s*/ 25, 32 /*210s*/};
-        // fixedEmergTimes = {90, 110, 210};
-        fixedNodes = {31, 54, /*360s*/ 71, 99, /*300s*/ 93, 96 /*350s*/};
-        fixedEmergTimes = {360, 300, 350};
-    }
+    // if (runMode == 'S') {
+    //     fixedNodes = {52, 37, 70};  // 480s
+    //     fixedEmergTimes = {480};
+    // } else {
+    //     // fixedNodes = {0, 5, /*90s*/ 13, 16, /*110s*/ 25, 32 /*210s*/};
+    //     // fixedEmergTimes = {90, 110, 210};
+    //     fixedNodes = {31, 54, /*360s*/ 71, 99, /*300s*/ 93, 96 /*350s*/};
+    //     fixedEmergTimes = {360, 300, 350};
+    // }
 
     NodeContainer::Iterator it;
     uint16_t port = 9;
