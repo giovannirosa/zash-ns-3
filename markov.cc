@@ -3,6 +3,8 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
+// #include <chrono>
+// #include <thread>
 using namespace std;
 
 class State {
@@ -216,6 +218,12 @@ class MarkovChain {
 
 int main() {
     cout << __cplusplus << endl;
+
+    // time_t t1, t2;
+    // time(&t1);
+    // this_thread::sleep_for(chrono::milliseconds(1000));
+    // time(&t2);
+    // cout << difftime(t1, t2) << endl;
     MarkovChain markovChain;
     // TransitionCol col = TransitionCol({0, 1, 1, 1});
     // col.totalOcc = 1;

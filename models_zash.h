@@ -7,12 +7,12 @@ using namespace std;
 
 class Context {
    public:
-    AccessWay accessWay;
-    Localization localization;
-    Group group;
-    TimeClass time;
+    vector<int> accessWay;
+    vector<int> localization;
+    vector<int> group;
+    vector<int> time;
     Context() {}
-    Context(AccessWay aw, Localization loc, Group g) {
+    Context(vector<int> aw, vector<int> loc, vector<int> g) {
         accessWay = aw;
         localization = loc;
         group = g;
