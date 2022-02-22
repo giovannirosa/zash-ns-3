@@ -45,10 +45,10 @@ class DeviceComponent {
             cout << "Not found proof" << endl;
             int proofInput = req.user.id;
             if (proofInput != req.user.id) {
-                auditComponent.invalidProofs.push_back(AuditEvent(currentDate, req));
+                auditComponent.invalidProofs.push_back(new AuditEvent(currentDate, req));
                 cout << "Proof does not match!";
             } else {
-                auditComponent.validProofs.push_back(AuditEvent(currentDate, req));
+                auditComponent.validProofs.push_back(new AuditEvent(currentDate, req));
                 proofs.push_back(new Proof(req.user.id, req.context.accessWay, currentDate));
             }
         }

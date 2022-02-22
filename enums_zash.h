@@ -1,67 +1,69 @@
+#include <map>
 #include <vector>
 using namespace std;
 
-enum class Room { BEDROOM = 1,
-                  BATHROOM = 2,
-                  KITCHEN = 3,
-                  LIVINGROOM = 4,
-                  OFFICE = 5,
-                  HOUSE = 6,
-                  UNKOWN = 7 };
+namespace enums {
 
-enum class Time { MORNING = 1,
-                  AFTERNOON = 2,
-                  NIGHT = 3 };
+enum Room { BEDROOM = 1,
+            BATHROOM = 2,
+            KITCHEN = 3,
+            LIVINGROOM = 4,
+            OFFICE = 5,
+            HOUSE = 6,
+            UNKOWN = 7 };
 
-class Action {
+enum Time { MORNING = 1,
+            AFTERNOON = 2,
+            NIGHT = 3 };
+
+class Enum {
    public:
-    vector<int> MANAGE = {1, 40},
-                CONTROL = {2, 20},
-                VIEW = {3, 0};
+    const char *key;
+    int value;
+    int weight;
+    Enum() {}
+    Enum(const char *k, int v, int w) {
+        key = k;
+        value = v;
+        weight = w;
+    }
 };
 
-class DeviceClass {
-   public:
-    vector<int> CRITICAL = {1, 30},
-                NONCRITICAL = {2, 0};
-};
+static const map<const char *, Enum *> Action = {
+    {"MANAGE", new Enum("MANAGE", 1, 40)},
+    {"CONTROL", new Enum("CONTROL", 2, 20)},
+    {"VIEW", new Enum("VIEW", 3, 0)}};
 
-class UserLevel {
-   public:
-    vector<int> ADMIN = {1, 70},
-                ADULT = {2, 50},
-                CHILD = {3, 30},
-                VISITOR = {4, 0};
-};
+static const map<const char *, Enum *> UserLevel = {
+    {"ADMIN", new Enum("ADMIN", 1, 70)},
+    {"ADULT", new Enum("ADULT", 2, 50)},
+    {"CHILD", new Enum("CHILD", 3, 30)},
+    {"VISITOR", new Enum("VISITOR", 4, 0)}};
 
-class AccessWay {
-   public:
-    vector<int> REQUESTED = {1, 30},
-                HOUSE = {2, 20},
-                PERSONAL = {3, 10};
-};
+static const map<const char *, Enum *> DeviceClass = {
+    {"CRITICAL", new Enum("CRITICAL", 1, 30)},
+    {"NONCRITICAL", new Enum("NONCRITICAL", 2, 0)}};
 
-class Localization {
-   public:
-    vector<int> INTERNAL = {1, 30},
-                EXTERNAL = {2, 10};
-};
+static const map<const char *, Enum *> AccessWay = {
+    {"REQUESTED", new Enum("REQUESTED", 1, 30)},
+    {"HOUSE", new Enum("HOUSE", 2, 20)},
+    {"PERSONAL", new Enum("PERSONAL", 3, 10)}};
 
-class TimeClass {
-   public:
-    vector<int> COMMOM = {1, 20},
-                UNCOMMOM = {2, 10};
-};
+static const map<const char *, Enum *> Localization = {
+    {"INTERNAL", new Enum("INTERNAL", 1, 30)},
+    {"EXTERNAL", new Enum("EXTERNAL", 2, 10)}};
 
-class Age {
-   public:
-    vector<int> ADULT = {1, 30},
-                TEEN = {2, 20},
-                KID = {2, 10};
-};
+static const map<const char *, Enum *> TimeClass = {
+    {"COMMOM", new Enum("COMMOM", 1, 20)},
+    {"UNCOMMOM", new Enum("UNCOMMOM", 2, 10)}};
 
-class Group {
-   public:
-    vector<int> TOGETHER = {1, 10},
-                ALONE = {2, 0};
-};
+static const map<const char *, Enum *> Age = {
+    {"ADULT", new Enum("ADULT", 1, 30)},
+    {"TEEN", new Enum("TEEN", 2, 20)},
+    {"KID", new Enum("KID", 3, 10)}};
+
+static const map<const char *, Enum *> Group = {
+    {"TOGETHER", new Enum("TOGETHER", 1, 10)},
+    {"ALONE", new Enum("ALONE", 2, 0)}};
+
+};  // namespace enums

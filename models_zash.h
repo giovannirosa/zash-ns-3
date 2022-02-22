@@ -34,13 +34,13 @@ class Ontology {
 class User {
    public:
     int id;
-    UserLevel userLevel;
-    Age age;
+    enums::Enum userLevel;
+    enums::Enum age;
     vector<string> rejected;
     time_t startInterval;
     bool blocked;
     User() {}
-    User(int i, UserLevel ul, Age a) {
+    User(int i, enums::Enum ul, enums::Enum a) {
         id = i;
         userLevel = ul;
         age = a;
@@ -54,11 +54,11 @@ class Device {
    public:
     int id;
     string name;
-    DeviceClass deviceClass;
-    Room room;
+    enums::Enum deviceClass;
+    enums::Enum room;
     bool active;
     Device() {}
-    Device(int i, string n, DeviceClass dc, Room r, bool a) {
+    Device(int i, string n, enums::Enum dc, enums::Enum r, bool a) {
         id = i;
         name = n;
         deviceClass = dc;
@@ -73,9 +73,9 @@ class Request {
     Device device;
     User user;
     Context context;
-    Action action;
+    enums::Enum action;
     Request() {}
-    Request(int i, Device d, User u, Context c, Action a) {
+    Request(int i, Device d, User u, Context c, enums::Enum a) {
         id = i;
         device = d;
         user = u;
