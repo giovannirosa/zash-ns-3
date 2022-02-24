@@ -11,6 +11,12 @@ char* formatTime(time_t mtime) {
     return buff;
 }
 
+int extractHour(time_t mtime) {
+    struct tm* timeinfo;
+    timeinfo = localtime(&mtime);
+    return timeinfo->tm_hour;
+}
+
 string vecToStr(vector<int> v) {
     stringstream ss;
     ss << "[";

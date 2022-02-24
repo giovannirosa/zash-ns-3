@@ -7,12 +7,12 @@ using namespace std;
 
 class Context {
    public:
-    vector<int> accessWay;
-    vector<int> localization;
-    vector<int> group;
-    vector<int> time;
+    enums::Enum *accessWay;
+    enums::Enum *localization;
+    enums::Enum *group;
+    enums::Enum *time;
     Context() {}
-    Context(vector<int> aw, vector<int> loc, vector<int> g) {
+    Context(enums::Enum *aw, enums::Enum *loc, enums::Enum *g) {
         accessWay = aw;
         localization = loc;
         group = g;
@@ -21,10 +21,10 @@ class Context {
 
 class Ontology {
    public:
-    vector<int> userLevel;
-    vector<int> deviceClass;
-    vector<vector<int>> capabilities;
-    Ontology(vector<int> ul, vector<int> dc, vector<vector<int>> c) {
+    enums::Enum *userLevel;
+    enums::Enum *deviceClass;
+    vector<enums::Enum *> capabilities;
+    Ontology(enums::Enum *ul, enums::Enum *dc, vector<enums::Enum *> c) {
         userLevel = ul;
         deviceClass = dc;
         capabilities = c;
@@ -36,7 +36,7 @@ class User {
     int id;
     enums::Enum userLevel;
     enums::Enum age;
-    vector<string> rejected;
+    vector<time_t> rejected;
     time_t startInterval;
     bool blocked;
     User() {}
