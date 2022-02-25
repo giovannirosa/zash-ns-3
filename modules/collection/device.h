@@ -1,10 +1,12 @@
 #include <algorithm>
 #include <ctime>
+#include <functional>
 #include <iostream>
 
 using namespace std;
 
 #include "audit.h"
+#include "authorization.h"
 #include "data.h"
 #include "models_zash.h"
 
@@ -22,10 +24,10 @@ struct compare {
 class Proof {
    public:
     int user;
-    vector<int> accessWay;
+    enums::Enum *accessWay;
     time_t date;
 
-    Proof(int u, vector<int> a, time_t d) {
+    Proof(int u, enums::Enum *a, time_t d) {
         user = u;
         accessWay = a;
         date = d;
@@ -38,6 +40,11 @@ class DeviceComponent {
     DataComponent dataComponent;
     AuditComponent auditComponent;
     vector<Proof *> proofs;
+    DeviceComponent(AuthorizationComponent a, DataComponent d, AuditComponent adt) {
+        authorizationComponent = a;
+        dataComponent = d;
+        auditComponent = adt;
+    }
 
     bool explicitAuthentication(Request req, time_t currentDate) {
         auto it = find_if(proofs.begin(), proofs.end(), compare(req));
@@ -72,7 +79,8 @@ class DeviceComponent {
                  << " to "
                  << dataComponent.currentState[req.device.id - 1];
             ++auditComponent.reqNumber;
-            result = authorizationComponent.authorizeRequest(req, currentDate, &explicitAuthentication);
+            auto fp = bind(&DeviceComponent::explicitAuthentication, this, placeholders::_1, placeholders::_2);
+            result = authorizationComponent.authorizeRequest(req, currentDate, fp);
         } else {
             cout << "Passive device "
                  << req.device.id

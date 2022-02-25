@@ -19,7 +19,13 @@ class ActivityComponent {
     AuditComponent auditComponent;
     MarkovChain markovChain;
     bool isMarkovBuilding = true;
-    time_t limitDate = NULL;
+    time_t limitDate = (time_t)(-1);
+    ActivityComponent() {}
+    ActivityComponent(DataComponent d, ConfigurationComponent c, AuditComponent a) {
+        dataComponent = d;
+        configurationComponent = c;
+        auditComponent = a;
+    }
 
     bool verifyActivity(Request req, time_t currentDate, function<bool(Request, time_t)> explicitAuthentication) {
         checkBuilding(currentDate);

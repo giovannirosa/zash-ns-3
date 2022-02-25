@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <ctime>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -18,12 +19,14 @@ using namespace std;
 #include "utils.h"
 
 class AuthorizationComponent {
+   public:
     ConfigurationComponent configurationComponent;
     OntologyComponent ontologyComponent;
     ContextComponent contextComponent;
     ActivityComponent activityComponent;
     NotificationComponent notificationComponent;
     AuditComponent auditComponent;
+    AuthorizationComponent() {}
     AuthorizationComponent(ConfigurationComponent c,
                            OntologyComponent o,
                            ContextComponent ctx,
