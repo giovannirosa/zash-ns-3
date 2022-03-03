@@ -1,14 +1,17 @@
+#ifndef ACTIVITY
+#define ACTIVITY
+
 #include <ctime>
 #include <iostream>
 
 using namespace std;
 
-#include "audit.h"
-#include "configuration.h"
-#include "data.h"
-#include "markov.h"
-#include "models_zash.h"
-#include "utils.h"
+#include "../audit/audit.h"
+#include "../behavior/configuration.h"
+#include "../collection/data.h"
+#include "../models/markov.h"
+#include "../models/models_zash.h"
+#include "../models/utils.h"
 
 #define PROB_THRESHOLD 0.1
 
@@ -55,7 +58,7 @@ class ActivityComponent {
 
     // check if markov build time expired
     void checkBuilding(time_t currentDate) {
-        if (limitDate == NULL) {
+        if (difftime(limitDate, (time_t)(-1)) == 0) {
             limitDate = currentDate + configurationComponent.buildInterval * 24 * 60 * 60;  // add days
         } else if (isMarkovBuilding && difftime(currentDate, limitDate) > 0) {
             isMarkovBuilding = false;
@@ -63,3 +66,5 @@ class ActivityComponent {
         }
     }
 };
+
+#endif

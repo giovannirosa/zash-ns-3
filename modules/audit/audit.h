@@ -1,9 +1,12 @@
+#ifndef AUDIT
+#define AUDIT
+
 #include <ctime>
 #include <iostream>
 
 using namespace std;
 
-#include "models_zash.h"
+#include "../models/models_zash.h"
 
 class AuditEvent {
    public:
@@ -29,3 +32,5 @@ class AuditComponent {
     int reqDenied = 0;
     AuditComponent() {}
 };
+
+#endif

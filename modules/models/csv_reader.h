@@ -1,3 +1,6 @@
+#ifndef CSV_READER
+#define CSV_READER
+
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -85,10 +88,12 @@ class CSVRange {
     CSVIterator end() const { return CSVIterator{}; }
 };
 
-int main() {
-    std::ifstream file("data/d6_2m_0tm.csv");
+// int main() {
+//     std::ifstream file("data/d6_2m_0tm.csv");
 
-    for (auto& row : CSVRange(file)) {
-        std::cout << "4th Element(" << row[30] << ")" << std::endl;
-    }
-}
+//     for (auto& row : CSVRange(file)) {
+//         std::cout << "4th Element(" << row[30] << ")" << std::endl;
+//     }
+// }
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef ONTOLOGY
+#define ONTOLOGY
+
 #include <algorithm>
 #include <ctime>
 #include <iostream>
@@ -6,15 +9,14 @@
 
 using namespace std;
 
-#include "audit.h"
-#include "configuration.h"
-#include "enums_zash.h"
-#include "models_zash.h"
-#include "utils.h"
+#include "../audit/audit.h"
+#include "../behavior/configuration.h"
+#include "../models/enums_zash.h"
+#include "../models/models_zash.h"
 
-struct compare {
+struct compareOnt {
     Request key;
-    compare(Request r) : key(r) {}
+    compareOnt(Request r) : key(r) {}
 
     bool operator()(Ontology *o) {
         return o->userLevel->value == key.user.userLevel->value &&
@@ -56,7 +58,7 @@ class OntologyComponent {
         cout << "Verify User Level " << req.user.userLevel->key << " with the action " << req.action.key << " on the device class " << req.device.deviceClass->key << endl;
 
         bool compatible = false;
-        auto it = find_if(configurationComponent.ontologies.begin(), configurationComponent.ontologies.end(), compare(req));
+        auto it = find_if(configurationComponent.ontologies.begin(), configurationComponent.ontologies.end(), compareOnt(req));
         if (it != configurationComponent.ontologies.end()) {
             Ontology *ontology = it[0];
             auto it2 = find_if(ontology->capabilities.begin(), ontology->capabilities.end(), compareCap(req));
@@ -73,3 +75,5 @@ class OntologyComponent {
         return compatible;
     }
 };
+
+#endif

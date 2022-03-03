@@ -1,3 +1,5 @@
+#ifndef MARKOV
+#define MARKOV
 
 #include <algorithm>
 #include <iostream>
@@ -85,9 +87,9 @@ void showTransitionCol(TransitionCol *tcol) {
     }
 }
 
-struct compare {
+struct compareVec {
     vector<int> key;
-    compare(vector<int> i) : key(i) {}
+    compareVec(vector<int> i) : key(i) {}
 
     bool operator()(vector<int> i) {
         return (i == key);
@@ -147,7 +149,7 @@ class MarkovChain {
 
     void buildTransition(vector<int> currentState, vector<int> lastState) {
         // cout << "---------------------------------" << endl;
-        if (none_of(stateSpace.begin(), stateSpace.end(), compare(currentState))) {
+        if (none_of(stateSpace.begin(), stateSpace.end(), compareVec(currentState))) {
             stateSpace.push_back(currentState);
         }
         // showVector(currentState);
@@ -216,28 +218,30 @@ class MarkovChain {
     }
 };
 
-int main() {
-    cout << __cplusplus << endl;
+// int main() {
+//     cout << __cplusplus << endl;
 
-    // time_t t1, t2;
-    // time(&t1);
-    // this_thread::sleep_for(chrono::milliseconds(1000));
-    // time(&t2);
-    // cout << difftime(t1, t2) << endl;
-    MarkovChain markovChain;
-    // TransitionCol col = TransitionCol({0, 1, 1, 1});
-    // col.totalOcc = 1;
-    // markovChain.transitionMatrix.push_back(col);
+//     // time_t t1, t2;
+//     // time(&t1);
+//     // this_thread::sleep_for(chrono::milliseconds(1000));
+//     // time(&t2);
+//     // cout << difftime(t1, t2) << endl;
+//     MarkovChain markovChain;
+//     // TransitionCol col = TransitionCol({0, 1, 1, 1});
+//     // col.totalOcc = 1;
+//     // markovChain.transitionMatrix.push_back(col);
 
-    vector<int> currentState = {0, 1, 0, 1};
-    vector<int> lastState = {0, 1, 1, 1};
-    vector<int> lastState2 = {0, 1, 1, 0};
-    markovChain.buildTransition(currentState, lastState);
-    markovChain.buildTransition(currentState, lastState);
-    markovChain.buildTransition(lastState2, lastState);
-    markovChain.buildTransition(lastState, currentState);
-    markovChain.showMatrix(false);
+//     vector<int> currentState = {0, 1, 0, 1};
+//     vector<int> lastState = {0, 1, 1, 1};
+//     vector<int> lastState2 = {0, 1, 1, 0};
+//     markovChain.buildTransition(currentState, lastState);
+//     markovChain.buildTransition(currentState, lastState);
+//     markovChain.buildTransition(lastState2, lastState);
+//     markovChain.buildTransition(lastState, currentState);
+//     markovChain.showMatrix(false);
 
-    cout << "Prob: " << markovChain.getProbability(currentState, lastState) << endl;
-    return 0;
-}
+//     cout << "Prob: " << markovChain.getProbability(currentState, lastState) << endl;
+//     return 0;
+// }
+
+#endif

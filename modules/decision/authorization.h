@@ -1,3 +1,6 @@
+#ifndef AUTHORIZATION
+#define AUTHORIZATION
+
 #include <algorithm>
 #include <ctime>
 #include <functional>
@@ -8,15 +11,14 @@
 
 using namespace std;
 
+#include "../audit/audit.h"
+#include "../behavior/configuration.h"
+#include "../behavior/notification.h"
+#include "../models/enums_zash.h"
+#include "../models/models_zash.h"
 #include "activity.h"
-#include "audit.h"
-#include "configuration.h"
 #include "context.h"
-#include "enums_zash.h"
-#include "models_zash.h"
-#include "notification.h"
 #include "ontology.h"
-#include "utils.h"
 
 class AuthorizationComponent {
    public:
@@ -76,3 +78,5 @@ class AuthorizationComponent {
         }
     }
 };
+
+#endif

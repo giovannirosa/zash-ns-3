@@ -1,3 +1,6 @@
+#ifndef CONTEXT
+#define CONTEXT
+
 #include <algorithm>
 #include <ctime>
 #include <iostream>
@@ -7,31 +10,11 @@
 
 using namespace std;
 
-#include "audit.h"
-#include "configuration.h"
-#include "enums_zash.h"
-#include "models_zash.h"
-#include "utils.h"
-
-struct compare {
-    Request key;
-    compare(Request r) : key(r) {}
-
-    bool operator()(TimeObject *t) {
-        return t->device->id == key.device.id &&
-               t->userLevel->value == key.user.userLevel->value &&
-               t->action->value == key.action.value;
-    }
-};
-
-struct compareTimes {
-    int key;
-    compareTimes(int t) : key(t) {}
-
-    bool operator()(int t) {
-        return t == key;
-    }
-};
+#include "../audit/audit.h"
+#include "../behavior/configuration.h"
+#include "../models/enums_zash.h"
+#include "../models/models_zash.h"
+#include "../models/utils.h"
 
 class TimePercentage {
    public:
@@ -60,12 +43,32 @@ class TimeObject {
     }
 };
 
+struct compareTObj {
+    Request key;
+    compareTObj(Request r) : key(r) {}
+
+    bool operator()(TimeObject *t) {
+        return t->device->id == key.device.id &&
+               t->userLevel->value == key.user.userLevel->value &&
+               t->action->value == key.action.value;
+    }
+};
+
+struct compareTimes {
+    int key;
+    compareTimes(int t) : key(t) {}
+
+    bool operator()(TimePercentage *t) {
+        return t->time == key;
+    }
+};
+
 class ContextComponent {
    public:
     ConfigurationComponent configurationComponent;
     AuditComponent auditComponent;
     bool isTimeBuilding = true;
-    time_t limitDate = NULL;
+    time_t limitDate = (time_t)(-1);;
     vector<TimeObject *> timeProbs;
     ContextComponent() {}
     ContextComponent(ConfigurationComponent c, AuditComponent a) {
@@ -110,7 +113,7 @@ class ContextComponent {
 
     // check if markov build time expired
     void checkBuilding(time_t currentDate) {
-        if (limitDate == NULL) {
+        if (difftime(limitDate, (time_t)(-1)) == 0) {
             limitDate = currentDate + configurationComponent.buildInterval * 24 * 60 * 60;  // add days
         } else if (isTimeBuilding && difftime(currentDate, limitDate) > 0) {
             isTimeBuilding = false;
@@ -137,7 +140,7 @@ class ContextComponent {
             time = enums::NIGHT;
         }
 
-        auto it = find_if(timeProbs.begin(), timeProbs.end(), compare(req));
+        auto it = find_if(timeProbs.begin(), timeProbs.end(), compareTObj(req));
         if (it != timeProbs.end()) {
             cout << "Found timeObj" << endl;
             it[0]->totalOcc++;
@@ -167,3 +170,5 @@ class ContextComponent {
         }
     }
 };
+
+#endif

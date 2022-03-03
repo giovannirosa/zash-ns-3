@@ -1,7 +1,10 @@
+#ifndef NOTIFICATION
+#define NOTIFICATION
+
 using namespace std;
 
 #include "configuration.h"
-#include "models_zash.h"
+#include "../models/models_zash.h"
 
 class NotificationComponent {
    public:
@@ -17,3 +20,5 @@ class NotificationComponent {
         }
     }
 };
+
+#endif

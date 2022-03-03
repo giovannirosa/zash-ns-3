@@ -1,3 +1,6 @@
+#ifndef DEVICE
+#define DEVICE
+
 #include <algorithm>
 #include <ctime>
 #include <functional>
@@ -5,21 +8,12 @@
 
 using namespace std;
 
-#include "audit.h"
-#include "authorization.h"
+#include "../audit/audit.h"
+#include "../decision/authorization.h"
 #include "data.h"
-#include "models_zash.h"
+#include "../models/models_zash.h"
 
 #define PROOF_EXPIRATION 10  // minutes
-
-struct compare {
-    Request key;
-    compare(Request r) : key(r) {}
-
-    bool operator()(Proof *p) {
-        return (p->user == key.user.id);
-    }
-};
 
 class Proof {
    public:
@@ -31,6 +25,15 @@ class Proof {
         user = u;
         accessWay = a;
         date = d;
+    }
+};
+
+struct compareProof {
+    Request key;
+    compareProof(Request r) : key(r) {}
+
+    bool operator()(Proof *p) {
+        return (p->user == key.user.id);
     }
 };
 
@@ -47,7 +50,7 @@ class DeviceComponent {
     }
 
     bool explicitAuthentication(Request req, time_t currentDate) {
-        auto it = find_if(proofs.begin(), proofs.end(), compare(req));
+        auto it = find_if(proofs.begin(), proofs.end(), compareProof(req));
         if (it == proofs.end()) {
             cout << "Not found proof" << endl;
             int proofInput = req.user.id;
@@ -93,3 +96,5 @@ class DeviceComponent {
         return result;
     }
 };
+
+#endif

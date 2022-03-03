@@ -3,20 +3,22 @@
 
 using namespace std;
 
-#include "audit/audit.h"
-#include "activity.h"
-#include "authorization.h"
-#include "configuration.h"
-#include "context.h"
-#include "data.h"
-#include "device.h"
-#include "enums_zash.h"
-#include "models_zash.h"
-#include "notification.h"
-#include "ontology.h"
-#include "csv_reader.h"
+#include "modules/audit/audit.h"
+#include "modules/behavior/configuration.h"
+#include "modules/behavior/notification.h"
+#include "modules/collection/data.h"
+#include "modules/collection/device.h"
+#include "modules/decision/activity.h"
+#include "modules/decision/authorization.h"
+#include "modules/decision/context.h"
+#include "modules/decision/ontology.h"
+#include "modules/models/csv_reader.h"
+#include "modules/models/enums_zash.h"
+#include "modules/models/models_zash.h"
+#include "modules/models/utils.h"
 
 #define NUMBER_OF_DEVICES 29
+#define ACTIVITY_COL 29
 #define DATE_COL 30
 
 int main() {
@@ -108,16 +110,16 @@ int main() {
     NotificationComponent notificationComponent = NotificationComponent(configurationComponent);
 
     // Collection Module
-    DataComponent dataComponent;
+    DataComponent *dataComponent;
 
     // Decision Module
     OntologyComponent ontologyComponent = OntologyComponent(configurationComponent, auditModule);
     ContextComponent contextComponent = ContextComponent(configurationComponent, auditModule);
-    ActivityComponent activityComponent = ActivityComponent(dataComponent, configurationComponent, auditModule);
+    ActivityComponent activityComponent = ActivityComponent(*dataComponent, configurationComponent, auditModule);
     AuthorizationComponent authorizationComponent = AuthorizationComponent(configurationComponent, ontologyComponent, contextComponent, activityComponent, notificationComponent, auditModule);
 
     // Collection Module
-    DeviceComponent deviceComponent = DeviceComponent(authorizationComponent, dataComponent, auditModule);
+    DeviceComponent deviceComponent = DeviceComponent(authorizationComponent, *dataComponent, auditModule);
 
     User *simUser = users[2];
     Context simContext = Context(enums::AccessWay.at("PERSONAL"), enums::Localization.at("INTERNAL"), enums::Group.at("ALONE"));
@@ -127,13 +129,38 @@ int main() {
 
     ifstream file("data/d6_2m_0tm.csv");
 
-    for (auto& row : CSVRange(file)) {
-        cout << row[DATE_COL] << std::endl;
+    for (auto &row : CSVRange(file)) {
         time_t currentDate = strToTime(string(row[DATE_COL]));
-        
-        vector<int> currentState = rowToState(row);
+
+        vector<int> *currentState = rowToState(row, NUMBER_OF_DEVICES);
+
+        if (*currentState == *dataComponent->lastState) {
+            continue;
+        }
+
+        if (dataComponent->lastState->size() > 0) {
+            cout << row[DATE_COL] << endl
+                 << row[ACTIVITY_COL] << endl;
+
+            vector<int> result(currentState->size() * 2);
+            // Using default operator<
+            auto it = set_symmetric_difference(dataComponent->lastState->begin(),
+                                               dataComponent->lastState->end(),
+                                               currentState->begin(),
+                                               currentState->end(),
+                                               result.begin());
+
+            cout << "Last State = " << vecToStr(*dataComponent->lastState) << endl;
+            cout << "Current State = " << vecToStr(*currentState) << endl;
+            cout << "The symmetric difference has "
+                 << (it - result.begin()) << " elements:\n";
+            for (auto st = result.begin(); st != it; ++st)
+                cout << ' ' << *st;
+            cout << '\n';
+        } else {
+            dataComponent->lastState = currentState;
+        }
     }
-    
 
     return 0;
 }

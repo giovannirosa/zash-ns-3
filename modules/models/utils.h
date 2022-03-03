@@ -1,11 +1,17 @@
+#ifndef UTILS
+#define UTILS
+
+#include <charconv>
 #include <ctime>
 #include <iomanip>
 #include <sstream>
 
 using namespace std;
 
+#include "csv_reader.h"
+
 char* formatTime(time_t mtime) {
-    char buff[20];
+    char* buff;
     struct tm* timeinfo;
     timeinfo = localtime(&mtime);
     strftime(buff, sizeof(buff), "%b %d %H:%M", timeinfo);
@@ -37,9 +43,19 @@ string vecToStr(vector<int> v) {
     return ss.str();
 }
 
-vector<int> rowToState(CSVRow row) {
-    for (int i = 0; i < row.size(); ++i) {
-        cout << row[i] << " ";
+vector<int>* rowToState(CSVRow row, int devNum) {
+    vector<int>* state;
+    for (int i = 0; i < devNum; ++i) {
+        // cout << row[i] << " ";
+        int s;
+        auto result = from_chars(row[i].data(), row[i].data() + row[i].size(), s);
+        if (result.ec == errc::invalid_argument) {
+            cout << "Could not convert.";
+        }
+        state->push_back(s);
     }
-    cout << endl;
+    // cout << endl;
+    return state;
 }
+
+#endif

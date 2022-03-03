@@ -1,6 +1,9 @@
+#ifndef CONFIGURATION
+#define CONFIGURATION
+
 using namespace std;
 
-#include "models_zash.h"
+#include "../models/models_zash.h"
 
 class ConfigurationComponent {
    public:
@@ -20,3 +23,5 @@ class ConfigurationComponent {
         ontologies = o;
     }
 };
+
+#endif

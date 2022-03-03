@@ -1,3 +1,6 @@
+#ifndef MODELS_ZASH
+#define MODELS_ZASH
+
 #include <ctime>
 #include <iostream>
 
@@ -45,7 +48,7 @@ class User {
         userLevel = ul;
         age = a;
         rejected = {};
-        startInterval = NULL;
+        startInterval = (time_t)(-1);
         blocked = false;
     }
 };
@@ -83,3 +86,5 @@ class Request {
         action = a;
     }
 };
+
+#endif

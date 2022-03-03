@@ -1,3 +1,6 @@
+#ifndef ENUMS_ZASH
+#define ENUMS_ZASH
+
 #include <map>
 #include <vector>
 using namespace std;
@@ -67,3 +70,5 @@ static const map<const char *, Enum *> Group = {
     {"ALONE", new Enum("ALONE", 2, 0)}};
 
 };  // namespace enums
+
+#endif
