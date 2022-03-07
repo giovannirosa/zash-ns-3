@@ -33,7 +33,7 @@ struct compareProof {
     compareProof(Request r) : key(r) {}
 
     bool operator()(Proof *p) {
-        return (p->user == key.user.id);
+        return (p->user == key.user->id);
     }
 };
 
@@ -53,13 +53,13 @@ class DeviceComponent {
         auto it = find_if(proofs.begin(), proofs.end(), compareProof(req));
         if (it == proofs.end()) {
             cout << "Not found proof" << endl;
-            int proofInput = req.user.id;
-            if (proofInput != req.user.id) {
+            int proofInput = req.user->id;
+            if (proofInput != req.user->id) {
                 auditComponent.invalidProofs.push_back(new AuditEvent(currentDate, req));
                 cout << "Proof does not match!";
             } else {
                 auditComponent.validProofs.push_back(new AuditEvent(currentDate, req));
-                proofs.push_back(new Proof(req.user.id, req.context.accessWay, currentDate));
+                proofs.push_back(new Proof(req.user->id, req.context->accessWay, currentDate));
             }
         }
         cout << "Proof matches!";
@@ -74,23 +74,23 @@ class DeviceComponent {
         clearProofs(currentDate);
         dataComponent.updateCurrentState(req);
         bool result = true;
-        if (req.device.active) {
+        if (req.device->active) {
             cout << "Active device "
-                 << req.device.id
+                 << req.device->id
                  << " request changing state from "
-                 << dataComponent.lastState[req.device.id - 1]
+                 << dataComponent.lastState[req.device->id - 1]
                  << " to "
-                 << dataComponent.currentState[req.device.id - 1];
+                 << dataComponent.currentState[req.device->id - 1];
             ++auditComponent.reqNumber;
             auto fp = bind(&DeviceComponent::explicitAuthentication, this, placeholders::_1, placeholders::_2);
             result = authorizationComponent.authorizeRequest(req, currentDate, fp);
         } else {
             cout << "Passive device "
-                 << req.device.id
+                 << req.device->id
                  << "changed state from "
-                 << dataComponent.lastState[req.device.id - 1]
+                 << dataComponent.lastState[req.device->id - 1]
                  << " to "
-                 << dataComponent.currentState[req.device.id - 1];
+                 << dataComponent.currentState[req.device->id - 1];
         }
         dataComponent.updateLastState();
         return result;

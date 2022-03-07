@@ -110,55 +110,64 @@ int main() {
     NotificationComponent notificationComponent = NotificationComponent(configurationComponent);
 
     // Collection Module
-    DataComponent *dataComponent;
+    DataComponent dataComponent;
 
     // Decision Module
     OntologyComponent ontologyComponent = OntologyComponent(configurationComponent, auditModule);
     ContextComponent contextComponent = ContextComponent(configurationComponent, auditModule);
-    ActivityComponent activityComponent = ActivityComponent(*dataComponent, configurationComponent, auditModule);
+    ActivityComponent activityComponent = ActivityComponent(dataComponent, configurationComponent, auditModule);
     AuthorizationComponent authorizationComponent = AuthorizationComponent(configurationComponent, ontologyComponent, contextComponent, activityComponent, notificationComponent, auditModule);
 
     // Collection Module
-    DeviceComponent deviceComponent = DeviceComponent(authorizationComponent, *dataComponent, auditModule);
+    DeviceComponent deviceComponent = DeviceComponent(authorizationComponent, dataComponent, auditModule);
 
     User *simUser = users[2];
-    Context simContext = Context(enums::AccessWay.at("PERSONAL"), enums::Localization.at("INTERNAL"), enums::Group.at("ALONE"));
+    Context *simContext = new Context(enums::AccessWay.at("PERSONAL"), enums::Localization.at("INTERNAL"), enums::Group.at("ALONE"));
     enums::Enum *simAction = enums::Action.at("CONTROL");
 
     int idReq = 0;
 
     ifstream file("data/d6_2m_0tm.csv");
+    int x = 0;
 
     for (auto &row : CSVRange(file)) {
+        cout << "Processing line " << x << endl;
+        if (x++ == 0) {
+            continue;
+        }
+        if (x > 4) {
+            break;
+        }
         time_t currentDate = strToTime(string(row[DATE_COL]));
 
-        vector<int> *currentState = rowToState(row, NUMBER_OF_DEVICES);
+        vector<int> currentState = rowToState(row, NUMBER_OF_DEVICES);
 
-        if (*currentState == *dataComponent->lastState) {
+        if (currentState == dataComponent.lastState) {
             continue;
         }
 
-        if (dataComponent->lastState->size() > 0) {
-            cout << row[DATE_COL] << endl
-                 << row[ACTIVITY_COL] << endl;
+        if (dataComponent.lastState.size() > 0) {
+            vector<int> changes;
 
-            vector<int> result(currentState->size() * 2);
-            // Using default operator<
-            auto it = set_symmetric_difference(dataComponent->lastState->begin(),
-                                               dataComponent->lastState->end(),
-                                               currentState->begin(),
-                                               currentState->end(),
-                                               result.begin());
+            for (int i = 0; i < NUMBER_OF_DEVICES; ++i) {
+                if (dataComponent.lastState[i] != currentState[i]) {
+                    changes.push_back(i);
+                }
+            }
 
-            cout << "Last State = " << vecToStr(*dataComponent->lastState) << endl;
-            cout << "Current State = " << vecToStr(*currentState) << endl;
-            cout << "The symmetric difference has "
-                 << (it - result.begin()) << " elements:\n";
-            for (auto st = result.begin(); st != it; ++st)
-                cout << ' ' << *st;
-            cout << '\n';
+            cout << "Last State =    " << vecToStr(dataComponent.lastState) << endl;
+            cout << "Current State = " << vecToStr(currentState) << endl;
+
+            for (int change : changes) {
+                cout << "Change on " << devices[change]->name << endl;
+                cout << row[DATE_COL] << endl
+                     << row[ACTIVITY_COL] << endl;
+                Request req = Request(++idReq, devices[change], simUser, simContext, simAction);
+                deviceComponent.listenRequest(req, currentDate);
+            }
         } else {
-            dataComponent->lastState = currentState;
+            cout << "1st copy of state" << endl;
+            dataComponent.lastState = currentState;
         }
     }
 

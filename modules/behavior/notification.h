@@ -14,9 +14,9 @@ class NotificationComponent {
         configurationComponent = c;
     }
 
-    void alertUsers(User blockedUser) {
+    void alertUsers(User *blockedUser) {
         for (User *user : configurationComponent.users) {
-            cout << "User " << user->id << " received message: 'User " << blockedUser.id << " is blocked!'";
+            cout << "User " << user->id << " received message: 'User " << blockedUser->id << " is blocked!'";
         }
     }
 };

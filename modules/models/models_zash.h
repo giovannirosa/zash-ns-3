@@ -73,12 +73,12 @@ class Device {
 class Request {
    public:
     int id;
-    Device device;
-    User user;
-    Context context;
-    enums::Enum action;
+    Device *device;
+    User *user;
+    Context *context;
+    enums::Enum *action;
     Request() {}
-    Request(int i, Device d, User u, Context c, enums::Enum a) {
+    Request(int i, Device *d, User *u, Context *c, enums::Enum *a) {
         id = i;
         device = d;
         user = u;

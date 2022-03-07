@@ -43,8 +43,8 @@ string vecToStr(vector<int> v) {
     return ss.str();
 }
 
-vector<int>* rowToState(CSVRow row, int devNum) {
-    vector<int>* state;
+vector<int> rowToState(CSVRow row, int devNum) {
+    vector<int> state;
     for (int i = 0; i < devNum; ++i) {
         // cout << row[i] << " ";
         int s;
@@ -52,7 +52,7 @@ vector<int>* rowToState(CSVRow row, int devNum) {
         if (result.ec == errc::invalid_argument) {
             cout << "Could not convert.";
         }
-        state->push_back(s);
+        state.push_back(s);
     }
     // cout << endl;
     return state;

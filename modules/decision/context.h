@@ -48,9 +48,9 @@ struct compareTObj {
     compareTObj(Request r) : key(r) {}
 
     bool operator()(TimeObject *t) {
-        return t->device->id == key.device.id &&
-               t->userLevel->value == key.user.userLevel->value &&
-               t->action->value == key.action.value;
+        return t->device->id == key.device->id &&
+               t->userLevel->value == key.user->userLevel->value &&
+               t->action->value == key.action->value;
     }
 };
 
@@ -92,11 +92,11 @@ class ContextComponent {
         checkBuilding(currentDate);
         if (isTimeBuilding) {
             cout << "Time probability is still building" << endl;
-            req.context.time = enums::TimeClass.at("COMMON");
+            req.context->time = enums::TimeClass.at("COMMON");
         }
-        cout << "Verify context with " << req.user.id << " in " << formatTime(currentDate) << endl;
-        int expectedDevice = req.device.deviceClass->weight + req.action.weight;
-        int expectedUser = req.user.userLevel->weight + req.action.weight;
+        cout << "Verify context with " << req.user->id << " in " << formatTime(currentDate) << endl;
+        int expectedDevice = req.device->deviceClass->weight + req.action->weight;
+        int expectedUser = req.user->userLevel->weight + req.action->weight;
         int expected = min(max(expectedDevice, expectedUser), 100);
         int calculated = min(calculateTrust(req.context, req.user), 100);
         cout << "Trust level is " << calculated << " and expected is " << expected;
@@ -121,12 +121,12 @@ class ContextComponent {
         }
     }
 
-    int calculateTrust(Context context, User user) {
-        return context.accessWay->weight +
-               context.localization->weight +
-               context.time->weight +
-               user.age->weight +
-               context.group->weight;
+    int calculateTrust(Context *context, User *user) {
+        return context->accessWay->weight +
+               context->localization->weight +
+               context->time->weight +
+               user->age->weight +
+               context->group->weight;
     }
 
     void calculateTime(Request req, time_t currentDate) {
@@ -152,9 +152,9 @@ class ContextComponent {
             if (it2 != timeObj->times.end()) {
                 TimePercentage *timePct = it2[0];
                 if (timePct->percentage < 0.3) {
-                    req.context.time = enums::TimeClass.at("COMMON");
+                    req.context->time = enums::TimeClass.at("COMMON");
                 } else {
-                    req.context.time = enums::TimeClass.at("UNCOMMON");
+                    req.context->time = enums::TimeClass.at("UNCOMMON");
                 }
             }
         }

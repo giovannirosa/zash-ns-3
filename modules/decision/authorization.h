@@ -47,7 +47,7 @@ class AuthorizationComponent {
         cout << "Authorization Component" << endl;
         cout << "Processing Request: " << req.id << endl;
         checkUsers(currentDate);
-        if (req.user.blocked) {
+        if (req.user->blocked) {
             ++auditComponent.reqDenied;
             cout << "USER IS BLOCKED - Request is NOT authorized!" << endl;
             return false;
@@ -55,12 +55,12 @@ class AuthorizationComponent {
         if (!ontologyComponent.verifyOntology(req, currentDate) ||
             !contextComponent.verifyContext(req, currentDate, explicitAuthentication) ||
             !activityComponent.verifyActivity(req, currentDate, explicitAuthentication)) {
-            req.user.rejected.push_back(currentDate);
-            cout << "User have now " << req.user.rejected.size() << " rejected requests!" << endl;
-            if (req.user.rejected.size() > configurationComponent.blockThreshold) {
+            req.user->rejected.push_back(currentDate);
+            cout << "User have now " << req.user->rejected.size() << " rejected requests!" << endl;
+            if (req.user->rejected.size() > configurationComponent.blockThreshold) {
                 auditComponent.blocks.push_back(new AuditEvent(currentDate, req));
-                req.user.blocked = true;
-                cout << "User " << req.user.id << " is blocked!" << endl;
+                req.user->blocked = true;
+                cout << "User " << req.user->id << " is blocked!" << endl;
                 notificationComponent.alertUsers(req.user);
             }
             ++auditComponent.reqDenied;
