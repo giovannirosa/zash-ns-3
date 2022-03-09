@@ -57,8 +57,8 @@ static const map<const char *, Enum *> Localization = {
     {"EXTERNAL", new Enum("EXTERNAL", 2, 10)}};
 
 static const map<const char *, Enum *> TimeClass = {
-    {"COMMOM", new Enum("COMMOM", 1, 20)},
-    {"UNCOMMOM", new Enum("UNCOMMOM", 2, 10)}};
+    {"COMMON", new Enum("COMMON", 1, 20)},
+    {"UNCOMMON", new Enum("UNCOMMON", 2, 10)}};
 
 static const map<const char *, Enum *> Age = {
     {"ADULT", new Enum("ADULT", 1, 30)},

@@ -15,31 +15,31 @@ using namespace std;
 #include "../models/models_zash.h"
 
 struct compareOnt {
-    Request key;
-    compareOnt(Request r) : key(r) {}
+    Request *key;
+    compareOnt(Request *r) : key(r) {}
 
     bool operator()(Ontology *o) {
-        return o->userLevel->value == key.user->userLevel->value &&
-               o->deviceClass->value == key.device->deviceClass->value;
+        return o->userLevel->value == key->user->userLevel->value &&
+               o->deviceClass->value == key->device->deviceClass->value;
     }
 };
 
 struct compareCap {
-    Request key;
-    compareCap(Request r) : key(r) {}
+    Request *key;
+    compareCap(Request *r) : key(r) {}
 
     bool operator()(enums::Enum *o) {
-        return o->key == key.action->key;
+        return o->key == key->action->key;
     }
 };
 
 class OntologyComponent {
-    ConfigurationComponent configurationComponent;
-    AuditComponent auditComponent;
+    ConfigurationComponent *configurationComponent;
+    AuditComponent *auditComponent;
 
    public:
     OntologyComponent() {}
-    OntologyComponent(ConfigurationComponent c, AuditComponent a) {
+    OntologyComponent(ConfigurationComponent *c, AuditComponent *a) {
         configurationComponent = c;
         auditComponent = a;
     }
@@ -53,13 +53,19 @@ class OntologyComponent {
     //   - non-critical devices:
     //       - visitor and kids can visualize and control
     //       - adults and admins can visualize, control and manage
-    bool verifyOntology(Request req, time_t currenDate) {
+    bool verifyOntology(Request *req, time_t currenDate) {
         cout << "Ontology Component" << endl;
-        cout << "Verify User Level " << req.user->userLevel->key << " with the action " << req.action->key << " on the device class " << req.device->deviceClass->key << endl;
+        cout << "Verify User Level "
+             << req->user->userLevel->key
+             << " with the action "
+             << req->action->key
+             << " on the device class "
+             << req->device->deviceClass->key
+             << endl;
 
         bool compatible = false;
-        auto it = find_if(configurationComponent.ontologies.begin(), configurationComponent.ontologies.end(), compareOnt(req));
-        if (it != configurationComponent.ontologies.end()) {
+        auto it = find_if(configurationComponent->ontologies.begin(), configurationComponent->ontologies.end(), compareOnt(req));
+        if (it != configurationComponent->ontologies.end()) {
             Ontology *ontology = it[0];
             auto it2 = find_if(ontology->capabilities.begin(), ontology->capabilities.end(), compareCap(req));
             if (it2 != ontology->capabilities.end()) {
@@ -68,9 +74,16 @@ class OntologyComponent {
         }
 
         string strResult = compatible ? "compatible" : "incompatible";
-        cout << "User Level " << req.user->userLevel->key << " is " << strResult << " with the Action " << req.action->key << " on the device class " << req.device->deviceClass->key;
+        cout << "User Level "
+             << req->user->userLevel->key
+             << " is " << strResult
+             << " with the Action "
+             << req->action->key
+             << " on the device class "
+             << req->device->deviceClass->key
+             << endl;
         if (!compatible) {
-            auditComponent.ontologyFail.push_back(new AuditEvent(currenDate, req));
+            auditComponent->ontologyFail.push_back(new AuditEvent(currenDate, req));
         }
         return compatible;
     }

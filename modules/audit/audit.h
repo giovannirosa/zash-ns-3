@@ -11,8 +11,8 @@ using namespace std;
 class AuditEvent {
    public:
     time_t time;
-    Request request;
-    AuditEvent(time_t t, Request r) {
+    Request *request;
+    AuditEvent(time_t t, Request *r) {
         time = t;
         request = r;
     }

@@ -103,23 +103,23 @@ int main() {
                                      adminNonCritical};
 
     // Audit Module
-    AuditComponent auditModule;
+    AuditComponent *auditModule = new AuditComponent();
 
     // Behavior Module
-    ConfigurationComponent configurationComponent = ConfigurationComponent(3, 24, 32, devices, users, ontologies);
-    NotificationComponent notificationComponent = NotificationComponent(configurationComponent);
+    ConfigurationComponent *configurationComponent = new ConfigurationComponent(3, 24, 32, devices, users, ontologies);
+    NotificationComponent *notificationComponent = new NotificationComponent(configurationComponent);
 
     // Collection Module
-    DataComponent dataComponent;
+    DataComponent *dataComponent = new DataComponent();
 
     // Decision Module
-    OntologyComponent ontologyComponent = OntologyComponent(configurationComponent, auditModule);
-    ContextComponent contextComponent = ContextComponent(configurationComponent, auditModule);
-    ActivityComponent activityComponent = ActivityComponent(dataComponent, configurationComponent, auditModule);
-    AuthorizationComponent authorizationComponent = AuthorizationComponent(configurationComponent, ontologyComponent, contextComponent, activityComponent, notificationComponent, auditModule);
+    OntologyComponent *ontologyComponent = new OntologyComponent(configurationComponent, auditModule);
+    ContextComponent *contextComponent = new ContextComponent(configurationComponent, auditModule);
+    ActivityComponent *activityComponent = new ActivityComponent(dataComponent, configurationComponent, auditModule);
+    AuthorizationComponent *authorizationComponent = new AuthorizationComponent(configurationComponent, ontologyComponent, contextComponent, activityComponent, notificationComponent, auditModule);
 
     // Collection Module
-    DeviceComponent deviceComponent = DeviceComponent(authorizationComponent, dataComponent, auditModule);
+    DeviceComponent *deviceComponent = new DeviceComponent(authorizationComponent, dataComponent, auditModule);
 
     User *simUser = users[2];
     Context *simContext = new Context(enums::AccessWay.at("PERSONAL"), enums::Localization.at("INTERNAL"), enums::Group.at("ALONE"));
@@ -131,43 +131,44 @@ int main() {
     int x = 0;
 
     for (auto &row : CSVRange(file)) {
-        cout << "Processing line " << x << endl;
+        // cout << "Processing line " << x << endl;
         if (x++ == 0) {
             continue;
         }
-        if (x > 4) {
-            break;
-        }
-        time_t currentDate = strToTime(string(row[DATE_COL]));
+        // if (x > 10) {
+        //     break;
+        // }
+        time_t currentDate = strToTime(row[DATE_COL].data());
 
         vector<int> currentState = rowToState(row, NUMBER_OF_DEVICES);
 
-        if (currentState == dataComponent.lastState) {
+        if (currentState == dataComponent->lastState) {
             continue;
         }
 
-        if (dataComponent.lastState.size() > 0) {
+        if (dataComponent->lastState.size() > 0) {
             vector<int> changes;
 
             for (int i = 0; i < NUMBER_OF_DEVICES; ++i) {
-                if (dataComponent.lastState[i] != currentState[i]) {
+                if (dataComponent->lastState[i] != currentState[i]) {
                     changes.push_back(i);
                 }
             }
 
-            cout << "Last State =    " << vecToStr(dataComponent.lastState) << endl;
+            cout << "Last State =    " << vecToStr(dataComponent->lastState) << endl;
             cout << "Current State = " << vecToStr(currentState) << endl;
 
             for (int change : changes) {
                 cout << "Change on " << devices[change]->name << endl;
                 cout << row[DATE_COL] << endl
                      << row[ACTIVITY_COL] << endl;
-                Request req = Request(++idReq, devices[change], simUser, simContext, simAction);
-                deviceComponent.listenRequest(req, currentDate);
+                cout << formatTime(currentDate) << endl;
+                Request *req = new Request(++idReq, devices[change], simUser, simContext, simAction);
+                deviceComponent->listenRequest(req, currentDate);
             }
         } else {
             cout << "1st copy of state" << endl;
-            dataComponent.lastState = currentState;
+            dataComponent->lastState = currentState;
         }
     }
 

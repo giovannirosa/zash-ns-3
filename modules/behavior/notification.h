@@ -8,14 +8,14 @@ using namespace std;
 
 class NotificationComponent {
    public:
-    ConfigurationComponent configurationComponent;
+    ConfigurationComponent *configurationComponent;
     NotificationComponent() {}
-    NotificationComponent(ConfigurationComponent c) {
+    NotificationComponent(ConfigurationComponent *c) {
         configurationComponent = c;
     }
 
     void alertUsers(User *blockedUser) {
-        for (User *user : configurationComponent.users) {
+        for (User *user : configurationComponent->users) {
             cout << "User " << user->id << " received message: 'User " << blockedUser->id << " is blocked!'";
         }
     }
