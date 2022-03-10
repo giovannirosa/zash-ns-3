@@ -7,6 +7,7 @@
 using namespace std;
 
 #include "enums_zash.h"
+#include "utils.h"
 
 class Context {
    public:
@@ -20,6 +21,15 @@ class Context {
         localization = loc;
         group = g;
     }
+
+    friend ostream &operator<<(ostream &out, Context const &c) {
+        out << "Context["
+            << c.accessWay->key << ","
+            << c.localization->key << ","
+            << c.time->key << ","
+            << c.group->key << "]";
+        return out;
+    }
 };
 
 class Ontology {
@@ -31,6 +41,14 @@ class Ontology {
         userLevel = ul;
         deviceClass = dc;
         capabilities = c;
+    }
+
+    friend ostream &operator<<(ostream &out, Ontology const &o) {
+        out << "Ontology["
+            << o.userLevel->key << ","
+            << o.deviceClass->key << ","
+            << vecToStr(o.capabilities) << "]";
+        return out;
     }
 };
 
@@ -51,6 +69,14 @@ class User {
         startInterval = (time_t)(-1);
         blocked = false;
     }
+
+    friend ostream &operator<<(ostream &out, User const &u) {
+        out << "User["
+            << u.id << ","
+            << u.userLevel->key << ","
+            << u.age->key << "]";
+        return out;
+    }
 };
 
 class Device {
@@ -68,6 +94,15 @@ class Device {
         room = r;
         active = a;
     }
+
+    friend ostream &operator<<(ostream &out, Device const &d) {
+        out << "Device["
+            << d.id << ","
+            << d.name << ","
+            << d.deviceClass->key << ","
+            << d.room << "]";
+        return out;
+    }
 };
 
 class Request {
@@ -84,6 +119,16 @@ class Request {
         user = u;
         context = c;
         action = a;
+    }
+
+    friend ostream &operator<<(ostream &out, Request const &r) {
+        out << "Request["
+            << r.id << ","
+            << r.device << ","
+            << r.user << ","
+            << r.context << ","
+            << r.action->key << "]";
+        return out;
     }
 };
 

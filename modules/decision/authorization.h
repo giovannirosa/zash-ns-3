@@ -53,10 +53,9 @@ class AuthorizationComponent {
             return false;
         }
         if (!ontologyComponent->verifyOntology(req, currentDate) ||
-            !contextComponent->verifyContext(req, currentDate, explicitAuthentication)  //||
-            //! activityComponent->verifyActivity(req, currentDate, explicitAuthentication)
-        ) {
-            cout << "aqui2" << endl;
+            !contextComponent->verifyContext(req, currentDate, explicitAuthentication) ||
+            !activityComponent->verifyActivity(req, currentDate, explicitAuthentication)) {
+            // cout << "aqui2" << endl;
             req->user->rejected.push_back(currentDate);
             cout << "User have now " << req->user->rejected.size() << " rejected requests!" << endl;
             if (req->user->rejected.size() > configurationComponent->blockThreshold) {
@@ -69,7 +68,7 @@ class AuthorizationComponent {
             cout << "Request is NOT authorized!" << endl;
             return false;
         }
-        cout << "aqui" << endl;
+        // cout << "aqui" << endl;
         ++auditComponent->reqGranted;
         cout << "Request is authorized!" << endl;
         return true;

@@ -23,6 +23,8 @@ using namespace std;
 
 int main() {
     cout << __cplusplus << endl;
+    ofstream out("out.txt");
+    cout.rdbuf(out.rdbuf());  // redirect std::cout to out.txt!
 
     vector<User *> users = {
         new User(1, enums::UserLevel.at("ADMIN"), enums::Age.at("ADULT")),
@@ -121,7 +123,7 @@ int main() {
     // Collection Module
     DeviceComponent *deviceComponent = new DeviceComponent(authorizationComponent, dataComponent, auditModule);
 
-    User *simUser = users[2];
+    User *simUser = users[0];
     Context *simContext = new Context(enums::AccessWay.at("PERSONAL"), enums::Localization.at("INTERNAL"), enums::Group.at("ALONE"));
     enums::Enum *simAction = enums::Action.at("CONTROL");
 
@@ -135,7 +137,7 @@ int main() {
         if (x++ == 0) {
             continue;
         }
-        // if (x > 10) {
+        // if (x > 4) {
         //     break;
         // }
         time_t currentDate = strToTime(row[DATE_COL].data());
@@ -162,7 +164,6 @@ int main() {
                 cout << "Change on " << devices[change]->name << endl;
                 cout << row[DATE_COL] << endl
                      << row[ACTIVITY_COL] << endl;
-                cout << formatTime(currentDate) << endl;
                 Request *req = new Request(++idReq, devices[change], simUser, simContext, simAction);
                 deviceComponent->listenRequest(req, currentDate);
             }
@@ -171,6 +172,108 @@ int main() {
             dataComponent->lastState = currentState;
         }
     }
+
+    int adminUsers = 0;
+    for (User *user : users) {
+        if (user->userLevel->key == "ADMIN") {
+            ++adminUsers;
+        }
+    }
+
+    int criticalDevices = 0;
+    for (Device *device : devices) {
+        if (device->deviceClass->key == "CRITICAL") {
+            ++criticalDevices;
+        }
+    }
+
+    cout << endl
+         << "Simulation user: " << *simUser << endl;
+
+    cout << endl
+         << "Simulation context: " << *simContext << endl;
+
+    cout << endl
+         << "Simulation action: " << simAction->key << endl;
+
+    cout << endl
+         << "Simulation configuration:" << endl;
+    cout << endl
+         << "User Level" << endl;
+    printValues(enums::UserLevel);
+    cout << endl;
+
+    cout << endl
+         << "Action" << endl;
+    printValues(enums::Action);
+    cout << endl;
+
+    cout << endl
+         << "Device Class" << endl;
+    printValues(enums::DeviceClass);
+    cout << endl;
+
+    cout << endl
+         << "Simulation context factors:" << endl;
+    cout << endl
+         << "Time" << endl;
+    printValues(enums::TimeClass);
+    cout << endl;
+
+    cout << endl
+         << "Localization" << endl;
+    printValues(enums::Localization);
+    cout << endl;
+
+    cout << endl
+         << "Age" << endl;
+    printValues(enums::Age);
+    cout << endl;
+
+    cout << endl
+         << "Group" << endl;
+    printValues(enums::Group);
+    cout << endl;
+
+    cout << endl
+         << "Access Way" << endl;
+    printValues(enums::AccessWay);
+    cout << endl;
+
+    int reqNumber = auditModule->reqNumber;
+    cout << "REQUESTS NUMBER = " << reqNumber << endl;
+
+    int reqGranted = auditModule->reqGranted;
+    cout << "REQUESTS GRANTED = " << reqGranted << endl;
+
+    int reqDenied = auditModule->reqDenied;
+    cout << "REQUESTS DENIED = " << reqDenied << endl;
+
+    int ontologyFail = auditModule->ontologyFail.size();
+    cout << "ONTOLOGY FAILS = " << ontologyFail
+         << " (" << percentage(ontologyFail, reqNumber)
+         << ")" << endl;
+
+    int contextFail = auditModule->contextFail.size();
+    cout << "CONTEXT FAILS = " << contextFail
+         << " (" << percentage(contextFail, reqNumber)
+         << ")" << endl;
+
+    int activityFail = auditModule->activityFail.size();
+    cout << "ACTIVITY FAILS = " << activityFail
+         << " (" << percentage(activityFail, reqNumber)
+         << ")" << endl;
+
+    int validProofs = auditModule->validProofs.size();
+    int invalidProofs = auditModule->invalidProofs.size();
+    cout << "VALID PROOFS = " << validProofs
+         << " (" << percentage(validProofs, validProofs + invalidProofs)
+         << ")" << endl;
+    cout << "INVALID PROOFS = " << invalidProofs
+         << " (" << percentage(invalidProofs, validProofs + invalidProofs)
+         << ")" << endl;
+
+    cout << "BLOCKS = " << auditModule->blocks.size() << endl;
 
     return 0;
 }

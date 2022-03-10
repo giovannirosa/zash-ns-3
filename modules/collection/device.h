@@ -73,7 +73,7 @@ class DeviceComponent {
     bool listenRequest(Request *req, time_t currentDate) {
         clearProofs(currentDate);
         dataComponent->updateCurrentState(req);
-        cout << "aqui" << endl;
+        // cout << "aqui" << endl;
         bool result = true;
         if (req->device->active) {
             cout << "Active device "

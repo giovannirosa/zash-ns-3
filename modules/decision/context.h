@@ -68,7 +68,7 @@ class ContextComponent {
     ConfigurationComponent *configurationComponent;
     AuditComponent *auditComponent;
     bool isTimeBuilding = true;
-    time_t limitDate = (time_t)(-1);;
+    time_t limitDate = (time_t)(-1);
     vector<TimeObject *> timeProbs;
     ContextComponent() {}
     ContextComponent(ConfigurationComponent *c, AuditComponent *a) {
@@ -86,7 +86,7 @@ class ContextComponent {
     // static trust calculation based on expected
     // for [DeviceClass x Action] and [UserLevel x Action]
     // from [AccessWay, Localization, Time, Age, Group]
-    bool verifyContext(Request *req, time_t currentDate, function<bool(Request*, time_t)> explicitAuthentication) {
+    bool verifyContext(Request *req, time_t currentDate, function<bool(Request *, time_t)> explicitAuthentication) {
         cout << "Context Component" << endl;
         calculateTime(req, currentDate);
         checkBuilding(currentDate);
@@ -94,7 +94,9 @@ class ContextComponent {
             cout << "Time probability is still building" << endl;
             req->context->time = enums::TimeClass.at("COMMON");
         }
-        cout << "Verify context with " << req->user->id << " in " << formatTime(currentDate) << endl;
+        cout << "Verify context with " << req->user->id << " in ";
+        printFormattedTime(currentDate);
+        cout << endl;
         int expectedDevice = req->device->deviceClass->weight + req->action->weight;
         int expectedUser = req->user->userLevel->weight + req->action->weight;
         int expected = min(max(expectedDevice, expectedUser), 100);
@@ -115,11 +117,17 @@ class ContextComponent {
     void checkBuilding(time_t currentDate) {
         if (difftime(limitDate, (time_t)(-1)) == 0) {
             limitDate = currentDate + configurationComponent->buildInterval * 24 * 60 * 60;  // add days
-            cout << "Current date = " << formatTime(currentDate) << endl;
-            cout << "Limit date   = " << formatTime(limitDate) << endl;
+            cout << "Current date = ";
+            printFormattedTime(currentDate);
+            cout << endl;
+            cout << "Limit date   = ";
+            printFormattedTime(limitDate);
+            cout << endl;
         } else if (isTimeBuilding && difftime(currentDate, limitDate) > 0) {
             isTimeBuilding = false;
-            cout << "Time context stopped building probabilities at " << formatTime(currentDate) << endl;
+            cout << "Time context stopped building probabilities at ";
+            printFormattedTime(currentDate);
+            cout << endl;
         }
     }
 

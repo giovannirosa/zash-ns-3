@@ -33,7 +33,7 @@ class ActivityComponent {
     bool verifyActivity(Request *req, time_t currentDate, function<bool(Request*, time_t)> explicitAuthentication) {
         cout << "Activity Component" << endl;
         checkBuilding(currentDate);
-        cout << "aqui" << endl;
+        // cout << "aqui" << endl;
         vector<int> lastState = dataComponent->lastState;
         vector<int> currentState = dataComponent->currentState;
         if (!isMarkovBuilding) {
@@ -63,7 +63,9 @@ class ActivityComponent {
             limitDate = currentDate + configurationComponent->buildInterval * 24 * 60 * 60;  // add days
         } else if (isMarkovBuilding && difftime(currentDate, limitDate) > 0) {
             isMarkovBuilding = false;
-            cout << "Markov Chain stopped building transition matrix at" << formatTime(currentDate) << endl;
+            cout << "Markov Chain stopped building transition matrix at ";
+            printFormattedTime(currentDate);
+            cout << endl;
         }
     }
 };
