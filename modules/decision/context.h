@@ -94,7 +94,7 @@ class ContextComponent {
             cout << "Time probability is still building" << endl;
             req->context->time = enums::TimeClass.at("COMMON");
         }
-        cout << "Verify context with " << req->user->id << " in ";
+        cout << "Verify context with " << req->user->id << " at ";
         printFormattedTime(currentDate);
         cout << endl;
         int expectedDevice = req->device->deviceClass->weight + req->action->weight;
@@ -117,12 +117,12 @@ class ContextComponent {
     void checkBuilding(time_t currentDate) {
         if (difftime(limitDate, (time_t)(-1)) == 0) {
             limitDate = currentDate + configurationComponent->buildInterval * 24 * 60 * 60;  // add days
-            cout << "Current date = ";
-            printFormattedTime(currentDate);
-            cout << endl;
-            cout << "Limit date   = ";
-            printFormattedTime(limitDate);
-            cout << endl;
+            // cout << "Current date = ";
+            // printFormattedTime(currentDate);
+            // cout << endl;
+            // cout << "Limit date   = ";
+            // printFormattedTime(limitDate);
+            // cout << endl;
         } else if (isTimeBuilding && difftime(currentDate, limitDate) > 0) {
             isTimeBuilding = false;
             cout << "Time context stopped building probabilities at ";
@@ -152,7 +152,7 @@ class ContextComponent {
 
         auto it = find_if(timeProbs.begin(), timeProbs.end(), compareTObj(req));
         if (it != timeProbs.end()) {
-            cout << "Found timeObj" << endl;
+            // cout << "Found timeObj" << endl;
             it[0]->totalOcc++;
             TimeObject *timeObj = it[0];
 
@@ -160,7 +160,7 @@ class ContextComponent {
 
             auto it2 = find_if(timeObj->times.begin(), timeObj->times.end(), compareTimes(time));
             if (it2 != timeObj->times.end()) {
-                cout << "Found timePct" << endl;
+                // cout << "Found timePct" << endl;
                 TimePercentage *timePct = it2[0];
                 if (timePct->percentage < 0.3) {
                     req->context->time = enums::TimeClass.at("COMMON");

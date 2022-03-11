@@ -5,10 +5,10 @@
 #include <time.h>
 
 #include <charconv>
+#include <cmath>
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <cmath>
 
 using namespace std;
 
@@ -26,6 +26,21 @@ string percentage(double number, double total) {
     return total == 0 ? "0.0%" : to_string(number / total * 100.0) + "%";
 }
 
+char* formatTime(time_t mtime, const char* format) {
+    char* buff = (char*)malloc(sizeof(char) * 20);
+    struct tm* timeinfo;
+    timeinfo = localtime(&mtime);
+    // cout << "year = " << timeinfo->tm_year << endl
+    //      << "month = " << timeinfo->tm_mon << endl
+    //      << "day = " << timeinfo->tm_mday << endl
+    //      << "hour = " << timeinfo->tm_hour << endl
+    //      << "minute = " << timeinfo->tm_min << endl
+    //      << "second = " << timeinfo->tm_sec << endl;
+    // cout << sizeof(buff) << endl;
+    strftime(buff, 20, format, timeinfo);
+    return buff;
+}
+
 char* formatTime(time_t mtime) {
     char* buff = (char*)malloc(sizeof(char) * 20);
     struct tm* timeinfo;
@@ -39,6 +54,12 @@ char* formatTime(time_t mtime) {
     // cout << sizeof(buff) << endl;
     strftime(buff, 20, "%F %T", timeinfo);
     return buff;
+}
+
+void printFormattedTime(time_t mtime, ostream &out) {
+    char* str = formatTime(mtime);
+    out << str;
+    delete str;
 }
 
 void printFormattedTime(time_t mtime) {

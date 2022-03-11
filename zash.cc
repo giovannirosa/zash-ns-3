@@ -1,7 +1,11 @@
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <vector>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 #include "modules/audit/audit.h"
 #include "modules/behavior/configuration.h"
@@ -23,8 +27,14 @@ using namespace std;
 
 int main() {
     cout << __cplusplus << endl;
-    ofstream out("out.txt");
-    cout.rdbuf(out.rdbuf());  // redirect std::cout to out.txt!
+
+    char *currDateStr = formatTime(time(0), "%Y-%m-%d-%H-%M-%S");
+    string dir = "logs/sim_" + string(currDateStr);
+    fs::create_directories(dir);
+    cout << "dir = " << dir << endl;
+
+    ofstream out(dir + "/" + "sim_" + string(currDateStr) + ".txt");
+    cout.rdbuf(out.rdbuf());
 
     vector<User *> users = {
         new User(1, enums::UserLevel.at("ADMIN"), enums::Age.at("ADULT")),
@@ -157,8 +167,8 @@ int main() {
                 }
             }
 
-            cout << "Last State =    " << vecToStr(dataComponent->lastState) << endl;
-            cout << "Current State = " << vecToStr(currentState) << endl;
+          //   cout << "Last State =    " << vecToStr(dataComponent->lastState) << endl;
+          //   cout << "Current State = " << vecToStr(currentState) << endl;
 
             for (int change : changes) {
                 cout << "Change on " << devices[change]->name << endl;
@@ -168,7 +178,6 @@ int main() {
                 deviceComponent->listenRequest(req, currentDate);
             }
         } else {
-            cout << "1st copy of state" << endl;
             dataComponent->lastState = currentState;
         }
     }
@@ -240,6 +249,16 @@ int main() {
     printValues(enums::AccessWay);
     cout << endl;
 
+    cout << endl
+         << "Simulation metrics:" << endl;
+
+    auditModule->printEvents(auditModule->blocks, currDateStr, dir + "/blocks");
+    auditModule->printEvents(auditModule->ontologyFail, currDateStr, dir + "/ontology_fail");
+    auditModule->printEvents(auditModule->contextFail, currDateStr, dir + "/context_fail");
+    auditModule->printEvents(auditModule->activityFail, currDateStr, dir + "/activity_fail");
+    auditModule->printEvents(auditModule->validProofs, currDateStr, dir + "/valid_proofs");
+    auditModule->printEvents(auditModule->invalidProofs, currDateStr, dir + "/invalid_proofs");
+
     int reqNumber = auditModule->reqNumber;
     cout << "REQUESTS NUMBER = " << reqNumber << endl;
 
@@ -274,6 +293,8 @@ int main() {
          << ")" << endl;
 
     cout << "BLOCKS = " << auditModule->blocks.size() << endl;
+
+    delete currDateStr;
 
     return 0;
 }

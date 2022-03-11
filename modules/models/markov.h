@@ -159,12 +159,12 @@ class MarkovChain {
             auto it = find_if(transitionMatrix.begin(), transitionMatrix.end(), compareMatrix(lastState));
             TransitionCol *transitionCol;
             if (it != transitionMatrix.end()) {
-                cout << "Found transitionCol" << endl;
+                // cout << "Found transitionCol" << endl;
                 it[0]->totalOcc++;
                 transitionCol = it[0];
                 // showTransitionCol(transitionCol);
             } else {
-                cout << "Not Found transitionCol" << endl;
+                // cout << "Not Found transitionCol" << endl;
                 transitionCol = new TransitionCol(lastState);
                 transitionMatrix.push_back(transitionCol);
             }
@@ -173,10 +173,10 @@ class MarkovChain {
 
             auto it2 = find_if(transitionCol->nextStates.begin(), transitionCol->nextStates.end(), compareState(currentState));
             if (it2 != transitionCol->nextStates.end()) {
-                cout << "Found nextState" << endl;
+                // cout << "Found nextState" << endl;
                 it2[0]->occurrences++;
             } else {
-                cout << "Not Found nextState" << endl;
+                // cout << "Not Found nextState" << endl;
                 State *state = new State(currentState);
                 transitionCol->nextStates.push_back(state);
             }

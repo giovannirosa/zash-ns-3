@@ -16,6 +16,12 @@ class AuditEvent {
         time = t;
         request = r;
     }
+
+    friend ostream &operator<<(ostream &out, AuditEvent const &a) {
+        printFormattedTime(a.time, out);
+        out << " - " << *a.request << endl;
+        return out;
+    }
 };
 
 class AuditComponent {
@@ -31,6 +37,14 @@ class AuditComponent {
     int reqGranted = 0;
     int reqDenied = 0;
     AuditComponent() {}
+
+    void printEvents(vector<AuditEvent *> events, char *currDateStr, string type) {
+        ofstream outfile(type + "_" + string(currDateStr) + ".txt");
+        for (AuditEvent *event : events) {
+            outfile << *event << std::endl;
+        }
+        outfile.close();
+    }
 };
 
 #endif

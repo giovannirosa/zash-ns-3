@@ -124,9 +124,9 @@ class Request {
     friend ostream &operator<<(ostream &out, Request const &r) {
         out << "Request["
             << r.id << ","
-            << r.device << ","
-            << r.user << ","
-            << r.context << ","
+            << *r.device << ","
+            << *r.user << ","
+            << *r.context << ","
             << r.action->key << "]";
         return out;
     }

@@ -49,6 +49,7 @@
         "limits": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "charconv": "cpp"
     }
 }
