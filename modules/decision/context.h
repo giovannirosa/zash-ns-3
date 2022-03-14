@@ -94,7 +94,7 @@ class ContextComponent {
             cout << "Time probability is still building" << endl;
             req->context->time = enums::TimeClass.at("COMMON");
         }
-        cout << "Verify context with " << req->user->id << " at ";
+        cout << "Verify context " << *req->context << " with " << *req->user << " at ";
         printFormattedTime(currentDate);
         cout << endl;
         int expectedDevice = req->device->deviceClass->weight + req->action->weight;
@@ -150,22 +150,24 @@ class ContextComponent {
             time = enums::NIGHT;
         }
 
+        cout << "time :: " << time << " | " << hour << endl;
+
         auto it = find_if(timeProbs.begin(), timeProbs.end(), compareTObj(req));
         if (it != timeProbs.end()) {
             // cout << "Found timeObj" << endl;
-            it[0]->totalOcc++;
             TimeObject *timeObj = it[0];
-
             recalculateProbabilities(timeObj, time);
 
             auto it2 = find_if(timeObj->times.begin(), timeObj->times.end(), compareTimes(time));
             if (it2 != timeObj->times.end()) {
                 // cout << "Found timePct" << endl;
                 TimePercentage *timePct = it2[0];
+                cout << "totalOcc :: " << timeObj->totalOcc << endl;
+                cout << "timePct :: " << timePct->time << " | " << timePct->occurrences << " | " << timePct->percentage << endl;
                 if (timePct->percentage < 0.3) {
-                    req->context->time = enums::TimeClass.at("COMMON");
-                } else {
                     req->context->time = enums::TimeClass.at("UNCOMMON");
+                } else {
+                    req->context->time = enums::TimeClass.at("COMMON");
                 }
             }
         }
@@ -173,11 +175,14 @@ class ContextComponent {
 
     void recalculateProbabilities(TimeObject *timeObj, int time) {
         ++timeObj->totalOcc;
+        cout << timeObj->device->name << " | " << timeObj->action->key << " | " << timeObj->userLevel->key << endl;
+        // cout << "totalOcc :: " << timeObj->totalOcc << endl;
         for (TimePercentage *timePct : timeObj->times) {
             if (timePct->time == time) {
                 ++timePct->occurrences;
             }
             timePct->percentage = (float)timePct->occurrences / timeObj->totalOcc;
+            // cout << "timePct :: " << timePct->time << " | " << timePct->occurrences << " | " << timePct->percentage << endl;
         }
     }
 };

@@ -167,15 +167,18 @@ int main() {
                 }
             }
 
-          //   cout << "Last State =    " << vecToStr(dataComponent->lastState) << endl;
-          //   cout << "Current State = " << vecToStr(currentState) << endl;
+            //   cout << "Last State =    " << vecToStr(dataComponent->lastState) << endl;
+            //   cout << "Current State = " << vecToStr(currentState) << endl;
 
             for (int change : changes) {
                 cout << "Change on " << devices[change]->name << endl;
                 cout << row[DATE_COL] << endl
                      << row[ACTIVITY_COL] << endl;
+                printFormattedTime(currentDate);
+                cout << endl;
                 Request *req = new Request(++idReq, devices[change], simUser, simContext, simAction);
                 deviceComponent->listenRequest(req, currentDate);
+                cout << endl;
             }
         } else {
             dataComponent->lastState = currentState;

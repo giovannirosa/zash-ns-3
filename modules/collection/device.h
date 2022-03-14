@@ -26,6 +26,15 @@ class Proof {
         accessWay = a;
         date = d;
     }
+
+    friend ostream &operator<<(ostream &out, Proof const &p) {
+        out << "Proof["
+            << p.user << ","
+            << p.accessWay->key << ",";
+        printFormattedTime(p.date, out);
+        out << "]";
+        return out;
+    }
 };
 
 struct compareProof {
@@ -56,18 +65,22 @@ class DeviceComponent {
             int proofInput = req->user->id;
             if (proofInput != req->user->id) {
                 auditComponent->invalidProofs.push_back(new AuditEvent(currentDate, req));
-                cout << "Proof does not match!";
+                cout << "Proof does not match!" << endl;
             } else {
                 auditComponent->validProofs.push_back(new AuditEvent(currentDate, req));
                 proofs.push_back(new Proof(req->user->id, req->context->accessWay, currentDate));
             }
         }
-        cout << "Proof matches!";
+        cout << "Proof matches!" << endl;
         return true;
     }
 
     void clearProofs(time_t currentDate) {
-        remove_if(proofs.begin(), proofs.end(), [currentDate](Proof *p) { return difftime(currentDate, p->date) >= PROOF_EXPIRATION * 60; });
+        auto new_end = remove_if(proofs.begin(), proofs.end(), [currentDate](Proof *p) { cout << *p << " | " <<  difftime(currentDate, p->date) << " | " << PROOF_EXPIRATION * 60 << " | " << (difftime(currentDate, p->date) >= PROOF_EXPIRATION * 60) << endl; return difftime(currentDate, p->date) >= PROOF_EXPIRATION * 60; });
+        proofs.erase(new_end, proofs.end());
+        // for (Proof *proof : proofs) {
+        //     cout << *proof << endl;
+        // }
     }
 
     bool listenRequest(Request *req, time_t currentDate) {
@@ -77,7 +90,7 @@ class DeviceComponent {
         bool result = true;
         if (req->device->active) {
             cout << "Active device "
-                 << req->device->id
+                 << *req->device
                  << " request changing state from "
                  << dataComponent->lastState[req->device->id - 1]
                  << " to "
@@ -88,7 +101,7 @@ class DeviceComponent {
             result = authorizationComponent->authorizeRequest(req, currentDate, fp);
         } else {
             cout << "Passive device "
-                 << req->device->id
+                 << *req->device
                  << " changed state from "
                  << dataComponent->lastState[req->device->id - 1]
                  << " to "

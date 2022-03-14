@@ -50,6 +50,8 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "thread": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "codecvt": "cpp",
+        "iomanip": "cpp"
     }
 }
