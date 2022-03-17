@@ -78,15 +78,11 @@ class DeviceComponent {
     void clearProofs(time_t currentDate) {
         auto new_end = remove_if(proofs.begin(), proofs.end(), [currentDate](Proof *p) { cout << *p << " | " <<  difftime(currentDate, p->date) << " | " << PROOF_EXPIRATION * 60 << " | " << (difftime(currentDate, p->date) >= PROOF_EXPIRATION * 60) << endl; return difftime(currentDate, p->date) >= PROOF_EXPIRATION * 60; });
         proofs.erase(new_end, proofs.end());
-        // for (Proof *proof : proofs) {
-        //     cout << *proof << endl;
-        // }
     }
 
     bool listenRequest(Request *req, time_t currentDate) {
         clearProofs(currentDate);
         dataComponent->updateCurrentState(req);
-        // cout << "aqui" << endl;
         bool result = true;
         if (req->device->active) {
             cout << "Active device "

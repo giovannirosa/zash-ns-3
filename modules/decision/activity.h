@@ -33,7 +33,6 @@ class ActivityComponent {
     bool verifyActivity(Request *req, time_t currentDate, function<bool(Request*, time_t)> explicitAuthentication) {
         cout << "Activity Component" << endl;
         checkBuilding(currentDate);
-        // cout << "aqui" << endl;
         vector<int> lastState = dataComponent->lastState;
         vector<int> currentState = dataComponent->currentState;
         if (!isMarkovBuilding) {
