@@ -1,0 +1,54 @@
+# -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+# def options(opt):
+#     pass
+
+# def configure(conf):
+#     conf.check_nonfatal(header_name='stdint.h', define_name='HAVE_STDINT_H')
+
+def build(bld):
+    module = bld.create_ns3_module('zash', ['network', 'internet'])
+    module.source = [
+        'model/zash-enums.cc',
+        'model/zash-markov.cc',
+        'model/zash-models.cc',
+        'helper/zash-utils.cc',
+        'model/audit/zash-audit.cc',
+        'model/behavior/zash-configuration.cc',
+        'model/behavior/zash-notification.cc',
+        'model/collection/zash-data.cc',
+        'model/collection/zash-device.cc',
+        'model/decision/zash-activity.cc',
+        'model/decision/zash-authorization.cc',
+        'model/decision/zash-context.cc',
+        'model/decision/zash-ontology.cc',
+        ]
+
+    module_test = bld.create_ns3_module_test_library('zash')
+    module_test.source = [
+        'test/zash-test-suite.cc',
+        ]
+
+    headers = bld(features='ns3header')
+    headers.module = 'zash'
+    headers.source = [
+        'model/zash-enums.h',
+        'model/zash-markov.h',
+        'model/zash-models.h',
+        'helper/zash-utils.h',
+        'model/audit/zash-audit.h',
+        'model/behavior/zash-configuration.h',
+        'model/behavior/zash-notification.h',
+        'model/collection/zash-data.h',
+        'model/collection/zash-device.h',
+        'model/decision/zash-activity.h',
+        'model/decision/zash-authorization.h',
+        'model/decision/zash-context.h',
+        'model/decision/zash-ontology.h',
+        ]
+
+    if bld.env.ENABLE_EXAMPLES:
+        bld.recurse('examples')
+
+    # bld.ns3_python_bindings()
+
