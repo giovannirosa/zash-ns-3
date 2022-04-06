@@ -62,11 +62,13 @@
 #include "ns3/zash-configuration.h"
 #include "ns3/zash-context.h"
 #include "ns3/zash-data.h"
+#include "ns3/zash-device-enforcer.h"
 #include "ns3/zash-device.h"
 #include "ns3/zash-enums.h"
 #include "ns3/zash-models.h"
 #include "ns3/zash-notification.h"
 #include "ns3/zash-ontology.h"
+#include "ns3/zash-packet-sink.h"
 #include "ns3/zash-utils.h"
 
 #define NUMBER_OF_DEVICES 29
@@ -83,14 +85,16 @@ int main(int argc, char *argv[]) {
   // for selected modules; the below lines suggest how to do this
 
   LogComponentEnable("ZASH", LOG_LEVEL_ALL);
-  // LogComponentEnable ("TcpL4Protocol", LOG_LEVEL_ALL);
-  // LogComponentEnable ("TcpSocketImpl", LOG_LEVEL_ALL);
+  LogComponentEnable("ZashPacketSink", LOG_LEVEL_ALL);
+  LogComponentEnable("DeviceEnforcer", LOG_LEVEL_ALL);
   // LogComponentEnable ("PacketSink", LOG_LEVEL_ALL);
 
   // Set up some default values for the simulation.
   Config::SetDefault("ns3::OnOffApplication::PacketSize", UintegerValue(250));
   Config::SetDefault("ns3::OnOffApplication::DataRate", StringValue("5kb/s"));
-  uint32_t N = 6;                   // number of nodes in the star
+  double start = 0.0;
+  double stop = 10.0;
+  uint32_t N = NUMBER_OF_DEVICES;   // number of nodes in the star
   uint32_t payloadSize = 1472;      /* Transport layer payload size in bytes. */
   string dataRate = "100Mbps";      /* Application layer datarate. */
   string tcpVariant = "TcpNewReno"; /* TCP variant type. */
@@ -156,34 +160,37 @@ int main(int argc, char *argv[]) {
   // Here, we will create N nodes in a star.
   NS_LOG_INFO("Create nodes.");
   NodeContainer serverNode;
-  NodeContainer clientNodes;
   serverNode.Create(1);
-  clientNodes.Create(N - 1);
-  NodeContainer allNodes = NodeContainer(serverNode, clientNodes);
+  NodeContainer apNode;
+  apNode.Create(1);
+  NodeContainer staNodes;
+  staNodes.Create(N);
+  NodeContainer allNodes = NodeContainer(serverNode, apNode, staNodes);
+
+  NodeContainer serverAp = NodeContainer(serverNode.Get(0), apNode.Get(0));
+  PointToPointHelper p2p;
+  p2p.SetDeviceAttribute("DataRate", StringValue("1Gbps"));
+  p2p.SetChannelAttribute("Delay", StringValue("1ms"));
+  NetDeviceContainer serverDevice = p2p.Install(serverAp);
 
   /* Configure AP */
   Ssid ssid = Ssid("network");
   wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(ssid));
 
   NetDeviceContainer apDevice;
-  apDevice = wifiHelper.Install(wifiPhy, wifiMac, serverNode);
+  apDevice = wifiHelper.Install(wifiPhy, wifiMac, apNode);
 
   /* Configure STA */
   wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid));
 
   NetDeviceContainer staDevices;
-  staDevices = wifiHelper.Install(wifiPhy, wifiMac, clientNodes);
+  staDevices = wifiHelper.Install(wifiPhy, wifiMac, staNodes);
 
   /* Mobility model */
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> positionAlloc =
       CreateObject<ListPositionAllocator>();
-  positionAlloc->Add(Vector(5, 4, 0.0));
-  positionAlloc->Add(Vector(2, 3, 0.0));
-  positionAlloc->Add(Vector(3, 2, 0.0));
-  positionAlloc->Add(Vector(6, 2, 0.0));
-  positionAlloc->Add(Vector(3, 5, 0.0));
-  positionAlloc->Add(Vector(4, 4, 0.0));
+  positionAlloc->Add("data/positions.csv");
 
   // for (uint32_t i = 0; i < N; ++i) {
   //   positionAlloc->Add(Vector(i, i, 0.0));
@@ -200,7 +207,7 @@ int main(int argc, char *argv[]) {
   // Collect an adjacency list of nodes for the p2p topology
   // vector<NodeContainer> nodeAdjacencyList(N - 1);
   // for (uint32_t i = 0; i < nodeAdjacencyList.size(); ++i) {
-  //   nodeAdjacencyList[i] = NodeContainer(serverNode, clientNodes.Get(i));
+  //   nodeAdjacencyList[i] = NodeContainer(apNode, staNodes.Get(i));
   // }
 
   // We create the channels first without any IP addressing information
@@ -226,21 +233,12 @@ int main(int argc, char *argv[]) {
 
   Ipv4AddressHelper address;
   address.SetBase("10.0.0.0", "255.255.255.0");
-  Ipv4InterfaceContainer apInterface;
-  apInterface = address.Assign(apDevice);
-  Ipv4InterfaceContainer staInterface;
-  staInterface = address.Assign(staDevices);
+  Ipv4InterfaceContainer serverInterface = address.Assign(serverDevice);
+  Ipv4InterfaceContainer apInterface = address.Assign(apDevice);
+  Ipv4InterfaceContainer staInterface = address.Assign(staDevices);
 
   // Turn on global static routing
   Ipv4GlobalRoutingHelper::PopulateRoutingTables();
-
-  // Create a packet sink on the star "hub" to receive these packets
-  uint16_t port = 50000;
-  Address sinkLocalAddress(InetSocketAddress(Ipv4Address::GetAny(), port));
-  PacketSinkHelper sinkHelper("ns3::TcpSocketFactory", sinkLocalAddress);
-  ApplicationContainer sinkApp = sinkHelper.Install(serverNode);
-  sinkApp.Start(Seconds(1.0));
-  sinkApp.Stop(Seconds(10.0));
 
   //----------------------------------------------------------------------------------
   // ZASH Application Logic
@@ -397,22 +395,40 @@ int main(int argc, char *argv[]) {
       configurationComponent, ontologyComponent, contextComponent,
       activityComponent, notificationComponent, auditModule);
 
-  // Collection Module
   DeviceComponent *deviceComponent =
       new DeviceComponent(authorizationComponent, dataComponent, auditModule);
 
-  // User *simUser = users[0];
+  // Collection Module
+  // Create a packet sink on the star "hub" to receive these packets
+  Ptr<ZashPacketSink> ZashPacketSinkApp = CreateObject<ZashPacketSink>();
+  ZashPacketSinkApp->SetDeviceComponent(deviceComponent);
+  ZashPacketSinkApp->SetAttribute("Protocol",
+                                  TypeIdValue(TcpSocketFactory::GetTypeId()));
+  ZashPacketSinkApp->SetStartTime(Seconds(start));
+  ZashPacketSinkApp->SetStopTime(Seconds(stop));
+
+  Address sinkLocalAddress(InetSocketAddress(apInterface.GetAddress(0), 9));
+  ZashPacketSinkApp->SetAttribute("Local", AddressValue(sinkLocalAddress));
+
+  apNode.Get(0)->AddApplication(ZashPacketSinkApp);
+
+  int user = 0;
+  // User *simUser = users[user];
+  string accessWay = "PERSONAL";
+  string localization = "INTERNAL";
+  string group = "ALONE";
+  string action = "CONTROL";
   // Context *simContext =
   //     new Context(enums::AccessWay.at("PERSONAL"),
-  //                 enums::Localization.at("INTERNAL"),
-  //                 enums::Group.at("ALONE"));
+  //                 enums::Localization.at("INTERNAL"), enums::Group.at("ALONE"));
   // enums::Enum *simAction = enums::Action.at("CONTROL");
 
-  // int idReq = 0;
+  int idReq = 0;
 
   NS_LOG_INFO("Opening dataset...");
   CsvReader csv("data/d6_2m_0tm.csv");
   vector<int> lastState;
+  time_t firstDate = (time_t)(-1);
   while (csv.FetchNextRow()) {
     NS_LOG_INFO("Processing row " + to_string(csv.RowNumber()) + "...");
     // Ignore blank lines and header
@@ -420,7 +436,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    if (csv.RowNumber() == 3) {
+    if (csv.RowNumber() == 20) {
       break;
     }
 
@@ -438,11 +454,17 @@ int main(int argc, char *argv[]) {
 
     string timeStr;
     csv.GetValue(DATE_COL, timeStr);
-
     time_t currentDate = strToTime(timeStr.c_str());
 
-    NS_LOG_INFO(formatTime(currentDate) + " - " +
-                to_string(deviceComponent->auditComponent->reqNumber));
+    if (difftime(firstDate, (time_t)(-1)) == 0) {
+      firstDate = currentDate;
+    }
+
+    string actStr;
+    csv.GetValue(ACTIVITY_COL, actStr);
+
+    // NS_LOG_INFO(formatTime(currentDate) + " - " +
+    //             to_string(deviceComponent->auditComponent->reqNumber));
 
     NS_LOG_INFO(vecToStr(currentState));
 
@@ -462,43 +484,74 @@ int main(int argc, char *argv[]) {
       //   cout << "Last State =    " << vecToStr(lastState) <<
       //   endl; cout << "Current State = " << vecToStr(currentState) << endl;
 
-      // for (int change : changes) {
-      //   cout << "Change on " << devices[change]->name << endl;
-      //   cout << row[DATE_COL] << endl << row[ACTIVITY_COL] << endl;
-      //   printFormattedTime(currentDate);
-      //   cout << endl;
-      //   Request *req = new Request(++idReq, devices[change], simUser,
-      //                              simContext, simAction);
-      //   deviceComponent->listenRequest(req, currentDate);
-      //   cout << endl;
-      // }
+      for (int change : changes) {
+        // NS_LOG_INFO("Change on " + devices[change]->name);
+        NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
+
+        Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
+        
+        // DeviceEnforcerApp->SetRequest(new Request(
+        //     ++idReq, devices[change], simUser, simContext, simAction));
+        string request = "[" + to_string(++idReq) + "," + to_string(change) +
+                         "," + to_string(user) + "," + accessWay + "," +
+                         localization + "," + group + "," + action + "]";
+        NS_LOG_INFO("Device enforcer created with message = " + request);
+        DeviceEnforcerApp->SetMessage(request);
+
+        Ptr<Node> node = staNodes.Get(change);
+        // NS_LOG_INFO("node selected = " + node->GetId());
+        DeviceEnforcerApp->SetAttribute(
+            "Protocol", TypeIdValue(TcpSocketFactory::GetTypeId()));
+        DeviceEnforcerApp->SetAttribute(
+            "OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+        DeviceEnforcerApp->SetAttribute(
+            "OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+
+        double diff = difftime(currentDate, firstDate);
+        NS_LOG_INFO(devices[change]->name + " will change at " +
+                    to_string(diff) + " seconds");
+        // NS_LOG_INFO(change + " will change at " +
+        //             to_string(diff) + " seconds");
+        DeviceEnforcerApp->SetAttribute("Remote",
+                                        AddressValue(sinkLocalAddress));
+        DeviceEnforcerApp->SetAttribute("PacketSize", UintegerValue(request.size()));
+        DeviceEnforcerApp->SetAttribute("MaxBytes", UintegerValue(request.size()));
+        DeviceEnforcerApp->SetAttribute("DataRate",
+                                        DataRateValue(DataRate(dataRate)));
+        DeviceEnforcerApp->SetStartTime(Seconds(diff));
+        DeviceEnforcerApp->SetStopTime(Seconds(diff + 1.0));
+
+        node->AddApplication(DeviceEnforcerApp);
+        // deviceComponent->listenRequest(req, currentDate);
+        // cout << endl;
+      }
     }
     lastState = currentState;
   }
 
   // Create the OnOff applications to send TCP to the server
-  OnOffHelper server("ns3::TcpSocketFactory",
-                     (InetSocketAddress(apInterface.GetAddress(0), 9)));
-  server.SetAttribute("PacketSize", UintegerValue(payloadSize));
-  server.SetAttribute("OnTime",
-                      StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-  server.SetAttribute("OffTime",
-                      StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-  server.SetAttribute("DataRate", DataRateValue(DataRate(dataRate)));
-  ApplicationContainer serverApp = server.Install(clientNodes);
+  // OnOffHelper server("ns3::TcpSocketFactory",
+  //                    (InetSocketAddress(apInterface.GetAddress(0), 9)));
+  // server.SetAttribute("PacketSize", UintegerValue(payloadSize));
+  // server.SetAttribute("OnTime",
+  //                     StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+  // server.SetAttribute("OffTime",
+  //                     StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+  // server.SetAttribute("DataRate", DataRateValue(DataRate(dataRate)));
+  // ApplicationContainer serverApp = server.Install(staNodes);
 
   // normally wouldn't need a loop here but the server IP address is different
   // on each p2p subnet
   // ApplicationContainer clientApps;
-  // for (uint32_t i = 0; i < clientNodes.GetN(); ++i) {
+  // for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
   //   AddressValue remoteAddress(
   //       InetSocketAddress(interfaceAdjacencyList[i].GetAddress(0), port));
-  //   clientHelper.SetAttribute("Remote", remoteAddress);
-  //   clientApps.Add(clientHelper.Install(clientNodes.Get(i)));
+  // clientHelper.SetAttribute("Remote", remoteAddress);
+  // clientApps.Add(clientHelper.Install(staNodes.Get(i)));
   // }
   /* Start Applications */
-  sinkApp.Start(Seconds(0.0));
-  serverApp.Start(Seconds(1.0));
+  // sinkApp.Start(Seconds(0.0));
+  // serverApp.Start(Seconds(1.0));
 
   /* Enable Traces */
   if (pcapTracing) {
@@ -515,18 +568,32 @@ int main(int argc, char *argv[]) {
   /* Stop Simulation */
   Simulator::Stop(Seconds(simulationTime + 1));
 
+  // 40mx28m
   AnimationInterface anim("animation.xml");
   anim.SetBackgroundImage(
       "/home/grosa/Dev/ns-allinone-3.35/ns-3.35/scratch/home-design.png", 0, 0,
-      0.01, 0.01, 1.0);
-  for (uint32_t i = 0; i < clientNodes.GetN(); ++i) {
-    anim.UpdateNodeDescription(clientNodes.Get(i), "STA"); // Optional
-    anim.UpdateNodeColor(clientNodes.Get(i), 255, 0, 0);   // Optional
+      0.07, 0.07, 1.0);
+  for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
+    Ptr<Node> node = staNodes.Get(i);
+    anim.UpdateNodeDescription(node, devices[i]->name); // Optional
+    anim.UpdateNodeColor(node, 255, 0, 0);              // Optional
+    anim.UpdateNodeSize(node->GetId(), 0.8, 0.8);
+  }
+  for (uint32_t i = 0; i < apNode.GetN(); ++i) {
+    Ptr<Node> node = apNode.Get(i);
+    anim.UpdateNodeDescription(node, "AP"); // Optional
+    anim.UpdateNodeColor(node, 0, 255, 0);  // Optional
+    anim.UpdateNodeSize(node->GetId(), 0.8, 0.8);
   }
   for (uint32_t i = 0; i < serverNode.GetN(); ++i) {
-    anim.UpdateNodeDescription(serverNode.Get(i), "AP"); // Optional
-    anim.UpdateNodeColor(serverNode.Get(i), 0, 255, 0);  // Optional
+    Ptr<Node> node = serverNode.Get(i);
+    anim.UpdateNodeDescription(node, "Local Server"); // Optional
+    anim.UpdateNodeColor(node, 0, 0, 255);            // Optional
+    anim.UpdateNodeSize(node->GetId(), 1.2, 1.2);
   }
+  anim.EnablePacketMetadata();
+  anim.EnableIpv4RouteTracking("zash.txt", Seconds(0), Seconds(200),
+                               Seconds(5));
 
   NS_LOG_INFO("Run Simulation.");
   Simulator::Run();

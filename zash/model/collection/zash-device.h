@@ -41,7 +41,7 @@ struct compareProof {
   bool operator()(Proof *p);
 };
 
-class DeviceComponent : private PacketSink {
+class DeviceComponent {
 public:
   AuthorizationComponent *authorizationComponent;
   DataComponent *dataComponent;
