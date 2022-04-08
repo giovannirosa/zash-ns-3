@@ -1,21 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright 2007 University of Washington
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * Author:  Tom Henderson (tomhend@u.washington.edu)
+ * Author:  Giovanni Rosa (giovanni_rosa4@hotmail.com)
  */
 
 #ifndef ZASH_PACKET_SINK_H
@@ -108,18 +93,9 @@ public:
                                     const Address &to,
                                     const SeqTsSizeHeader &header);
 
-  //----------------------------------------------------------------------------------
-  // ZASH Application Logic
-  //----------------------------------------------------------------------------------
-
-  void SetDeviceComponent(DeviceComponent *dc);
-
-  //----------------------------------------------------------------------------------
-
 protected:
   virtual void DoDispose(void);
 
-private:
   // inherited from Application base class.
   virtual void StartApplication(void); // Called at time specified by Start
   virtual void StopApplication(void);  // Called at time specified by Stop
@@ -129,6 +105,11 @@ private:
    * \param socket the receiving socket
    */
   void HandleRead(Ptr<Socket> socket);
+  /**
+   * \brief Handle a packet received by the application
+   * \param socket the receiving socket
+   */
+  virtual void HandlePacket(string buffer);
   /**
    * \brief Handle an incoming connection
    * \param socket the incoming connection socket
@@ -211,7 +192,7 @@ private:
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  DeviceComponent *deviceComponent;
+  bool z_router;
 };
 
 } // namespace ns3

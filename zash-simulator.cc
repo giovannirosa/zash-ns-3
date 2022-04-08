@@ -45,7 +45,11 @@
 #include <string>
 
 #include "ns3/applications-module.h"
+#include "ns3/bridge-helper.h"
 #include "ns3/core-module.h"
+#include "ns3/csma-helper.h"
+#include "ns3/flow-monitor-helper.h"
+#include "ns3/flow-monitor.h"
 #include "ns3/internet-module.h"
 #include "ns3/ipv4-global-routing-helper.h"
 #include "ns3/mobility-helper.h"
@@ -68,7 +72,8 @@
 #include "ns3/zash-models.h"
 #include "ns3/zash-notification.h"
 #include "ns3/zash-ontology.h"
-#include "ns3/zash-packet-sink.h"
+#include "ns3/zash-router.h"
+#include "ns3/zash-server.h"
 #include "ns3/zash-utils.h"
 
 #define NUMBER_OF_DEVICES 29
@@ -86,7 +91,10 @@ int main(int argc, char *argv[]) {
 
   LogComponentEnable("ZASH", LOG_LEVEL_ALL);
   LogComponentEnable("ZashPacketSink", LOG_LEVEL_ALL);
+  LogComponentEnable("ZashPacketSender", LOG_LEVEL_ALL);
   LogComponentEnable("DeviceEnforcer", LOG_LEVEL_ALL);
+  LogComponentEnable("ZashRouter", LOG_LEVEL_ALL);
+  LogComponentEnable("ZashServer", LOG_LEVEL_ALL);
   // LogComponentEnable ("PacketSink", LOG_LEVEL_ALL);
 
   // Set up some default values for the simulation.
@@ -168,10 +176,14 @@ int main(int argc, char *argv[]) {
   NodeContainer allNodes = NodeContainer(serverNode, apNode, staNodes);
 
   NodeContainer serverAp = NodeContainer(serverNode.Get(0), apNode.Get(0));
-  PointToPointHelper p2p;
-  p2p.SetDeviceAttribute("DataRate", StringValue("1Gbps"));
-  p2p.SetChannelAttribute("Delay", StringValue("1ms"));
-  NetDeviceContainer serverDevice = p2p.Install(serverAp);
+  // PointToPointHelper p2p;
+  // p2p.SetDeviceAttribute("DataRate", StringValue("1Gbps"));
+  // p2p.SetChannelAttribute("Delay", StringValue("1ms"));
+  // NetDeviceContainer serverApDevice = p2p.Install(serverAp);
+  CsmaHelper csma;
+  // csma.SetDeviceAttribute("DataRate", StringValue("1Gbps"));
+  // csma.SetChannelAttribute("Delay", StringValue("1ms"));
+  NetDeviceContainer serverApDevice = csma.Install(serverAp);
 
   /* Configure AP */
   Ssid ssid = Ssid("network");
@@ -181,20 +193,22 @@ int main(int argc, char *argv[]) {
   apDevice = wifiHelper.Install(wifiPhy, wifiMac, apNode);
 
   /* Configure STA */
-  wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid));
+  wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid), "ActiveProbing",
+                  BooleanValue(false));
 
   NetDeviceContainer staDevices;
   staDevices = wifiHelper.Install(wifiPhy, wifiMac, staNodes);
+
+  BridgeHelper bridge;
+  NetDeviceContainer bridgeDev;
+  bridgeDev = bridge.Install(
+      apNode.Get(0), NetDeviceContainer(apDevice, serverApDevice.Get(1)));
 
   /* Mobility model */
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> positionAlloc =
       CreateObject<ListPositionAllocator>();
   positionAlloc->Add("data/positions.csv");
-
-  // for (uint32_t i = 0; i < N; ++i) {
-  //   positionAlloc->Add(Vector(i, i, 0.0));
-  // }
 
   mobility.SetPositionAllocator(positionAlloc);
   mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
@@ -204,37 +218,13 @@ int main(int argc, char *argv[]) {
   InternetStackHelper internet;
   internet.Install(allNodes);
 
-  // Collect an adjacency list of nodes for the p2p topology
-  // vector<NodeContainer> nodeAdjacencyList(N - 1);
-  // for (uint32_t i = 0; i < nodeAdjacencyList.size(); ++i) {
-  //   nodeAdjacencyList[i] = NodeContainer(apNode, staNodes.Get(i));
-  // }
-
-  // We create the channels first without any IP addressing information
-  // NS_LOG_INFO("Create channels.");
-  // PointToPointHelper p2p;
-  // p2p.SetDeviceAttribute("DataRate", StringValue("5Mbps"));
-  // p2p.SetChannelAttribute("Delay", StringValue("2ms"));
-  // vector<NetDeviceContainer> deviceAdjacencyList(N - 1);
-  // for (uint32_t i = 0; i < deviceAdjacencyList.size(); ++i) {
-  //   deviceAdjacencyList[i] = p2p.Install(nodeAdjacencyList[i]);
-  // }
-
   // Later, we add IP addresses.
   NS_LOG_INFO("Assign IP Addresses.");
-  // Ipv4AddressHelper ipv4;
-  // vector<Ipv4InterfaceContainer> interfaceAdjacencyList(N - 1);
-  // for (uint32_t i = 0; i < interfaceAdjacencyList.size(); ++i) {
-  //   ostringstream subnet;
-  //   subnet << "10.1." << i + 1 << ".0";
-  //   ipv4.SetBase(subnet.str().c_str(), "255.255.255.0");
-  //   interfaceAdjacencyList[i] = ipv4.Assign(deviceAdjacencyList[i]);
-  // }
-
   Ipv4AddressHelper address;
-  address.SetBase("10.0.0.0", "255.255.255.0");
-  Ipv4InterfaceContainer serverInterface = address.Assign(serverDevice);
-  Ipv4InterfaceContainer apInterface = address.Assign(apDevice);
+  address.SetBase("192.168.0.0", "255.255.255.0");
+  Ipv4InterfaceContainer serverApInterface =
+      address.Assign(serverApDevice.Get(0));
+  Ipv4InterfaceContainer apInterface = address.Assign(bridgeDev);
   Ipv4InterfaceContainer staInterface = address.Assign(staDevices);
 
   // Turn on global static routing
@@ -398,19 +388,44 @@ int main(int argc, char *argv[]) {
   DeviceComponent *deviceComponent =
       new DeviceComponent(authorizationComponent, dataComponent, auditModule);
 
+  NS_LOG_INFO(deviceComponent);
+
   // Collection Module
-  // Create a packet sink on the star "hub" to receive these packets
-  Ptr<ZashPacketSink> ZashPacketSinkApp = CreateObject<ZashPacketSink>();
-  ZashPacketSinkApp->SetDeviceComponent(deviceComponent);
-  ZashPacketSinkApp->SetAttribute("Protocol",
-                                  TypeIdValue(TcpSocketFactory::GetTypeId()));
-  ZashPacketSinkApp->SetStartTime(Seconds(start));
-  ZashPacketSinkApp->SetStopTime(Seconds(stop));
+  // Create a server to receive these packets
+  Address serverAddress(InetSocketAddress(serverApInterface.GetAddress(0), 9));
+  Ptr<ZashPacketSink> ZashServerApp = CreateObject<ZashPacketSink>();
+  ZashServerApp->SetAttribute("Protocol",
+                              TypeIdValue(TcpSocketFactory::GetTypeId()));
+  ZashServerApp->SetAttribute("Local", AddressValue(serverAddress));
+  // ZashServerApp->SetDeviceComponent(deviceComponent);
+  ZashServerApp->SetStartTime(Seconds(start));
+  ZashServerApp->SetStopTime(Seconds(stop));
+  serverNode.Get(0)->AddApplication(ZashServerApp);
 
-  Address sinkLocalAddress(InetSocketAddress(apInterface.GetAddress(0), 9));
-  ZashPacketSinkApp->SetAttribute("Local", AddressValue(sinkLocalAddress));
-
-  apNode.Get(0)->AddApplication(ZashPacketSinkApp);
+  // Create a packet sink on the star "hub" to router these packets
+  // Address routerAddress1(InetSocketAddress(apInterface.GetAddress(0), 9));
+  // Address routerAddress2(InetSocketAddress(serverApInterface.GetAddress(1),
+  // 9)); Ptr<ZashRouter> ZashRouterApp = CreateObject<ZashRouter>();
+  // ZashRouterApp->SetAttribute("Protocol",
+  //                             TypeIdValue(TcpSocketFactory::GetTypeId()));
+  // ZashRouterApp->SetAttribute("Local", AddressValue(routerAddress1));
+  // ZashRouterApp->SetAttribute("Router", BooleanValue(true));
+  // ZashRouterApp->SetStartTime(Seconds(start));
+  // ZashRouterApp->SetStopTime(Seconds(stop));
+  // ZashRouterApp->zashPacketSender->SetAttribute(
+  //     "Protocol", TypeIdValue(TcpSocketFactory::GetTypeId()));
+  // ZashRouterApp->zashPacketSender->SetAttribute("Local",
+  //                                               AddressValue(routerAddress2));
+  // ZashRouterApp->zashPacketSender->SetAttribute("Remote",
+  //                                               AddressValue(serverAddress));
+  // ZashRouterApp->zashPacketSender->SetAttribute(
+  //     "DataRate", DataRateValue(DataRate(dataRate)));
+  // ZashRouterApp->zashPacketSender->SetAttribute("StopApp",
+  // BooleanValue(false));
+  // ZashRouterApp->zashPacketSender->SetStartTime(Seconds(start));
+  // ZashRouterApp->zashPacketSender->SetStopTime(Seconds(stop));
+  // apNode.Get(0)->AddApplication(ZashRouterApp);
+  // apNode.Get(0)->AddApplication(ZashRouterApp->zashPacketSender);
 
   int user = 0;
   // User *simUser = users[user];
@@ -420,7 +435,8 @@ int main(int argc, char *argv[]) {
   string action = "CONTROL";
   // Context *simContext =
   //     new Context(enums::AccessWay.at("PERSONAL"),
-  //                 enums::Localization.at("INTERNAL"), enums::Group.at("ALONE"));
+  //                 enums::Localization.at("INTERNAL"),
+  //                 enums::Group.at("ALONE"));
   // enums::Enum *simAction = enums::Action.at("CONTROL");
 
   int idReq = 0;
@@ -488,38 +504,29 @@ int main(int argc, char *argv[]) {
         // NS_LOG_INFO("Change on " + devices[change]->name);
         NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
 
-        Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
-        
-        // DeviceEnforcerApp->SetRequest(new Request(
-        //     ++idReq, devices[change], simUser, simContext, simAction));
+        double diff = difftime(currentDate, firstDate);
+
+        Address nodeAddress(
+            InetSocketAddress(staInterface.GetAddress(change), 9));
         string request = "[" + to_string(++idReq) + "," + to_string(change) +
                          "," + to_string(user) + "," + accessWay + "," +
                          localization + "," + group + "," + action + "]";
         NS_LOG_INFO("Device enforcer created with message = " + request);
-        DeviceEnforcerApp->SetMessage(request);
-
-        Ptr<Node> node = staNodes.Get(change);
-        // NS_LOG_INFO("node selected = " + node->GetId());
+        Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
         DeviceEnforcerApp->SetAttribute(
             "Protocol", TypeIdValue(TcpSocketFactory::GetTypeId()));
-        DeviceEnforcerApp->SetAttribute(
-            "OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
-        DeviceEnforcerApp->SetAttribute(
-            "OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
-
-        double diff = difftime(currentDate, firstDate);
-        NS_LOG_INFO(devices[change]->name + " will change at " +
-                    to_string(diff) + " seconds");
-        // NS_LOG_INFO(change + " will change at " +
-        //             to_string(diff) + " seconds");
-        DeviceEnforcerApp->SetAttribute("Remote",
-                                        AddressValue(sinkLocalAddress));
-        DeviceEnforcerApp->SetAttribute("PacketSize", UintegerValue(request.size()));
-        DeviceEnforcerApp->SetAttribute("MaxBytes", UintegerValue(request.size()));
+        DeviceEnforcerApp->SetAttribute("Local", AddressValue(nodeAddress));
+        DeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
         DeviceEnforcerApp->SetAttribute("DataRate",
                                         DataRateValue(DataRate(dataRate)));
         DeviceEnforcerApp->SetStartTime(Seconds(diff));
         DeviceEnforcerApp->SetStopTime(Seconds(diff + 1.0));
+        DeviceEnforcerApp->SetMessage(request);
+
+        Ptr<Node> node = staNodes.Get(change);
+
+        NS_LOG_INFO(devices[change]->name + " will change at " +
+                    to_string(diff) + " seconds");
 
         node->AddApplication(DeviceEnforcerApp);
         // deviceComponent->listenRequest(req, currentDate);
@@ -595,10 +602,17 @@ int main(int argc, char *argv[]) {
   anim.EnableIpv4RouteTracking("zash.txt", Seconds(0), Seconds(200),
                                Seconds(5));
 
+  // Flow monitor
+  Ptr<FlowMonitor> flowMonitor;
+  FlowMonitorHelper flowHelper;
+  flowMonitor = flowHelper.InstallAll();
+
   NS_LOG_INFO("Run Simulation.");
   Simulator::Run();
   Simulator::Destroy();
   NS_LOG_INFO("Done.");
+
+  flowMonitor->SerializeToXmlFile("flow.xml", true, true);
 
   return 0;
 }

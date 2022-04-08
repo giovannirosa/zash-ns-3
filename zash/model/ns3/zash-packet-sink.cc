@@ -1,21 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright 2007 University of Washington
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * Author:  Tom Henderson (tomhend@u.washington.edu)
+ * Author:  Giovanni Rosa (giovanni_rosa4@hotmail.com)
  */
 #include "zash-packet-sink.h"
 #include "ns3/address-utils.h"
@@ -73,7 +58,11 @@ TypeId ZashPacketSink::GetTypeId(void) {
               "RxWithSeqTsSize",
               "A packet with SeqTsSize header has been received",
               MakeTraceSourceAccessor(&ZashPacketSink::m_rxTraceWithSeqTsSize),
-              "ns3::ZashPacketSink::SeqTsSizeCallback");
+              "ns3::ZashPacketSink::SeqTsSizeCallback")
+          .AddAttribute("Router", "If application is part of a router",
+                        BooleanValue(false),
+                        MakeBooleanAccessor(&ZashPacketSink::z_router),
+                        MakeBooleanChecker());
   return tid;
 }
 
@@ -122,15 +111,6 @@ void ZashPacketSink::StartApplication() // Called at time specified by Start
     }
     m_socket->Listen();
     m_socket->ShutdownSend();
-    // if (addressUtils::IsMulticast(m_local)) {
-    //   Ptr<TcpSocket> udpSocket = DynamicCast<TcpSocket>(m_socket);
-    //   if (udpSocket) {
-    //     // equivalent to setsockopt (MCAST_JOIN_GROUP)
-    //     udpSocket->MulticastJoinGroup(0, m_local);
-    //   } else {
-    //     NS_FATAL_ERROR("Error: joining multicast on a non-UDP socket");
-    //   }
-    // }
   }
 
   if (InetSocketAddress::IsMatchingType(m_local)) {
@@ -227,6 +207,9 @@ void ZashPacketSink::HandleRead(Ptr<Socket> socket) {
       }
     }
   }
+  if (z_router) {
+    HandlePacket(newBuffer);
+  }
 }
 
 void ZashPacketSink::PacketReceived(const Ptr<Packet> &p, const Address &from,
@@ -277,14 +260,6 @@ void ZashPacketSink::HandleAccept(Ptr<Socket> s, const Address &from) {
   NS_LOG_FUNCTION(this << s << from);
   s->SetRecvCallback(MakeCallback(&ZashPacketSink::HandleRead, this));
   m_socketList.push_back(s);
-}
-
-//----------------------------------------------------------------------------------
-// ZASH Application Logic
-//----------------------------------------------------------------------------------
-
-void ZashPacketSink::SetDeviceComponent(DeviceComponent *dc) {
-  deviceComponent = dc;
 }
 
 } // Namespace ns3
