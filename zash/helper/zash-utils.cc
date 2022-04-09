@@ -76,4 +76,20 @@ string vecToStr(vector<int> v) {
   ss << "]";
   return ss.str();
 }
+
+vector<string> strTokenize(string buffer) {
+  string delimiter = ",";
+
+  size_t pos = 0;
+  string token;
+  vector<string> tokens;
+  while ((pos = buffer.find(delimiter)) != string::npos) {
+    token = buffer.substr(0, pos);
+    tokens.push_back(token);
+    buffer.erase(0, pos + delimiter.length());
+  }
+  tokens.push_back(buffer);
+  return tokens;
 }
+
+} // namespace ns3

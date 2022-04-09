@@ -72,7 +72,6 @@
 #include "ns3/zash-models.h"
 #include "ns3/zash-notification.h"
 #include "ns3/zash-ontology.h"
-#include "ns3/zash-router.h"
 #include "ns3/zash-server.h"
 #include "ns3/zash-utils.h"
 
@@ -90,10 +89,7 @@ int main(int argc, char *argv[]) {
   // for selected modules; the below lines suggest how to do this
 
   LogComponentEnable("ZASH", LOG_LEVEL_ALL);
-  LogComponentEnable("ZashPacketSink", LOG_LEVEL_ALL);
-  LogComponentEnable("ZashPacketSender", LOG_LEVEL_ALL);
   LogComponentEnable("DeviceEnforcer", LOG_LEVEL_ALL);
-  LogComponentEnable("ZashRouter", LOG_LEVEL_ALL);
   LogComponentEnable("ZashServer", LOG_LEVEL_ALL);
   // LogComponentEnable ("PacketSink", LOG_LEVEL_ALL);
 
@@ -393,7 +389,7 @@ int main(int argc, char *argv[]) {
   // Collection Module
   // Create a server to receive these packets
   Address serverAddress(InetSocketAddress(serverApInterface.GetAddress(0), 9));
-  Ptr<ZashPacketSink> ZashServerApp = CreateObject<ZashPacketSink>();
+  Ptr<ZashServer> ZashServerApp = CreateObject<ZashServer>();
   ZashServerApp->SetAttribute("Protocol",
                               TypeIdValue(TcpSocketFactory::GetTypeId()));
   ZashServerApp->SetAttribute("Local", AddressValue(serverAddress));
@@ -565,11 +561,13 @@ int main(int argc, char *argv[]) {
     wifiPhy.SetPcapDataLinkType(WifiPhyHelper::DLT_IEEE802_11_RADIO);
     wifiPhy.EnablePcap("AccessPoint", apDevice);
     wifiPhy.EnablePcap("Station", staDevices);
+    csma.EnablePcap("Server", serverApDevice);
   }
 
   // configure tracing
   AsciiTraceHelper ascii;
-  mobility.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
+  // mobility.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
+  csma.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
   // p2p.EnablePcapAll("tcp-star-server");
 
   /* Stop Simulation */

@@ -28,8 +28,8 @@ ContextComponent::ContextComponent(ConfigurationComponent *c,
   configurationComponent = c;
   auditComponent = a;
   for (Device *device : c->devices) {
-    for (const pair<const char *const, enums::Enum *> ul : enums::UserLevel) {
-      for (const pair<const char *const, enums::Enum *> act : enums::Action) {
+    for (const pair<string, enums::Enum *> ul : enums::UserLevel) {
+      for (const pair<string, enums::Enum *> act : enums::Action) {
         timeProbs.push_back(new TimeObject(device, ul.second, act.second));
       }
     }

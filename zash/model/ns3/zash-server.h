@@ -25,10 +25,10 @@ class Packet;
 
 /**
  * \ingroup applications
- * \defgroup packetsink ZashPacketSink
+ * \defgroup packetsink ZashServer
  *
  * This application was written to complement OnOffApplication, but it
- * is more general so a ZashPacketSink name was selected.  Functionally it is
+ * is more general so a ZashServer name was selected.  Functionally it is
  * important to use in multicast situations, so that reception of the layer-2
  * multicast frames of interest are enabled, but it is also useful for
  * unicast as an example of how you can write something simple to receive
@@ -42,7 +42,7 @@ class Packet;
  * \brief Receive and consume traffic generated to an IP address and port
  *
  * This application was written to complement OnOffApplication, but it
- * is more general so a ZashPacketSink name was selected.  Functionally it is
+ * is more general so a ZashServer name was selected.  Functionally it is
  * important to use in multicast situations, so that reception of the layer-2
  * multicast frames of interest are enabled, but it is also useful for
  * unicast as an example of how you can write something simple to receive
@@ -55,16 +55,16 @@ class Packet;
  * enabled, it prints out the size of packets and their address.
  * A tracing source to Receive() is also available.
  */
-class ZashPacketSink : public Application {
+class ZashServer : public Application {
 public:
   /**
    * \brief Get the type ID.
    * \return the object TypeId
    */
   static TypeId GetTypeId(void);
-  ZashPacketSink();
+  ZashServer();
 
-  virtual ~ZashPacketSink();
+  virtual ~ZashServer();
 
   /**
    * \return the total bytes received in this sink app
@@ -192,7 +192,14 @@ protected:
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  bool z_router;
+  void SetDeviceComponent(DeviceComponent *dc);
+  void SetDevices(vector<Device *> d);
+  void SetUsers(vector<User *> u);
+
+private:
+  DeviceComponent *deviceComponent;
+  vector<Device *> devices;
+  vector<User *> users;
 };
 
 } // namespace ns3

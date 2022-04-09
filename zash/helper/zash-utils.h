@@ -81,6 +81,8 @@ string vecToStr(vector<enums::Enum *> v);
  */
 string vecToStr(vector<int> v);
 
+vector<string> strTokenize(string buffer);
+
 } // namespace ns3
 
 #endif

@@ -9,15 +9,12 @@
 def build(bld):
     module = bld.create_ns3_module('zash', ['network', 'internet'])
     module.source = [
-        'model/ns3/zash-packet-sink.cc',
-        'model/ns3/zash-packet-sender.cc',
+        'model/ns3/zash-server.cc',
+        'model/ns3/zash-device-enforcer.cc',
         'model/zash-enums.cc',
         'model/zash-markov.cc',
         'model/zash-models.cc',
         'helper/zash-utils.cc',
-        'model/zash-device-enforcer.cc',
-        'model/zash-router.cc',
-        'model/zash-server.cc',
         'model/audit/zash-audit.cc',
         'model/behavior/zash-configuration.cc',
         'model/behavior/zash-notification.cc',
@@ -37,15 +34,12 @@ def build(bld):
     headers = bld(features='ns3header')
     headers.module = 'zash'
     headers.source = [
-        'model/ns3/zash-packet-sink.h',
-        'model/ns3/zash-packet-sender.h',
+        'model/ns3/zash-server.h',
+        'model/ns3/zash-device-enforcer.h',
         'model/zash-enums.h',
         'model/zash-markov.h',
         'model/zash-models.h',
         'helper/zash-utils.h',
-        'model/zash-device-enforcer.h',
-        'model/zash-router.h',
-        'model/zash-server.h',
         'model/audit/zash-audit.h',
         'model/behavior/zash-configuration.h',
         'model/behavior/zash-notification.h',

@@ -4,7 +4,7 @@
  * Author:  Giovanni Rosa (giovanni_rosa4@hotmail.com)
  */
 
-#include "zash-packet-sender.h"
+#include "zash-device-enforcer.h"
 #include "ns3/address.h"
 #include "ns3/boolean.h"
 #include "ns3/data-rate.h"
@@ -28,33 +28,33 @@
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE("ZashPacketSender");
+NS_LOG_COMPONENT_DEFINE("DeviceEnforcer");
 
-NS_OBJECT_ENSURE_REGISTERED(ZashPacketSender);
+NS_OBJECT_ENSURE_REGISTERED(DeviceEnforcer);
 
-TypeId ZashPacketSender::GetTypeId(void) {
+TypeId DeviceEnforcer::GetTypeId(void) {
   static TypeId tid =
-      TypeId("ns3::ZashPacketSender")
+      TypeId("ns3::DeviceEnforcer")
           .SetParent<Application>()
           .SetGroupName("Applications")
-          .AddConstructor<ZashPacketSender>()
+          .AddConstructor<DeviceEnforcer>()
           .AddAttribute("DataRate", "The data rate in on state.",
                         DataRateValue(DataRate("500kb/s")),
-                        MakeDataRateAccessor(&ZashPacketSender::m_cbrRate),
+                        MakeDataRateAccessor(&DeviceEnforcer::m_cbrRate),
                         MakeDataRateChecker())
           .AddAttribute("PacketSize", "The size of packets sent in on state",
                         UintegerValue(512),
-                        MakeUintegerAccessor(&ZashPacketSender::m_pktSize),
+                        MakeUintegerAccessor(&DeviceEnforcer::m_pktSize),
                         MakeUintegerChecker<uint32_t>(1))
           .AddAttribute("Remote", "The address of the destination",
                         AddressValue(),
-                        MakeAddressAccessor(&ZashPacketSender::m_peer),
+                        MakeAddressAccessor(&DeviceEnforcer::m_peer),
                         MakeAddressChecker())
           .AddAttribute("Local",
                         "The Address on which to bind the socket. If not set, "
                         "it is generated automatically.",
                         AddressValue(),
-                        MakeAddressAccessor(&ZashPacketSender::m_local),
+                        MakeAddressAccessor(&DeviceEnforcer::m_local),
                         MakeAddressChecker())
           .AddAttribute(
               "MaxBytes",
@@ -62,63 +62,59 @@ TypeId ZashPacketSender::GetTypeId(void) {
               "no packet is sent again, even in on state. The value zero means "
               "that there is no limit.",
               UintegerValue(0),
-              MakeUintegerAccessor(&ZashPacketSender::m_maxBytes),
+              MakeUintegerAccessor(&DeviceEnforcer::m_maxBytes),
               MakeUintegerChecker<uint64_t>())
           .AddAttribute("Protocol",
                         "The type of protocol to use. This should be "
                         "a subclass of ns3::SocketFactory",
                         TypeIdValue(TcpSocketFactory::GetTypeId()),
-                        MakeTypeIdAccessor(&ZashPacketSender::m_tid),
+                        MakeTypeIdAccessor(&DeviceEnforcer::m_tid),
                         // This should check for SocketFactory as a parent
                         MakeTypeIdChecker())
           .AddAttribute(
               "EnableSeqTsSizeHeader",
               "Enable use of SeqTsSizeHeader for sequence number and timestamp",
               BooleanValue(false),
-              MakeBooleanAccessor(&ZashPacketSender::m_enableSeqTsSizeHeader),
+              MakeBooleanAccessor(&DeviceEnforcer::m_enableSeqTsSizeHeader),
               MakeBooleanChecker())
           .AddTraceSource("Tx", "A new packet is created and is sent",
-                          MakeTraceSourceAccessor(&ZashPacketSender::m_txTrace),
+                          MakeTraceSourceAccessor(&DeviceEnforcer::m_txTrace),
                           "ns3::Packet::TracedCallback")
           .AddTraceSource("TxWithAddresses",
                           "A new packet is created and is sent",
                           MakeTraceSourceAccessor(
-                              &ZashPacketSender::m_txTraceWithAddresses),
+                              &DeviceEnforcer::m_txTraceWithAddresses),
                           "ns3::Packet::TwoAddressTracedCallback")
           .AddTraceSource("TxWithSeqTsSize",
                           "A new packet is created with SeqTsSizeHeader",
                           MakeTraceSourceAccessor(
-                              &ZashPacketSender::m_txTraceWithSeqTsSize),
+                              &DeviceEnforcer::m_txTraceWithSeqTsSize),
                           "ns3::PacketSink::SeqTsSizeCallback")
           .AddAttribute("Message", "The message to be sent", StringValue(),
-                        MakeStringAccessor(&ZashPacketSender::z_message),
-                        MakeStringChecker())
-          .AddAttribute("StopApp", "If stop application after message is sent",
-                        BooleanValue(true),
-                        MakeBooleanAccessor(&ZashPacketSender::z_stopApp),
-                        MakeBooleanChecker());
+                        MakeStringAccessor(&DeviceEnforcer::z_message),
+                        MakeStringChecker());
   return tid;
 }
 
-ZashPacketSender::ZashPacketSender()
+DeviceEnforcer::DeviceEnforcer()
     : m_socket(0), m_connected(false), m_residualBits(0),
       m_lastStartTime(Seconds(0)), m_totBytes(0), m_unsentPacket(0) {
   NS_LOG_FUNCTION(this);
 }
 
-ZashPacketSender::~ZashPacketSender() { NS_LOG_FUNCTION(this); }
+DeviceEnforcer::~DeviceEnforcer() { NS_LOG_FUNCTION(this); }
 
-void ZashPacketSender::SetMaxBytes(uint64_t maxBytes) {
+void DeviceEnforcer::SetMaxBytes(uint64_t maxBytes) {
   NS_LOG_FUNCTION(this << maxBytes);
   m_maxBytes = maxBytes;
 }
 
-Ptr<Socket> ZashPacketSender::GetSocket(void) const {
+Ptr<Socket> DeviceEnforcer::GetSocket(void) const {
   NS_LOG_FUNCTION(this);
   return m_socket;
 }
 
-void ZashPacketSender::DoDispose(void) {
+void DeviceEnforcer::DoDispose(void) {
   NS_LOG_FUNCTION(this);
 
   CancelEvents();
@@ -129,7 +125,7 @@ void ZashPacketSender::DoDispose(void) {
 }
 
 // Application Methods
-void ZashPacketSender::StartApplication() // Called at time specified by Start
+void DeviceEnforcer::StartApplication() // Called at time specified by Start
 {
   NS_LOG_FUNCTION(this);
 
@@ -163,8 +159,8 @@ void ZashPacketSender::StartApplication() // Called at time specified by Start
     m_socket->ShutdownRecv();
 
     m_socket->SetConnectCallback(
-        MakeCallback(&ZashPacketSender::ConnectionSucceeded, this),
-        MakeCallback(&ZashPacketSender::ConnectionFailed, this));
+        MakeCallback(&DeviceEnforcer::ConnectionSucceeded, this),
+        MakeCallback(&DeviceEnforcer::ConnectionFailed, this));
   }
   m_cbrRateFailSafe = m_cbrRate;
 
@@ -173,12 +169,10 @@ void ZashPacketSender::StartApplication() // Called at time specified by Start
   // If we are not yet connected, there is nothing to do here
   // The ConnectionComplete upcall will start timers at that time
   // if (!m_connected) return;
-  if (z_stopApp) {
-    StartSending();
-  }
+  StartSending();
 }
 
-void ZashPacketSender::StopApplication() // Called at time specified by Stop
+void DeviceEnforcer::StopApplication() // Called at time specified by Stop
 {
   NS_LOG_FUNCTION(this);
 
@@ -187,11 +181,11 @@ void ZashPacketSender::StopApplication() // Called at time specified by Stop
     m_socket->Close();
   } else {
     NS_LOG_WARN(
-        "ZashPacketSender found null socket to close in StopApplication");
+        "DeviceEnforcer found null socket to close in StopApplication");
   }
 }
 
-void ZashPacketSender::CancelEvents() {
+void DeviceEnforcer::CancelEvents() {
   NS_LOG_FUNCTION(this);
 
   if (m_sendEvent.IsRunning() &&
@@ -213,14 +207,14 @@ void ZashPacketSender::CancelEvents() {
 }
 
 // Event handlers
-void ZashPacketSender::StartSending() {
+void DeviceEnforcer::StartSending() {
   NS_LOG_FUNCTION(this);
   m_lastStartTime = Simulator::Now();
   ScheduleNextTx(); // Schedule the send packet event
 }
 
 // Private helpers
-void ZashPacketSender::ScheduleNextTx() {
+void DeviceEnforcer::ScheduleNextTx() {
   NS_LOG_FUNCTION(this);
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes) {
@@ -233,13 +227,13 @@ void ZashPacketSender::ScheduleNextTx() {
         static_cast<double>(m_cbrRate.GetBitRate()))); // Time till next packet
     NS_LOG_LOGIC("nextTime = " << nextTime.As(Time::S));
     m_sendEvent =
-        Simulator::Schedule(nextTime, &ZashPacketSender::SendPacket, this);
-  } else if (z_stopApp) { // All done, cancel any pending events
+        Simulator::Schedule(nextTime, &DeviceEnforcer::SendPacket, this);
+  } else { // All done, cancel any pending events
     StopApplication();
   }
 }
 
-void ZashPacketSender::SendPacket() {
+void DeviceEnforcer::SendPacket() {
   NS_LOG_FUNCTION(this);
 
   NS_ASSERT(m_sendEvent.IsExpired());
@@ -309,12 +303,12 @@ void ZashPacketSender::SendPacket() {
   ScheduleNextTx();
 }
 
-void ZashPacketSender::ConnectionSucceeded(Ptr<Socket> socket) {
+void DeviceEnforcer::ConnectionSucceeded(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
   m_connected = true;
 }
 
-void ZashPacketSender::ConnectionFailed(Ptr<Socket> socket) {
+void DeviceEnforcer::ConnectionFailed(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
   NS_FATAL_ERROR("Can't connect");
 }
@@ -323,7 +317,7 @@ void ZashPacketSender::ConnectionFailed(Ptr<Socket> socket) {
 // ZASH Application Logic
 //----------------------------------------------------------------------------------
 
-void ZashPacketSender::SetMessage(string msg) {
+void DeviceEnforcer::SetMessage(string msg) {
   NS_LOG_FUNCTION(this << msg);
   m_pktSize = msg.size();
   m_maxBytes = msg.size();

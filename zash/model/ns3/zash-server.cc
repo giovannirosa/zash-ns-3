@@ -2,7 +2,7 @@
 /*
  * Author:  Giovanni Rosa (giovanni_rosa4@hotmail.com)
  */
-#include "zash-packet-sink.h"
+#include "zash-server.h"
 #include "ns3/address-utils.h"
 #include "ns3/address.h"
 #include "ns3/boolean.h"
@@ -19,77 +19,74 @@
 #include "ns3/tcp-socket-factory.h"
 #include "ns3/tcp-socket.h"
 #include "ns3/trace-source-accessor.h"
+#include "ns3/zash-utils.h"
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE("ZashPacketSink");
+NS_LOG_COMPONENT_DEFINE("ZashServer");
 
-NS_OBJECT_ENSURE_REGISTERED(ZashPacketSink);
+NS_OBJECT_ENSURE_REGISTERED(ZashServer);
 
-TypeId ZashPacketSink::GetTypeId(void) {
+TypeId ZashServer::GetTypeId(void) {
   static TypeId tid =
-      TypeId("ns3::ZashPacketSink")
+      TypeId("ns3::ZashServer")
           .SetParent<Application>()
           .SetGroupName("Applications")
-          .AddConstructor<ZashPacketSink>()
+          .AddConstructor<ZashServer>()
           .AddAttribute("Local", "The Address on which to Bind the rx socket.",
                         AddressValue(),
-                        MakeAddressAccessor(&ZashPacketSink::m_local),
+                        MakeAddressAccessor(&ZashServer::m_local),
                         MakeAddressChecker())
           .AddAttribute("Protocol",
                         "The type id of the protocol to use for the rx socket.",
                         TypeIdValue(TcpSocketFactory::GetTypeId()),
-                        MakeTypeIdAccessor(&ZashPacketSink::m_tid),
+                        MakeTypeIdAccessor(&ZashServer::m_tid),
                         MakeTypeIdChecker())
           .AddAttribute(
               "EnableSeqTsSizeHeader",
               "Enable optional header tracing of SeqTsSizeHeader",
               BooleanValue(false),
-              MakeBooleanAccessor(&ZashPacketSink::m_enableSeqTsSizeHeader),
+              MakeBooleanAccessor(&ZashServer::m_enableSeqTsSizeHeader),
               MakeBooleanChecker())
           .AddTraceSource("Rx", "A packet has been received",
-                          MakeTraceSourceAccessor(&ZashPacketSink::m_rxTrace),
+                          MakeTraceSourceAccessor(&ZashServer::m_rxTrace),
                           "ns3::Packet::AddressTracedCallback")
           .AddTraceSource(
               "RxWithAddresses", "A packet has been received",
-              MakeTraceSourceAccessor(&ZashPacketSink::m_rxTraceWithAddresses),
+              MakeTraceSourceAccessor(&ZashServer::m_rxTraceWithAddresses),
               "ns3::Packet::TwoAddressTracedCallback")
           .AddTraceSource(
               "RxWithSeqTsSize",
               "A packet with SeqTsSize header has been received",
-              MakeTraceSourceAccessor(&ZashPacketSink::m_rxTraceWithSeqTsSize),
-              "ns3::ZashPacketSink::SeqTsSizeCallback")
-          .AddAttribute("Router", "If application is part of a router",
-                        BooleanValue(false),
-                        MakeBooleanAccessor(&ZashPacketSink::z_router),
-                        MakeBooleanChecker());
+              MakeTraceSourceAccessor(&ZashServer::m_rxTraceWithSeqTsSize),
+              "ns3::ZashServer::SeqTsSizeCallback");
   return tid;
 }
 
-ZashPacketSink::ZashPacketSink() {
+ZashServer::ZashServer() {
   NS_LOG_FUNCTION(this);
   m_socket = 0;
   m_totalRx = 0;
 }
 
-ZashPacketSink::~ZashPacketSink() { NS_LOG_FUNCTION(this); }
+ZashServer::~ZashServer() { NS_LOG_FUNCTION(this); }
 
-uint64_t ZashPacketSink::GetTotalRx() const {
+uint64_t ZashServer::GetTotalRx() const {
   NS_LOG_FUNCTION(this);
   return m_totalRx;
 }
 
-Ptr<Socket> ZashPacketSink::GetListeningSocket(void) const {
+Ptr<Socket> ZashServer::GetListeningSocket(void) const {
   NS_LOG_FUNCTION(this);
   return m_socket;
 }
 
-std::list<Ptr<Socket>> ZashPacketSink::GetAcceptedSockets(void) const {
+std::list<Ptr<Socket>> ZashServer::GetAcceptedSockets(void) const {
   NS_LOG_FUNCTION(this);
   return m_socketList;
 }
 
-void ZashPacketSink::DoDispose(void) {
+void ZashServer::DoDispose(void) {
   NS_LOG_FUNCTION(this);
   m_socket = 0;
   m_socketList.clear();
@@ -99,7 +96,7 @@ void ZashPacketSink::DoDispose(void) {
 }
 
 // Application Methods
-void ZashPacketSink::StartApplication() // Called at time specified by Start
+void ZashServer::StartApplication() // Called at time specified by Start
 {
   NS_LOG_FUNCTION(this);
   NS_LOG_INFO("Starting zash packet sink...");
@@ -120,17 +117,16 @@ void ZashPacketSink::StartApplication() // Called at time specified by Start
   } else {
     m_localPort = 0;
   }
-  m_socket->SetRecvCallback(MakeCallback(&ZashPacketSink::HandleRead, this));
+  m_socket->SetRecvCallback(MakeCallback(&ZashServer::HandleRead, this));
   m_socket->SetRecvPktInfo(true);
   m_socket->SetAcceptCallback(
       MakeNullCallback<bool, Ptr<Socket>, const Address &>(),
-      MakeCallback(&ZashPacketSink::HandleAccept, this));
-  m_socket->SetCloseCallbacks(
-      MakeCallback(&ZashPacketSink::HandlePeerClose, this),
-      MakeCallback(&ZashPacketSink::HandlePeerError, this));
+      MakeCallback(&ZashServer::HandleAccept, this));
+  m_socket->SetCloseCallbacks(MakeCallback(&ZashServer::HandlePeerClose, this),
+                              MakeCallback(&ZashServer::HandlePeerError, this));
 }
 
-void ZashPacketSink::StopApplication() // Called at time specified by Stop
+void ZashServer::StopApplication() // Called at time specified by Stop
 {
   NS_LOG_FUNCTION(this);
   NS_LOG_INFO("Stopping zash packet sink...");
@@ -146,7 +142,7 @@ void ZashPacketSink::StopApplication() // Called at time specified by Stop
   }
 }
 
-void ZashPacketSink::HandleRead(Ptr<Socket> socket) {
+void ZashServer::HandleRead(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
   NS_LOG_INFO("Handling read zash packet sink...");
   Ptr<Packet> packet;
@@ -207,13 +203,11 @@ void ZashPacketSink::HandleRead(Ptr<Socket> socket) {
       }
     }
   }
-  if (z_router) {
-    HandlePacket(newBuffer);
-  }
+  HandlePacket(newBuffer);
 }
 
-void ZashPacketSink::PacketReceived(const Ptr<Packet> &p, const Address &from,
-                                    const Address &localAddress) {
+void ZashServer::PacketReceived(const Ptr<Packet> &p, const Address &from,
+                                const Address &localAddress) {
   SeqTsSizeHeader header;
   Ptr<Packet> buffer;
 
@@ -248,18 +242,55 @@ void ZashPacketSink::PacketReceived(const Ptr<Packet> &p, const Address &from,
   }
 }
 
-void ZashPacketSink::HandlePeerClose(Ptr<Socket> socket) {
+void ZashServer::HandlePeerClose(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
 }
 
-void ZashPacketSink::HandlePeerError(Ptr<Socket> socket) {
+void ZashServer::HandlePeerError(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
 }
 
-void ZashPacketSink::HandleAccept(Ptr<Socket> s, const Address &from) {
+void ZashServer::HandleAccept(Ptr<Socket> s, const Address &from) {
   NS_LOG_FUNCTION(this << s << from);
-  s->SetRecvCallback(MakeCallback(&ZashPacketSink::HandleRead, this));
+  s->SetRecvCallback(MakeCallback(&ZashServer::HandleRead, this));
   m_socketList.push_back(s);
+}
+
+//----------------------------------------------------------------------------------
+// ZASH Application Logic
+//----------------------------------------------------------------------------------
+
+void ZashServer::SetDeviceComponent(DeviceComponent *dc) {
+  NS_LOG_FUNCTION(this << dc);
+  deviceComponent = dc;
+}
+
+void ZashServer::SetDevices(vector<Device *> d) {
+  NS_LOG_FUNCTION(this << d);
+  devices = d;
+}
+
+void ZashServer::SetUsers(vector<User *> u) {
+  NS_LOG_FUNCTION(this << u);
+  users = u;
+}
+
+void ZashServer::HandlePacket(string buffer) {
+  NS_LOG_FUNCTION(this << buffer);
+  if (!buffer.empty()) {
+    buffer = buffer.substr(1);
+    buffer = buffer.substr(0, buffer.size() - 1);
+    vector<string> tokens = strTokenize(buffer);
+
+    Request *req = new Request(stoi(tokens[0]), devices[stoi(tokens[1])],
+                               users[stoi(tokens[2])],
+                               new Context(enums::AccessWay.at(tokens[3]),
+                                           enums::Localization.at(tokens[4]),
+                                           enums::Group.at(tokens[5])),
+                               enums::Action.at(tokens[6]));
+    NS_LOG_INFO(req);
+    // deviceComponent->listenRequest();
+  }
 }
 
 } // Namespace ns3

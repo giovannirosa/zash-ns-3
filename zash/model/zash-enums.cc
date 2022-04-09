@@ -3,7 +3,7 @@
 namespace enums {
 
 Enum::Enum() {}
-Enum::Enum(const char *k, int v, int w) {
+Enum::Enum(string k, int v, int w) {
   key = k;
   value = v;
   weight = w;
