@@ -97,13 +97,13 @@ int main(int argc, char *argv[]) {
   Config::SetDefault("ns3::OnOffApplication::PacketSize", UintegerValue(250));
   Config::SetDefault("ns3::OnOffApplication::DataRate", StringValue("5kb/s"));
   double start = 0.0;
-  double stop = 10.0;
+  double stop = 20.0;
   uint32_t N = NUMBER_OF_DEVICES;   // number of nodes in the star
   uint32_t payloadSize = 1472;      /* Transport layer payload size in bytes. */
   string dataRate = "100Mbps";      /* Application layer datarate. */
   string tcpVariant = "TcpNewReno"; /* TCP variant type. */
   string phyRate = "HtMcs7";        /* Physical layer bitrate. */
-  double simulationTime = 10;       /* Simulation time in seconds. */
+  double simulationTime = stop;       /* Simulation time in seconds. */
   bool pcapTracing = false;         /* PCAP Tracing is enabled or not. */
 
   // Allow the user to override any of the defaults and the above
@@ -393,7 +393,10 @@ int main(int argc, char *argv[]) {
   ZashServerApp->SetAttribute("Protocol",
                               TypeIdValue(TcpSocketFactory::GetTypeId()));
   ZashServerApp->SetAttribute("Local", AddressValue(serverAddress));
-  // ZashServerApp->SetDeviceComponent(deviceComponent);
+  // ZashServerApp->SetNodes(staNodes);
+  ZashServerApp->SetDevices(devices);
+  ZashServerApp->SetUsers(users);
+  ZashServerApp->SetDeviceComponent(deviceComponent);
   ZashServerApp->SetStartTime(Seconds(start));
   ZashServerApp->SetStopTime(Seconds(stop));
   serverNode.Get(0)->AddApplication(ZashServerApp);
@@ -422,6 +425,30 @@ int main(int argc, char *argv[]) {
   // ZashRouterApp->zashPacketSender->SetStopTime(Seconds(stop));
   // apNode.Get(0)->AddApplication(ZashRouterApp);
   // apNode.Get(0)->AddApplication(ZashRouterApp->zashPacketSender);
+
+  for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
+    Address nodeAddress(InetSocketAddress(staInterface.GetAddress(i), 9));
+    Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
+    DeviceEnforcerApp->SetAttribute("Protocol",
+                                    TypeIdValue(TcpSocketFactory::GetTypeId()));
+    DeviceEnforcerApp->SetAttribute("Local", AddressValue(nodeAddress));
+    DeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
+    DeviceEnforcerApp->SetAttribute("DataRate",
+                                    DataRateValue(DataRate(dataRate)));
+    DeviceEnforcerApp->SetDeviceName(devices[i]->name);
+    DeviceEnforcerApp->SetStartTime(Seconds(start));
+    DeviceEnforcerApp->SetStopTime(Seconds(stop));
+    // DeviceEnforcerApp->SetMessage(request);
+
+    Ptr<Node> node = staNodes.Get(i);
+
+    // NS_LOG_INFO(devices[change]->name + " will change at " + to_string(diff)
+    // +
+    //             " seconds");
+
+    node->AddApplication(DeviceEnforcerApp);
+    NS_LOG_INFO("Installed device " << i);
+  }
 
   int user = 0;
   // User *simUser = users[user];
@@ -469,7 +496,7 @@ int main(int argc, char *argv[]) {
     time_t currentDate = strToTime(timeStr.c_str());
 
     if (difftime(firstDate, (time_t)(-1)) == 0) {
-      firstDate = currentDate;
+      firstDate = currentDate - 10;
     }
 
     string actStr;
@@ -501,33 +528,21 @@ int main(int argc, char *argv[]) {
         NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
 
         double diff = difftime(currentDate, firstDate);
-
-        Address nodeAddress(
-            InetSocketAddress(staInterface.GetAddress(change), 9));
         string request = "[" + to_string(++idReq) + "," + to_string(change) +
                          "," + to_string(user) + "," + accessWay + "," +
-                         localization + "," + group + "," + action + "]";
-        NS_LOG_INFO("Device enforcer created with message = " + request);
-        Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
-        DeviceEnforcerApp->SetAttribute(
-            "Protocol", TypeIdValue(TcpSocketFactory::GetTypeId()));
-        DeviceEnforcerApp->SetAttribute("Local", AddressValue(nodeAddress));
-        DeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
-        DeviceEnforcerApp->SetAttribute("DataRate",
-                                        DataRateValue(DataRate(dataRate)));
-        DeviceEnforcerApp->SetStartTime(Seconds(diff));
-        DeviceEnforcerApp->SetStopTime(Seconds(diff + 1.0));
-        DeviceEnforcerApp->SetMessage(request);
-
+                         localization + "," + group + "," + action + "," +
+                         formatTime(currentDate) + "]";
+        NS_LOG_INFO("Device enforcer scheduled with message = " + request);
         Ptr<Node> node = staNodes.Get(change);
-
+        Ptr<DeviceEnforcer> DeviceEnforcerApp = DynamicCast<DeviceEnforcer>(node->GetApplication(0));
+            // (Ptr<DeviceEnforcer>)node->GetApplication(0);
+        Simulator::Schedule(Seconds(diff), &DeviceEnforcer::StartSending,
+                            DeviceEnforcerApp, request);
         NS_LOG_INFO(devices[change]->name + " will change at " +
                     to_string(diff) + " seconds");
-
-        node->AddApplication(DeviceEnforcerApp);
-        // deviceComponent->listenRequest(req, currentDate);
-        // cout << endl;
       }
+    } else {
+      dataComponent->lastState = currentState;
     }
     lastState = currentState;
   }

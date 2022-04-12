@@ -119,7 +119,7 @@ public:
   /**
    * \brief Start an On period
    */
-  void StartSending();
+  void StartSending(string message);
   /**
    * \brief Send a packet
    */
@@ -173,13 +173,23 @@ public:
    */
   void ConnectionFailed(Ptr<Socket> socket);
 
+  /**
+   * \brief Handle a packet received by the application
+   * \param socket the receiving socket
+   */
+  void HandleRead(Ptr<Socket> socket);
+
   //----------------------------------------------------------------------------------
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
   void SetMessage(string msg);
 
+  void SetDeviceName(string dn);
+
   string z_message;
+
+  string z_device_name;
 };
 
 } // namespace ns3

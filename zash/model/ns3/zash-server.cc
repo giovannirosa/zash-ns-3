@@ -107,7 +107,7 @@ void ZashServer::StartApplication() // Called at time specified by Start
       NS_FATAL_ERROR("Failed to bind socket");
     }
     m_socket->Listen();
-    m_socket->ShutdownSend();
+    // m_socket->ShutdownSend();
   }
 
   if (InetSocketAddress::IsMatchingType(m_local)) {
@@ -203,7 +203,7 @@ void ZashServer::HandleRead(Ptr<Socket> socket) {
       }
     }
   }
-  HandlePacket(newBuffer);
+  HandlePacket(newBuffer, socket);
 }
 
 void ZashServer::PacketReceived(const Ptr<Packet> &p, const Address &from,
@@ -275,21 +275,32 @@ void ZashServer::SetUsers(vector<User *> u) {
   users = u;
 }
 
-void ZashServer::HandlePacket(string buffer) {
+void ZashServer::HandlePacket(string buffer, Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << buffer);
   if (!buffer.empty()) {
     buffer = buffer.substr(1);
     buffer = buffer.substr(0, buffer.size() - 1);
     vector<string> tokens = strTokenize(buffer);
 
-    Request *req = new Request(stoi(tokens[0]), devices[stoi(tokens[1])],
-                               users[stoi(tokens[2])],
-                               new Context(enums::AccessWay.at(tokens[3]),
-                                           enums::Localization.at(tokens[4]),
-                                           enums::Group.at(tokens[5])),
-                               enums::Action.at(tokens[6]));
-    NS_LOG_INFO(req);
-    // deviceComponent->listenRequest();
+    int reqId = stoi(tokens[0]);
+    Device *device = devices[stoi(tokens[1])];
+    User *user = users[stoi(tokens[2])];
+    Context *context = new Context(enums::AccessWay.at(tokens[3]),
+                                   enums::Localization.at(tokens[4]),
+                                   enums::Group.at(tokens[5]));
+    enums::Enum *action = enums::Action.at(tokens[6]);
+
+    Request *req = new Request(reqId, device, user, context, action);
+    time_t currentDate = strToTime(tokens[7].c_str());
+    bool response = deviceComponent->listenRequest(req, currentDate);
+
+    string respStr = response ? "[Accepted]" : "[Refused]";
+
+    Ptr<Packet> packet = Create<Packet>(
+        reinterpret_cast<const uint8_t *>(respStr.c_str()), respStr.size());
+
+    socket->Send(packet);
+    // NS_LOG_INFO(response);
   }
 }
 

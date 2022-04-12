@@ -93,7 +93,6 @@ public:
                                     const Address &to,
                                     const SeqTsSizeHeader &header);
 
-protected:
   virtual void DoDispose(void);
 
   // inherited from Application base class.
@@ -109,7 +108,7 @@ protected:
    * \brief Handle a packet received by the application
    * \param socket the receiving socket
    */
-  virtual void HandlePacket(string buffer);
+  virtual void HandlePacket(string buffer, Ptr<Socket> socket);
   /**
    * \brief Handle an incoming connection
    * \param socket the incoming connection socket

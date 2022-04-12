@@ -80,16 +80,14 @@ TypeId DeviceEnforcer::GetTypeId(void) {
           .AddTraceSource("Tx", "A new packet is created and is sent",
                           MakeTraceSourceAccessor(&DeviceEnforcer::m_txTrace),
                           "ns3::Packet::TracedCallback")
-          .AddTraceSource("TxWithAddresses",
-                          "A new packet is created and is sent",
-                          MakeTraceSourceAccessor(
-                              &DeviceEnforcer::m_txTraceWithAddresses),
-                          "ns3::Packet::TwoAddressTracedCallback")
-          .AddTraceSource("TxWithSeqTsSize",
-                          "A new packet is created with SeqTsSizeHeader",
-                          MakeTraceSourceAccessor(
-                              &DeviceEnforcer::m_txTraceWithSeqTsSize),
-                          "ns3::PacketSink::SeqTsSizeCallback")
+          .AddTraceSource(
+              "TxWithAddresses", "A new packet is created and is sent",
+              MakeTraceSourceAccessor(&DeviceEnforcer::m_txTraceWithAddresses),
+              "ns3::Packet::TwoAddressTracedCallback")
+          .AddTraceSource(
+              "TxWithSeqTsSize", "A new packet is created with SeqTsSizeHeader",
+              MakeTraceSourceAccessor(&DeviceEnforcer::m_txTraceWithSeqTsSize),
+              "ns3::PacketSink::SeqTsSizeCallback")
           .AddAttribute("Message", "The message to be sent", StringValue(),
                         MakeStringAccessor(&DeviceEnforcer::z_message),
                         MakeStringChecker());
@@ -156,11 +154,14 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
 
     m_socket->Connect(m_peer);
     m_socket->SetAllowBroadcast(true);
-    m_socket->ShutdownRecv();
+    // m_socket->ShutdownRecv();
 
     m_socket->SetConnectCallback(
         MakeCallback(&DeviceEnforcer::ConnectionSucceeded, this),
         MakeCallback(&DeviceEnforcer::ConnectionFailed, this));
+
+    m_socket->SetRecvCallback(MakeCallback(&DeviceEnforcer::HandleRead, this));
+    m_socket->SetRecvPktInfo(true);
   }
   m_cbrRateFailSafe = m_cbrRate;
 
@@ -169,7 +170,7 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
   // If we are not yet connected, there is nothing to do here
   // The ConnectionComplete upcall will start timers at that time
   // if (!m_connected) return;
-  StartSending();
+  // StartSending();
 }
 
 void DeviceEnforcer::StopApplication() // Called at time specified by Stop
@@ -180,8 +181,7 @@ void DeviceEnforcer::StopApplication() // Called at time specified by Stop
   if (m_socket != 0) {
     m_socket->Close();
   } else {
-    NS_LOG_WARN(
-        "DeviceEnforcer found null socket to close in StopApplication");
+    NS_LOG_WARN("DeviceEnforcer found null socket to close in StopApplication");
   }
 }
 
@@ -207,8 +207,9 @@ void DeviceEnforcer::CancelEvents() {
 }
 
 // Event handlers
-void DeviceEnforcer::StartSending() {
-  NS_LOG_FUNCTION(this);
+void DeviceEnforcer::StartSending(string message) {
+  NS_LOG_FUNCTION(this << message);
+  SetMessage(message);
   m_lastStartTime = Simulator::Now();
   ScheduleNextTx(); // Schedule the send packet event
 }
@@ -229,7 +230,7 @@ void DeviceEnforcer::ScheduleNextTx() {
     m_sendEvent =
         Simulator::Schedule(nextTime, &DeviceEnforcer::SendPacket, this);
   } else { // All done, cancel any pending events
-    StopApplication();
+    // StopApplication();
   }
 }
 
@@ -313,9 +314,63 @@ void DeviceEnforcer::ConnectionFailed(Ptr<Socket> socket) {
   NS_FATAL_ERROR("Can't connect");
 }
 
+void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
+  NS_LOG_FUNCTION(this << socket);
+  NS_LOG_INFO("Handling read zash device...");
+  Ptr<Packet> packet;
+  Address from;
+  string newBuffer;
+  while ((packet = socket->RecvFrom(from))) {
+    if (packet->GetSize() == 0) { // EOF
+      break;
+    }
+
+    newBuffer.clear();
+    uint8_t *buffer = new uint8_t[packet->GetSize()];
+    packet->CopyData(buffer, packet->GetSize());
+    newBuffer = (char *)buffer;
+    size_t endOfMsg = newBuffer.find("]");
+    newBuffer = newBuffer.substr(0, endOfMsg + 1).c_str();
+
+    NS_LOG_INFO("Received packet from "
+                << InetSocketAddress::ConvertFrom(from).GetIpv4()
+                << " with message = " << newBuffer);
+
+    if (InetSocketAddress::IsMatchingType(from)) {
+      NS_LOG_INFO("At time "
+                  << Simulator::Now().As(Time::S) << " packet sink received "
+                  << packet->GetSize() << " bytes from "
+                  << InetSocketAddress::ConvertFrom(from).GetIpv4() << " port "
+                  << InetSocketAddress::ConvertFrom(from).GetPort());
+    } else if (Inet6SocketAddress::IsMatchingType(from)) {
+      NS_LOG_INFO("At time "
+                  << Simulator::Now().As(Time::S) << " packet sink received "
+                  << packet->GetSize() << " bytes from "
+                  << Inet6SocketAddress::ConvertFrom(from).GetIpv6() << " port "
+                  << Inet6SocketAddress::ConvertFrom(from).GetPort());
+    }
+  }
+
+  if (newBuffer == "[Accepted]") {
+    NS_LOG_INFO(z_device_name
+                << "(" << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
+                << ") has changed!");
+
+  } else if (newBuffer == "[Refused]") {
+    NS_LOG_INFO(z_device_name
+                << "(" << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
+                << ") has NOT changed!");
+  }
+}
+
 //----------------------------------------------------------------------------------
 // ZASH Application Logic
 //----------------------------------------------------------------------------------
+
+void DeviceEnforcer::SetDeviceName(string dn) {
+  NS_LOG_FUNCTION(this << dn);
+  z_device_name = dn;
+}
 
 void DeviceEnforcer::SetMessage(string msg) {
   NS_LOG_FUNCTION(this << msg);
