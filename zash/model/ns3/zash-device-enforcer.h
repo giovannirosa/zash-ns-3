@@ -178,6 +178,22 @@ public:
    * \param socket the receiving socket
    */
   void HandleRead(Ptr<Socket> socket);
+  /**
+   * \brief Handle an incoming connection
+   * \param socket the incoming connection socket
+   * \param from the address the connection is from
+   */
+  void HandleAccept(Ptr<Socket> socket, const Address &from);
+  /**
+   * \brief Handle an connection close
+   * \param socket the connected socket
+   */
+  void HandlePeerClose(Ptr<Socket> socket);
+  /**
+   * \brief Handle an connection error
+   * \param socket the connected socket
+   */
+  void HandlePeerError(Ptr<Socket> socket);
 
   //----------------------------------------------------------------------------------
   // ZASH Application Logic

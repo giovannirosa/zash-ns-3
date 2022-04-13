@@ -397,7 +397,7 @@ int main(int argc, char *argv[]) {
   ZashServerApp->SetDevices(devices);
   ZashServerApp->SetUsers(users);
   ZashServerApp->SetDeviceComponent(deviceComponent);
-  ZashServerApp->SetStartTime(Seconds(start));
+  ZashServerApp->SetStartTime(Seconds(start + 1.0));
   ZashServerApp->SetStopTime(Seconds(stop));
   serverNode.Get(0)->AddApplication(ZashServerApp);
 
@@ -426,7 +426,10 @@ int main(int argc, char *argv[]) {
   // apNode.Get(0)->AddApplication(ZashRouterApp);
   // apNode.Get(0)->AddApplication(ZashRouterApp->zashPacketSender);
 
+  double startDevice = start + 2.0;
+  // for (uint32_t i = 7; i < 8; ++i) {
   for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
+
     Address nodeAddress(InetSocketAddress(staInterface.GetAddress(i), 9));
     Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
     DeviceEnforcerApp->SetAttribute("Protocol",
@@ -436,8 +439,9 @@ int main(int argc, char *argv[]) {
     DeviceEnforcerApp->SetAttribute("DataRate",
                                     DataRateValue(DataRate(dataRate)));
     DeviceEnforcerApp->SetDeviceName(devices[i]->name);
-    DeviceEnforcerApp->SetStartTime(Seconds(start));
+    DeviceEnforcerApp->SetStartTime(Seconds(startDevice));
     DeviceEnforcerApp->SetStopTime(Seconds(stop));
+    startDevice += 0.1;
     // DeviceEnforcerApp->SetMessage(request);
 
     Ptr<Node> node = staNodes.Get(i);
@@ -475,9 +479,9 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    if (csv.RowNumber() == 20) {
-      break;
-    }
+    // if (csv.RowNumber() == 20) {
+    //   break;
+    // }
 
     // Expecting vector
     vector<int> currentState(NUMBER_OF_DEVICES);
@@ -496,7 +500,7 @@ int main(int argc, char *argv[]) {
     time_t currentDate = strToTime(timeStr.c_str());
 
     if (difftime(firstDate, (time_t)(-1)) == 0) {
-      firstDate = currentDate - 10;
+      firstDate = currentDate - 20;
     }
 
     string actStr;
@@ -535,7 +539,6 @@ int main(int argc, char *argv[]) {
         NS_LOG_INFO("Device enforcer scheduled with message = " + request);
         Ptr<Node> node = staNodes.Get(change);
         Ptr<DeviceEnforcer> DeviceEnforcerApp = DynamicCast<DeviceEnforcer>(node->GetApplication(0));
-            // (Ptr<DeviceEnforcer>)node->GetApplication(0);
         Simulator::Schedule(Seconds(diff), &DeviceEnforcer::StartSending,
                             DeviceEnforcerApp, request);
         NS_LOG_INFO(devices[change]->name + " will change at " +

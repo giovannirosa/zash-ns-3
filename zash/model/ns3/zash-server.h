@@ -109,6 +109,7 @@ public:
    * \param socket the receiving socket
    */
   virtual void HandlePacket(string buffer, Ptr<Socket> socket);
+  bool HandleConnectRequest(Ptr<Socket> socket, const Address &from);
   /**
    * \brief Handle an incoming connection
    * \param socket the incoming connection socket

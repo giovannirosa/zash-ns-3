@@ -126,6 +126,8 @@ void DeviceEnforcer::DoDispose(void) {
 void DeviceEnforcer::StartApplication() // Called at time specified by Start
 {
   NS_LOG_FUNCTION(this);
+  NS_LOG_INFO("Starting " << z_device_name << " @"
+                          << Simulator::Now().As(Time::S));
 
   // Create the socket if not already
   if (!m_socket) {
@@ -152,7 +154,10 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
       NS_FATAL_ERROR("Failed to bind socket");
     }
 
-    m_socket->Connect(m_peer);
+    ret = m_socket->Connect(m_peer);
+    NS_LOG_INFO("Socket connect "
+                << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
+                << " return " << ret);
     m_socket->SetAllowBroadcast(true);
     // m_socket->ShutdownRecv();
 
@@ -162,6 +167,12 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
 
     m_socket->SetRecvCallback(MakeCallback(&DeviceEnforcer::HandleRead, this));
     m_socket->SetRecvPktInfo(true);
+    m_socket->SetAcceptCallback(
+        MakeNullCallback<bool, Ptr<Socket>, const Address &>(),
+        MakeCallback(&DeviceEnforcer::HandleAccept, this));
+    m_socket->SetCloseCallbacks(
+        MakeCallback(&DeviceEnforcer::HandlePeerClose, this),
+        MakeCallback(&DeviceEnforcer::HandlePeerError, this));
   }
   m_cbrRateFailSafe = m_cbrRate;
 
@@ -306,12 +317,14 @@ void DeviceEnforcer::SendPacket() {
 
 void DeviceEnforcer::ConnectionSucceeded(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
+  NS_LOG_INFO(z_device_name << " connected @" << Simulator::Now().As(Time::S));
   m_connected = true;
 }
 
 void DeviceEnforcer::ConnectionFailed(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
-  NS_FATAL_ERROR("Can't connect");
+  NS_FATAL_ERROR(z_device_name << " can't connect @"
+                               << Simulator::Now().As(Time::S));
 }
 
 void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
@@ -361,6 +374,19 @@ void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
                 << "(" << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
                 << ") has NOT changed!");
   }
+}
+
+void DeviceEnforcer::HandlePeerClose(Ptr<Socket> socket) {
+  NS_LOG_FUNCTION(this << socket);
+}
+
+void DeviceEnforcer::HandlePeerError(Ptr<Socket> socket) {
+  NS_LOG_FUNCTION(this << socket);
+}
+
+void DeviceEnforcer::HandleAccept(Ptr<Socket> s, const Address &from) {
+  NS_LOG_FUNCTION(this << s << InetSocketAddress::ConvertFrom(from).GetIpv4());
+  s->SetRecvCallback(MakeCallback(&DeviceEnforcer::HandleRead, this));
 }
 
 //----------------------------------------------------------------------------------

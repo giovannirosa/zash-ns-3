@@ -120,7 +120,7 @@ void ZashServer::StartApplication() // Called at time specified by Start
   m_socket->SetRecvCallback(MakeCallback(&ZashServer::HandleRead, this));
   m_socket->SetRecvPktInfo(true);
   m_socket->SetAcceptCallback(
-      MakeNullCallback<bool, Ptr<Socket>, const Address &>(),
+      MakeCallback(&ZashServer::HandleConnectRequest, this),
       MakeCallback(&ZashServer::HandleAccept, this));
   m_socket->SetCloseCallbacks(MakeCallback(&ZashServer::HandlePeerClose, this),
                               MakeCallback(&ZashServer::HandlePeerError, this));
@@ -250,8 +250,14 @@ void ZashServer::HandlePeerError(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
 }
 
+bool ZashServer::HandleConnectRequest(Ptr<Socket> socket, const Address &from) {
+  NS_LOG_FUNCTION(this << socket
+                       << InetSocketAddress::ConvertFrom(from).GetIpv4());
+  return true;
+}
+
 void ZashServer::HandleAccept(Ptr<Socket> s, const Address &from) {
-  NS_LOG_FUNCTION(this << s << from);
+  NS_LOG_FUNCTION(this << s << InetSocketAddress::ConvertFrom(from).GetIpv4());
   s->SetRecvCallback(MakeCallback(&ZashServer::HandleRead, this));
   m_socketList.push_back(s);
 }
