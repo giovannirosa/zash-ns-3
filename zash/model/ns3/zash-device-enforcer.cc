@@ -125,6 +125,7 @@ void DeviceEnforcer::DoDispose(void) {
 // Application Methods
 void DeviceEnforcer::StartApplication() // Called at time specified by Start
 {
+  NS_LOG_INFO("=======================================================");
   NS_LOG_FUNCTION(this);
   NS_LOG_INFO("Starting " << z_device_name << " @"
                           << Simulator::Now().As(Time::S));
@@ -134,6 +135,9 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
     m_socket = Socket::CreateSocket(GetNode(), m_tid);
     int ret = -1;
 
+    NS_LOG_INFO("Socket bind "
+                << InetSocketAddress::ConvertFrom(m_local).GetIpv4() << " to "
+                << InetSocketAddress::ConvertFrom(m_peer).GetIpv4());
     if (!m_local.IsInvalid()) {
       NS_ABORT_MSG_IF((Inet6SocketAddress::IsMatchingType(m_peer) &&
                        InetSocketAddress::IsMatchingType(m_local)) ||
@@ -151,7 +155,7 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
     }
 
     if (ret == -1) {
-      NS_FATAL_ERROR("Failed to bind socket");
+      NS_FATAL_ERROR("Failed to bind socket = " << m_socket->GetErrno());
     }
 
     ret = m_socket->Connect(m_peer);
@@ -187,10 +191,15 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
 void DeviceEnforcer::StopApplication() // Called at time specified by Stop
 {
   NS_LOG_FUNCTION(this);
+  NS_LOG_INFO("Stopping " << z_device_name << " @"
+                          << Simulator::Now().As(Time::S));
 
   CancelEvents();
   if (m_socket != 0) {
-    m_socket->Close();
+    int ret = m_socket->Close();
+    NS_LOG_INFO("Socket closed "
+                << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
+                << " return " << ret);
   } else {
     NS_LOG_WARN("DeviceEnforcer found null socket to close in StopApplication");
   }
@@ -219,7 +228,8 @@ void DeviceEnforcer::CancelEvents() {
 
 // Event handlers
 void DeviceEnforcer::StartSending(string message) {
-  NS_LOG_FUNCTION(this << message);
+  NS_LOG_INFO("=======================================================");
+  NS_LOG_FUNCTION(this);
   SetMessage(message);
   m_lastStartTime = Simulator::Now();
   ScheduleNextTx(); // Schedule the send packet event
@@ -323,8 +333,8 @@ void DeviceEnforcer::ConnectionSucceeded(Ptr<Socket> socket) {
 
 void DeviceEnforcer::ConnectionFailed(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
-  NS_FATAL_ERROR(z_device_name << " can't connect @"
-                               << Simulator::Now().As(Time::S));
+  NS_FATAL_ERROR(z_device_name << " can't connect " << socket->GetErrno()
+                               << " @" << Simulator::Now().As(Time::S));
 }
 
 void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {

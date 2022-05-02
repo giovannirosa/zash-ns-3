@@ -193,13 +193,9 @@ public:
   //----------------------------------------------------------------------------------
 
   void SetDeviceComponent(DeviceComponent *dc);
-  void SetDevices(vector<Device *> d);
-  void SetUsers(vector<User *> u);
 
 private:
   DeviceComponent *deviceComponent;
-  vector<Device *> devices;
-  vector<User *> users;
 };
 
 } // namespace ns3

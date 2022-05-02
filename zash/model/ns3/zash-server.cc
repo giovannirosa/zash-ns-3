@@ -271,16 +271,6 @@ void ZashServer::SetDeviceComponent(DeviceComponent *dc) {
   deviceComponent = dc;
 }
 
-void ZashServer::SetDevices(vector<Device *> d) {
-  NS_LOG_FUNCTION(this << d);
-  devices = d;
-}
-
-void ZashServer::SetUsers(vector<User *> u) {
-  NS_LOG_FUNCTION(this << u);
-  users = u;
-}
-
 void ZashServer::HandlePacket(string buffer, Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << buffer);
   if (!buffer.empty()) {
@@ -289,8 +279,8 @@ void ZashServer::HandlePacket(string buffer, Ptr<Socket> socket) {
     vector<string> tokens = strTokenize(buffer);
 
     int reqId = stoi(tokens[0]);
-    Device *device = devices[stoi(tokens[1])];
-    User *user = users[stoi(tokens[2])];
+    Device *device = deviceComponent->authorizationComponent->configurationComponent->devices[stoi(tokens[1])];
+    User *user = deviceComponent->authorizationComponent->configurationComponent->users[stoi(tokens[2])];
     Context *context = new Context(enums::AccessWay.at(tokens[3]),
                                    enums::Localization.at(tokens[4]),
                                    enums::Group.at(tokens[5]));
