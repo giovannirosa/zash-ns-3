@@ -544,7 +544,7 @@ int main(int argc, char *argv[]) {
   // 40mx28m
   AnimationInterface anim("animation.xml");
   anim.SetBackgroundImage(
-      "/home/grosa/Dev/ns-allinone-3.35/ns-3.35/scratch/home-design.png", 0, 0,
+      "/home/grosa/Dev/ns-allinone-3.35/ns-3.35/data/home-design.png", 0, 0,
       0.07, 0.07, 1.0);
   for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
     Ptr<Node> node = staNodes.Get(i);
