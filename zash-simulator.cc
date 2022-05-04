@@ -327,16 +327,19 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
     }
 
     if (lastState.size() > 0) {
-      vector<int> changes;
+      vector<uint32_t> changes;
 
-      for (int i = 0; i < NUMBER_OF_DEVICES; ++i) {
+      for (uint32_t i = 0; i < NUMBER_OF_DEVICES; ++i) {
         if (lastState[i] != currentState[i]) {
           changes.push_back(i);
         }
       }
 
       double diff = difftime(currentDate, firstDate);
-      for (int change : changes) {
+      for (uint32_t change : changes) {
+        if (change > staNodes.GetN() - 1) {
+          continue;
+        }
         NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
 
         string request = "[" + to_string(++idReq) + "," + to_string(change) +
