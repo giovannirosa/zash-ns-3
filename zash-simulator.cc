@@ -241,7 +241,8 @@ void appsConfiguration(Ipv4InterfaceContainer serverApInterface,
   // Create a server to receive these packets
   // Start at 0s
   // Stop at final
-  Address serverAddress(InetSocketAddress(serverApInterface.GetAddress(0), 9));
+  Address serverAddress(
+      InetSocketAddress(serverApInterface.GetAddress(0), 50000));
   Ptr<ZashServer> ZashServerApp = CreateObject<ZashServer>();
   ZashServerApp->SetAttribute("Protocol",
                               TypeIdValue(TcpSocketFactory::GetTypeId()));
@@ -257,7 +258,7 @@ void appsConfiguration(Ipv4InterfaceContainer serverApInterface,
   double startDevice = start + 1.0;
   for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
 
-    Address nodeAddress(InetSocketAddress(staInterface.GetAddress(i), 9));
+    Address nodeAddress(InetSocketAddress(staInterface.GetAddress(i), 50000));
     Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
     DeviceEnforcerApp->SetAttribute("Protocol",
                                     TypeIdValue(TcpSocketFactory::GetTypeId()));
@@ -384,12 +385,12 @@ int main(int argc, char *argv[]) {
                      BooleanValue(true));
   double start = 0.0;
   double stop = 200.0;
-  uint32_t N = NUMBER_OF_DEVICES; // number of nodes in the star
-  uint32_t payloadSize = 1448;    /* Transport layer payload size in bytes. */
-  string dataRate = "100Mbps";    /* Application layer datarate. */
-  string phyRate = "HtMcs7";      /* Physical layer bitrate. */
-  double simulationTime = stop;   /* Simulation time in seconds. */
-  bool pcapTracing = false;       /* PCAP Tracing is enabled or not. */
+  uint32_t N = NUMBER_OF_DEVICES;               // number of nodes in the star
+  uint32_t payloadSize = 1448;  /* Transport layer payload size in bytes. */
+  string dataRate = "100Mbps";  /* Application layer datarate. */
+  string phyRate = "HtMcs7";    /* Physical layer bitrate. */
+  double simulationTime = stop; /* Simulation time in seconds. */
+  bool pcapTracing = false;     /* PCAP Tracing is enabled or not. */
 
   // Allow the user to override any of the defaults and the above
   // Config::SetDefault()s at run-time, via command-line arguments
@@ -402,8 +403,8 @@ int main(int argc, char *argv[]) {
   cmd.AddValue("pcap", "Enable/disable PCAP Tracing", pcapTracing);
   cmd.Parse(argc, argv);
 
-  Config::SetDefault("ns3::TcpL4Protocol::SocketType",
-                     TypeIdValue(TypeId::LookupByName("ns3::TcpNewReno")));
+  // Config::SetDefault("ns3::TcpL4Protocol::SocketType",
+  //                    TypeIdValue(TypeId::LookupByName("ns3::TcpNewReno")));
 
   /* Configure TCP Options */
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(payloadSize));
@@ -415,20 +416,29 @@ int main(int argc, char *argv[]) {
   WifiMacHelper wifiMac;
   WifiHelper wifiHelper;
   wifiHelper.SetStandard(WIFI_STANDARD_80211n_2_4GHZ);
+  Config::SetDefault("ns3::LogDistancePropagationLossModel::ReferenceLoss",
+                     DoubleValue(40.046));
 
   /* Set up Legacy Channel */
-  YansWifiChannelHelper wifiChannel;
-  wifiChannel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-  wifiChannel.AddPropagationLoss("ns3::FriisPropagationLossModel", "Frequency",
-                                 DoubleValue(5e9));
+  YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
+  // wifiChannel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
+  // wifiChannel.AddPropagationLoss("ns3::FriisPropagationLossModel",
+  // "Frequency",
+  //                                DoubleValue(5e9));
 
   /* Setup Physical Layer */
   YansWifiPhyHelper wifiPhy;
   wifiPhy.SetChannel(wifiChannel.Create());
-  wifiPhy.SetErrorRateModel("ns3::YansErrorRateModel");
-  wifiHelper.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode",
-                                     StringValue(phyRate), "ControlMode",
-                                     StringValue(phyRate));
+  // Set MIMO capabilities
+  wifiPhy.Set("Antennas", UintegerValue(4));
+  wifiPhy.Set("MaxSupportedTxSpatialStreams", UintegerValue(4));
+  wifiPhy.Set("MaxSupportedRxSpatialStreams", UintegerValue(4));
+  // wifiPhy.SetErrorRateModel("ns3::YansErrorRateModel");
+  // wifiHelper.SetRemoteStationManager("ns3::AarfWifiManager");
+  wifiHelper.SetRemoteStationManager("ns3::IdealWifiManager");
+  // wifiHelper.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode",
+  //                                    StringValue(phyRate), "ControlMode",
+  //                                    StringValue("ErpOfdmRate24Mbps"));
 
   // Here, we will create N nodes in a star.
   NS_LOG_INFO("Create nodes.");
