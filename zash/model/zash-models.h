@@ -66,8 +66,11 @@ public:
   enums::Enum *deviceClass;
   int room;
   bool active;
+  int ap;
+  int pos;
   Device();
   Device(int i, string n, enums::Enum *dc, int r, bool a);
+  Device(int i, string n, enums::Enum *dc, int r, bool a, int apv, int p);
 
   friend ostream &operator<<(ostream &out, Device const &d) {
     out << "Device[" << d.id << "," << d.name << "," << d.deviceClass->key

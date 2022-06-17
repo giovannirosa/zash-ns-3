@@ -92,4 +92,47 @@ vector<string> strTokenize(string buffer) {
   return tokens;
 }
 
+string getTimeOfSimulationStart() {
+  time_t now = time(0);
+  tm *ltm = localtime(&now);
+  ostringstream convert;
+
+  if (ltm->tm_mday < 10)
+    convert << "0";
+  convert << ltm->tm_mday;
+
+  if ((ltm->tm_mon + 1) < 10)
+    convert << "0";
+  convert << ltm->tm_mon + 1;
+
+  convert << 1900 + ltm->tm_year << "_";
+
+  if (ltm->tm_hour < 10)
+    convert << "0";
+  convert << ltm->tm_hour;
+
+  if (ltm->tm_min < 10)
+    convert << "0";
+  convert << ltm->tm_min << endl << endl;
+
+  return convert.str();
+}
+
+void createFile(string fileName, string simDate,
+                           string content) {
+  ofstream fileSimRec;
+  fileSimRec.open(fileName.c_str());
+  fileSimRec << "**** ZASH file ****" << endl << endl;
+  fileSimRec << "Date: " << simDate.substr(0, 8).c_str() << " - "
+             << simDate.substr(9, 2).c_str() << ":"
+             << simDate.substr(11, 2).c_str() << "hs" << endl
+             << endl;
+
+  fileSimRec << content.c_str();
+
+  // Close scenario simulation configuration file
+  fileSimRec << "**** End of ZASH file ****" << endl;
+  fileSimRec.close();
+}
+
 } // namespace ns3

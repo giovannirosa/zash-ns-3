@@ -33,6 +33,15 @@ Device::Device(int i, string n, enums::Enum *dc, int r, bool a) {
   room = r;
   active = a;
 }
+Device::Device(int i, string n, enums::Enum *dc, int r, bool a, int apv, int p) {
+  id = i;
+  name = n;
+  deviceClass = dc;
+  room = r;
+  active = a;
+  ap = apv;
+  pos = p;
+}
 
 Request::Request() {}
 Request::Request(int i, Device *d, User *u, Context *c, enums::Enum *a) {

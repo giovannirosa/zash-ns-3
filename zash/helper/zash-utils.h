@@ -2,6 +2,7 @@
 #define UTILS
 
 #include <charconv>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -81,7 +82,20 @@ string vecToStr(vector<enums::Enum *> v);
  */
 string vecToStr(vector<int> v);
 
+/*
+ * Format from string to vector of strings using comma as delimiter
+ * \param buffer string
+ * \returns vector of strings
+ */
 vector<string> strTokenize(string buffer);
+
+/*
+ * Get current local time formatted to string
+ * \returns formatted current time
+ */
+string getTimeOfSimulationStart();
+
+void createFile(string fileName, string simDate, string content);
 
 } // namespace ns3
 

@@ -136,8 +136,8 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
     int ret = -1;
 
     NS_LOG_INFO("Socket bind "
-                << InetSocketAddress::ConvertFrom(m_local).GetIpv4() << " to "
-                << InetSocketAddress::ConvertFrom(m_peer).GetIpv4());
+                << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6() << " to "
+                << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6());
     if (!m_local.IsInvalid()) {
       NS_ABORT_MSG_IF((Inet6SocketAddress::IsMatchingType(m_peer) &&
                        InetSocketAddress::IsMatchingType(m_local)) ||
@@ -160,7 +160,7 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
 
     ret = m_socket->Connect(m_peer);
     NS_LOG_INFO("Socket connect "
-                << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
+                << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6()
                 << " return " << ret);
     m_socket->SetAllowBroadcast(true);
     // m_socket->ShutdownRecv();
@@ -198,7 +198,7 @@ void DeviceEnforcer::StopApplication() // Called at time specified by Stop
   if (m_socket != 0) {
     int ret = m_socket->Close();
     NS_LOG_INFO("Socket closed "
-                << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
+                << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6()
                 << " return " << ret);
   } else {
     NS_LOG_WARN("DeviceEnforcer found null socket to close in StopApplication");
@@ -283,8 +283,8 @@ void DeviceEnforcer::SendPacket() {
   }
 
   NS_LOG_INFO("Sending packet from "
-              << InetSocketAddress::ConvertFrom(m_local).GetIpv4() << " to "
-              << InetSocketAddress::ConvertFrom(m_peer).GetIpv4());
+              << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6() << " to "
+              << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6());
 
   int actual = m_socket->Send(packet);
   if ((unsigned)actual == m_pktSize) {
@@ -302,7 +302,7 @@ void DeviceEnforcer::SendPacket() {
                              << InetSocketAddress::ConvertFrom(m_peer).GetPort()
                              << " total Tx " << m_totBytes << " bytes");
       m_txTraceWithAddresses(packet, localAddress,
-                             InetSocketAddress::ConvertFrom(m_peer));
+                             Inet6SocketAddress::ConvertFrom(m_peer));
     } else if (Inet6SocketAddress::IsMatchingType(m_peer)) {
       NS_LOG_INFO("At time "
                   << Simulator::Now().As(Time::S) << " on-off application sent "
@@ -356,7 +356,7 @@ void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
     newBuffer = newBuffer.substr(0, endOfMsg + 1).c_str();
 
     NS_LOG_INFO("Received packet from "
-                << InetSocketAddress::ConvertFrom(from).GetIpv4()
+                << Inet6SocketAddress::ConvertFrom(from).GetIpv6()
                 << " with message = " << newBuffer);
 
     if (InetSocketAddress::IsMatchingType(from)) {
@@ -376,12 +376,12 @@ void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
 
   if (newBuffer == "[Accepted]") {
     NS_LOG_INFO(z_device_name
-                << "(" << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
+                << "(" << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
                 << ") has changed!");
 
   } else if (newBuffer == "[Refused]") {
     NS_LOG_INFO(z_device_name
-                << "(" << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
+                << "(" << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
                 << ") has NOT changed!");
   }
 }
@@ -395,7 +395,7 @@ void DeviceEnforcer::HandlePeerError(Ptr<Socket> socket) {
 }
 
 void DeviceEnforcer::HandleAccept(Ptr<Socket> s, const Address &from) {
-  NS_LOG_FUNCTION(this << s << InetSocketAddress::ConvertFrom(from).GetIpv4());
+  NS_LOG_FUNCTION(this << s << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
   s->SetRecvCallback(MakeCallback(&DeviceEnforcer::HandleRead, this));
 }
 
