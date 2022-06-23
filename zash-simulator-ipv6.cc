@@ -129,7 +129,8 @@ public:
   }
 };
 
-DeviceComponent *buildServerStructure(stringstream &fileSim) {
+DeviceComponent *buildServerStructure(stringstream &fileSim, string simDate,
+                                      string tracesFolder) {
   vector<User *> users = {
       new User(1, enums::UserLevel.at("ADMIN"), enums::Age.at("ADULT")),
       new User(2, enums::UserLevel.at("ADULT"), enums::Age.at("ADULT")),
@@ -275,7 +276,7 @@ DeviceComponent *buildServerStructure(stringstream &fileSim) {
   }
 
   // Audit Module
-  AuditComponent *auditModule = new AuditComponent();
+  AuditComponent *auditModule = new AuditComponent(simDate, tracesFolder);
 
   // Behavior Module
   int blockThreshold = 3;
@@ -348,7 +349,7 @@ void appsConfiguration(Ipv6InterfaceContainer serverApInterface,
     DeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
     DeviceEnforcerApp->SetAttribute("DataRate",
                                     DataRateValue(DataRate(dataRate)));
-    DeviceEnforcerApp->SetDeviceName(devices[i]->name);
+    DeviceEnforcerApp->SetDevice(devices[i]);
     DeviceEnforcerApp->SetStartTime(Seconds(startDevice));
     DeviceEnforcerApp->SetStopTime(Seconds(stop));
     startDevice += 0.2;
@@ -382,6 +383,7 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
   CsvReader csv(dataset);
   vector<int> lastState;
   time_t firstDate = (time_t)(-1);
+  int count = 0;
   while (csv.FetchNextRow()) {
     // NS_LOG_INFO("Processing row " << csv.RowNumber() << "...");
     fileMsgs << "Processing row " << csv.RowNumber() << "..." << endl;
@@ -449,6 +451,7 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
             DynamicCast<DeviceEnforcer>(node->GetApplication(0));
         Simulator::Schedule(Seconds(diff), &DeviceEnforcer::StartSending,
                             DeviceEnforcerApp, request);
+        count++;
         // NS_LOG_INFO(devices[change]->name << " will change at " << diff
         //                                   << " seconds");
         fileMsgs << devices[change]->name << " will change at " << diff
@@ -460,6 +463,8 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
     }
     lastState = currentState;
   }
+
+  NS_LOG_INFO("Count of messages = " << count << endl);
 }
 
 int main(int argc, char *argv[]) {
@@ -483,6 +488,7 @@ int main(int argc, char *argv[]) {
   Config::SetDefault("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents",
                      BooleanValue(true));
   double start = 0.0;
+  // double stop = 86400.0;
   double stop = 200.0;
   uint32_t N = NUMBER_OF_DEVICES; // number of nodes in the star
   uint32_t payloadSize = 1448;    /* Transport layer payload size in bytes. */
@@ -537,6 +543,14 @@ int main(int argc, char *argv[]) {
   dir = mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   if (dir == -1)
     cout << "Fail creating sub directory for specific traces!" << dir << endl;
+
+  NS_LOG_INFO(tracesFolder);
+
+  string messagesFolder = tracesFolder + "messages/";
+  // Creates a directory for messages simulation
+  dir = mkdir(messagesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (dir == -1)
+    cout << "Fail creating sub directory for messages traces!" << dir << endl;
 
   ostringstream convert;
   convert << tracesFolder.c_str() << "zash_simulation_scenario_"
@@ -606,7 +620,7 @@ int main(int argc, char *argv[]) {
 
   NodeContainer serverAp = NodeContainer(serverNode.Get(0), apNode.Get(0));
   CsmaHelper csma;
-  csma.SetChannelAttribute("DataRate", StringValue("500Mbps"));
+  csma.SetChannelAttribute("DataRate", StringValue("100Mbps"));
   csma.SetChannelAttribute("Delay", StringValue("1ms"));
   NetDeviceContainer serverApDevice = csma.Install(serverAp);
 
@@ -679,13 +693,15 @@ int main(int argc, char *argv[]) {
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  DeviceComponent *deviceComponent = buildServerStructure(fileSim);
+  DeviceComponent *deviceComponent =
+      buildServerStructure(fileSim, simDate, tracesFolder);
 
   // NS_LOG_INFO(deviceComponent);
 
   vector<Device *> devices =
       deviceComponent->authorizationComponent->configurationComponent->devices;
   DataComponent *dataComponent = deviceComponent->dataComponent;
+  AuditComponent *auditComponent = deviceComponent->auditComponent;
 
   //----------------------------------------------------------------------------------
   // Applications configuration
@@ -706,6 +722,26 @@ int main(int argc, char *argv[]) {
 
   createFile(scenarioSimFile.c_str(), simDate, fileSim.str());
   createFile(messagesSimFile.c_str(), simDate, fileMsgs.str());
+
+  // Callback Trace to Collect Messages in Device Enforcer Application
+  for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
+    if (i == 7) {
+      continue;
+    }
+    Ptr<Node> node = staNodes.Get(i);
+    Ptr<DeviceEnforcer> DeviceEnforcerApp =
+        DynamicCast<DeviceEnforcer>(node->GetApplication(0));
+    ostringstream paramTest;
+    paramTest << "/NodeList/" << (DeviceEnforcerApp->z_device->id)
+              << "/ApplicationList/*/$ns3::DeviceEnforcer/Traces";
+    DeviceEnforcerApp->m_traces.Connect(
+        MakeCallback(&AuditComponent::deviceEnforcerCallback, auditComponent),
+        paramTest.str());
+    // Config::Connect(
+    //     paramTest.str(),
+    //     MakeCallback(&AuditComponent::deviceEnforcerCallback,
+    //     auditComponent));
+  }
 
   /* Enable Traces */
   if (pcapTracing) {
