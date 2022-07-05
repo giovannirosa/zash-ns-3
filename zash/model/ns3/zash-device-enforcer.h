@@ -152,6 +152,9 @@ public:
   TracedCallback<Ptr<const Packet>, const Address &, const Address &>
       m_txTraceWithAddresses;
 
+  TracedCallback<Ipv6Address, Ipv6Address, string>
+      m_traces; //!< Traced Callback: messages
+
   /// Callback for tracing the packet Tx events, includes source, destination,
   /// the packet sent, and header
   TracedCallback<Ptr<const Packet>, const Address &, const Address &,
@@ -201,11 +204,11 @@ public:
 
   void SetMessage(string msg);
 
-  void SetDeviceName(string dn);
+  void SetDevice(Device *d);
 
   string z_message;
 
-  string z_device_name;
+  Device *z_device;
 };
 
 } // namespace ns3

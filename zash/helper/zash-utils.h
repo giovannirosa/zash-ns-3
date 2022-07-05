@@ -7,6 +7,7 @@
 #include <sstream>
 
 #include "ns3/zash-enums.h"
+// #include "ns3/zash-audit.h"
 
 using namespace std;
 
@@ -95,6 +96,12 @@ vector<string> strTokenize(string buffer);
  */
 string getTimeOfSimulationStart();
 
+/*
+ * Create file and store its content
+ * \param fileName string
+ * \param simDate string
+ * \param content string
+ */
 void createFile(string fileName, string simDate, string content);
 
 } // namespace ns3

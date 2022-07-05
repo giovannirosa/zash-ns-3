@@ -29,9 +29,15 @@
 // - Primary traffic goes from the nodes to the local server through the AP
 // - The local server responds to the node through the AP
 
+#include "sys/stat.h"
+#include "sys/types.h"
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string>
 
 #include "ns3/applications-module.h"
@@ -42,6 +48,8 @@
 #include "ns3/flow-monitor.h"
 #include "ns3/internet-module.h"
 #include "ns3/ipv4-global-routing-helper.h"
+#include "ns3/ipv6-routing-table-entry.h"
+#include "ns3/ipv6-static-routing-helper.h"
 #include "ns3/mobility-helper.h"
 #include "ns3/mobility-model.h"
 #include "ns3/netanim-module.h"
@@ -74,13 +82,118 @@ using namespace std;
 
 NS_LOG_COMPONENT_DEFINE("ZASH");
 
-DeviceComponent *buildServerStructure() {
+/**
+ * \class StackHelper
+ * \brief Helper to set or get some IPv6 information about nodes.
+ */
+// class StackHelper {
+// public:
+//   /**
+//    * \brief Add an address to a IPv6 node.
+//    * \param n node
+//    * \param interface interface index
+//    * \param address IPv6 address to add
+//    */
+//   inline void AddAddress(Ptr<Node> &n, uint32_t interface,
+//                          Ipv6Address address) {
+//     Ptr<Ipv6> ipv6 = n->GetObject<Ipv6>();
+//     ipv6->AddAddress(interface, address);
+//   };
+
+//   /**
+//    * \brief Print the routing table.
+//    * \param n the node
+//    */
+//   inline void PrintRoutingTable(Ptr<Node> &n) {
+//     Ptr<Ipv6StaticRouting> routing = 0;
+//     Ipv6StaticRoutingHelper routingHelper;
+//     Ptr<Ipv6> ipv6 = n->GetObject<Ipv6>();
+//     uint32_t nbRoutes = 0;
+//     Ipv6RoutingTableEntry route;
+
+//     routing = routingHelper.GetStaticRouting(ipv6);
+
+//     std::cout << "Routing table of " << n << " : " << std::endl;
+//     std::cout << "Destination\t"
+//               << "Gateway\t"
+//               << "Interface\t"
+//               << "Prefix to use" << std::endl;
+
+//     nbRoutes = routing->GetNRoutes();
+//     for (uint32_t i = 0; i < nbRoutes; i++) {
+//       route = routing->GetRoute(i);
+//       std::cout << route.GetDest() << "\t" << route.GetGateway() << "\t"
+//                 << route.GetInterface() << "\t" << route.GetPrefixToUse()
+//                 << "\t" << std::endl;
+//     }
+//   }
+// }
+
+AuditComponent *createAudit() {
+  string tracesFolder;
+  string simDate = getTimeOfSimulationStart();
+
+  tracesFolder = "zash_traces/";
+  errno = 0;
+  int dir = mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (dir < 0 && errno != EEXIST)
+    cout << "Fail creating directory for traces!" << endl;
+
+  tracesFolder.append(simDate + "/");
+
+  // Creates a directory for specific simulation
+  dir = mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (dir == -1)
+    cout << "Fail creating sub directory for specific traces!" << dir << endl;
+
+  NS_LOG_INFO(tracesFolder);
+  // Audit Module
+  AuditComponent *auditModule =
+      new AuditComponent(simDate, tracesFolder);
+
+  string messagesFolder = tracesFolder + "messages/";
+  // Creates a directory for messages simulation
+  dir = mkdir(messagesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (dir == -1)
+    cout << "Fail creating sub directory for messages traces!" << dir << endl;
+
+  ostringstream convert;
+  convert << tracesFolder.c_str() << "zash_simulation_scenario_"
+          << auditModule->simDate << ".txt";
+  auditModule->scenarioSimFile = convert.str();
+
+  ostringstream convert2;
+  convert2 << tracesFolder.c_str() << "zash_simulation_messages_"
+           << auditModule->simDate << ".txt";
+  auditModule->messagesSimFile = convert2.str();
+
+  ostringstream convert3;
+  convert3 << tracesFolder.c_str() << "zash_simulation_metrics_"
+           << auditModule->simDate << ".txt";
+  auditModule->metricsSimFile = convert3.str();
+
+  // Save start seed in file
+  // fileSim << "Start seed: " << seed << endl << endl;
+
+  return auditModule;
+}
+
+DeviceComponent *buildServerStructure(AuditComponent *auditModule) {
   vector<User *> users = {
       new User(1, enums::UserLevel.at("ADMIN"), enums::Age.at("ADULT")),
       new User(2, enums::UserLevel.at("ADULT"), enums::Age.at("ADULT")),
       new User(3, enums::UserLevel.at("CHILD"), enums::Age.at("TEEN")),
       new User(4, enums::UserLevel.at("CHILD"), enums::Age.at("KID")),
       new User(5, enums::UserLevel.at("VISITOR"), enums::Age.at("ADULT"))};
+
+  auditModule->fileSim << "Users of simulation are " << users.size() << ":"
+                       << endl;
+  for (User *user : users) {
+    auditModule->fileSim << *user << endl;
+    if (user->userLevel == enums::UserLevel.at("ADMIN")) {
+      ++auditModule->adminNumber;
+    }
+  }
 
   vector<Device *> devices = {
       new Device(1, "Wardrobe", enums::DeviceClass.at("NONCRITICAL"),
@@ -143,6 +256,18 @@ DeviceComponent *buildServerStructure() {
                  enums::BATHROOM, false) // bathroomCarp
   };
 
+  auditModule->fileSim << "Devices of simulation are " << devices.size() << ":"
+                       << endl;
+  for (Device *device : devices) {
+    auditModule->fileSim << *device << endl;
+    if (device->deviceClass == enums::DeviceClass.at("CRITICAL")) {
+      ++auditModule->criticalNumber;
+    }
+  }
+
+  auditModule->privacyRisk =
+      auditModule->adminNumber * auditModule->criticalNumber;
+
   vector<enums::Enum *> visitorCriticalCap = {};
   Ontology *visitorCritical =
       new Ontology(enums::UserLevel.at("VISITOR"),
@@ -203,12 +328,23 @@ DeviceComponent *buildServerStructure() {
       visitorCritical,    childCritical,    adultCritical,    adminCritical,
       visitorNonCritical, childNonCritical, adultNonCritical, adminNonCritical};
 
-  // Audit Module
-  AuditComponent *auditModule = new AuditComponent();
+  auditModule->fileSim << "Ontologies of simulation are " << ontologies.size()
+                       << ":" << endl;
+  for (Ontology *ontology : ontologies) {
+    auditModule->fileSim << *ontology << endl;
+  }
 
   // Behavior Module
-  ConfigurationComponent *configurationComponent =
-      new ConfigurationComponent(3, 24, 32, devices, users, ontologies);
+  int blockThreshold = 3;
+  int blockInterval = 24;
+  int buildInterval = 32;
+  ConfigurationComponent *configurationComponent = new ConfigurationComponent(
+      blockThreshold, blockInterval, buildInterval, devices, users, ontologies);
+  auditModule->fileSim << "Other configuration parameters of simulation are:"
+                       << endl;
+  auditModule->fileSim << "Block Threshold: " << blockThreshold << endl;
+  auditModule->fileSim << "Block Interval: " << blockInterval << endl;
+  auditModule->fileSim << "Build Interval: " << buildInterval << endl;
   NotificationComponent *notificationComponent =
       new NotificationComponent(configurationComponent);
 
@@ -230,19 +366,19 @@ DeviceComponent *buildServerStructure() {
       new DeviceComponent(authorizationComponent, dataComponent, auditModule);
 
   return deviceComponent;
-}
+};
 
-void appsConfiguration(Ipv4InterfaceContainer serverApInterface,
+void appsConfiguration(Ipv6InterfaceContainer serverApInterface,
                        DeviceComponent *deviceComponent, double start,
                        double stop, NodeContainer serverNode,
                        NodeContainer staNodes,
-                       Ipv4InterfaceContainer staInterface, string dataRate,
+                       Ipv6InterfaceContainer staInterface, string dataRate,
                        vector<Device *> devices) {
   // Create a server to receive these packets
   // Start at 0s
   // Stop at final
   Address serverAddress(
-      InetSocketAddress(serverApInterface.GetAddress(0), 50000));
+      Inet6SocketAddress(serverApInterface.GetAddress(0, 0), 50000));
   Ptr<ZashServer> ZashServerApp = CreateObject<ZashServer>();
   ZashServerApp->SetAttribute("Protocol",
                               TypeIdValue(TcpSocketFactory::GetTypeId()));
@@ -257,8 +393,12 @@ void appsConfiguration(Ipv4InterfaceContainer serverApInterface,
   // Stop at final
   double startDevice = start + 1.0;
   for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
+    if (i == 7) {
+      continue;
+    }
 
-    Address nodeAddress(InetSocketAddress(staInterface.GetAddress(i), 50000));
+    Address nodeAddress(
+        Inet6SocketAddress(staInterface.GetAddress(i, 0), 50000));
     Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
     DeviceEnforcerApp->SetAttribute("Protocol",
                                     TypeIdValue(TcpSocketFactory::GetTypeId()));
@@ -266,7 +406,7 @@ void appsConfiguration(Ipv4InterfaceContainer serverApInterface,
     DeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
     DeviceEnforcerApp->SetAttribute("DataRate",
                                     DataRateValue(DataRate(dataRate)));
-    DeviceEnforcerApp->SetDeviceName(devices[i]->name);
+    DeviceEnforcerApp->SetDevice(devices[i]);
     DeviceEnforcerApp->SetStartTime(Seconds(startDevice));
     DeviceEnforcerApp->SetStopTime(Seconds(stop));
     startDevice += 0.2;
@@ -278,21 +418,34 @@ void appsConfiguration(Ipv4InterfaceContainer serverApInterface,
 }
 
 void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
-                      DataComponent *dataComponent) {
+                      DataComponent *dataComponent,
+                      AuditComponent *auditModule) {
   int user = 0;
   string accessWay = "PERSONAL";
   string localization = "INTERNAL";
   string group = "ALONE";
   string action = "CONTROL";
+  auditModule->fileSim << "Devices interaction have the following properties: "
+                       << endl;
+  auditModule->fileSim << "User: " << user << endl;
+  auditModule->fileSim << "Access Way: " << accessWay << endl;
+  auditModule->fileSim << "Localization: " << localization << endl;
+  auditModule->fileSim << "Group: " << group << endl;
+  auditModule->fileSim << "Action: " << action << endl;
 
   int idReq = 0;
 
   NS_LOG_INFO("Opening dataset...");
-  CsvReader csv("data/d6_2m_0tm.csv");
+  string dataset = "data/d6_2m_0tm.csv";
+  auditModule->fileMsgs << "Dataset is: " << dataset << endl;
+  CsvReader csv(dataset);
   vector<int> lastState;
   time_t firstDate = (time_t)(-1);
+  int count = 0;
   while (csv.FetchNextRow()) {
-    NS_LOG_INFO("Processing row " + to_string(csv.RowNumber()) + "...");
+    // NS_LOG_INFO("Processing row " << csv.RowNumber() << "...");
+    auditModule->fileMsgs << "Processing row " << csv.RowNumber() << "..."
+                          << endl;
     // Ignore blank lines and header
     if (csv.RowNumber() == 1 || csv.IsBlankRow()) {
       continue;
@@ -321,7 +474,8 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
     string actStr;
     csv.GetValue(ACTIVITY_COL, actStr);
 
-    NS_LOG_INFO(vecToStr(currentState));
+    // NS_LOG_INFO(vecToStr(currentState));
+    auditModule->fileMsgs << vecToStr(currentState) << endl;
 
     if (currentState == lastState) {
       continue;
@@ -338,23 +492,30 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
 
       double diff = difftime(currentDate, firstDate);
       for (uint32_t change : changes) {
-        if (change > staNodes.GetN() - 1) {
+        if (change > staNodes.GetN() - 1 || change == 7) {
           continue;
         }
-        NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
+        // NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
+        auditModule->fileMsgs << formatTime(currentDate) << " - " << actStr
+                              << endl;
 
         string request = "[" + to_string(++idReq) + "," + to_string(change) +
                          "," + to_string(user) + "," + accessWay + "," +
                          localization + "," + group + "," + action + "," +
                          formatTime(currentDate) + "]";
-        NS_LOG_INFO("Device enforcer scheduled with message = " + request);
+        // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
+        auditModule->fileMsgs
+            << "Device enforcer scheduled with message = " << request << endl;
         Ptr<Node> node = staNodes.Get(change);
         Ptr<DeviceEnforcer> DeviceEnforcerApp =
             DynamicCast<DeviceEnforcer>(node->GetApplication(0));
         Simulator::Schedule(Seconds(diff), &DeviceEnforcer::StartSending,
                             DeviceEnforcerApp, request);
-        NS_LOG_INFO(devices[change]->name + " will change at " +
-                    to_string(diff) + " seconds");
+        count++;
+        // NS_LOG_INFO(devices[change]->name << " will change at " << diff
+        //                                   << " seconds");
+        auditModule->fileMsgs << devices[change]->name << " will change at "
+                              << diff << " seconds" << endl;
         diff += 0.2;
       }
     } else {
@@ -362,7 +523,9 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
     }
     lastState = currentState;
   }
-}
+
+  NS_LOG_INFO("Count of messages = " << count << endl);
+};
 
 int main(int argc, char *argv[]) {
   //----------------------------------------------------------------------------------
@@ -373,7 +536,8 @@ int main(int argc, char *argv[]) {
   LogComponentEnable("ZASH", LOG_LEVEL_ALL);
   LogComponentEnable("DeviceEnforcer", LOG_LEVEL_ALL);
   LogComponentEnable("ZashServer", LOG_LEVEL_ALL);
-  // LogComponentEnable("TcpSocketBase", LOG_LEVEL_INFO);
+  // LogComponentEnable("ArpL3Protocol", LOG_LEVEL_INFO);
+  LogComponentEnable("AuditComponent", LOG_LEVEL_INFO);
 
   //----------------------------------------------------------------------------------
   // Simulation variables
@@ -384,13 +548,14 @@ int main(int argc, char *argv[]) {
   Config::SetDefault("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents",
                      BooleanValue(true));
   double start = 0.0;
+  // double stop = 86400.0;
   double stop = 200.0;
-  uint32_t N = NUMBER_OF_DEVICES;               // number of nodes in the star
-  uint32_t payloadSize = 1448;  /* Transport layer payload size in bytes. */
-  string dataRate = "100Mbps";  /* Application layer datarate. */
-  string phyRate = "HtMcs7";    /* Physical layer bitrate. */
-  double simulationTime = stop; /* Simulation time in seconds. */
-  bool pcapTracing = false;     /* PCAP Tracing is enabled or not. */
+  uint32_t N = NUMBER_OF_DEVICES; // number of nodes in the star
+  uint32_t payloadSize = 1448;    /* Transport layer payload size in bytes. */
+  string dataRate = "100Mbps";    /* Application layer datarate. */
+  string phyRate = "HtMcs7";      /* Physical layer bitrate. */
+  double simulationTime = stop;   /* Simulation time in seconds. */
+  bool pcapTracing = false;       /* PCAP Tracing is enabled or not. */
 
   // Allow the user to override any of the defaults and the above
   // Config::SetDefault()s at run-time, via command-line arguments
@@ -409,15 +574,31 @@ int main(int argc, char *argv[]) {
   /* Configure TCP Options */
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(payloadSize));
 
+  // Config::SetDefault("ns3::ArpCache::DeadTimeout",
+  //                    TimeValue(MilliSeconds(500)));
+  // Config::SetDefault("ns3::ArpCache::WaitReplyTimeout",
+  //                    TimeValue(MilliSeconds(200)));
+  // Config::SetDefault("ns3::ArpCache::MaxRetries", UintegerValue(10));
+  // Config::SetDefault("ns3::ArpCache::PendingQueueSize",
+  //                    UintegerValue(NUMBER_OF_DEVICES));
+
+  //----------------------------------------------------------------------------------
+  // Create a directory for traces (zash_traces) inside ns3 directory
+  //----------------------------------------------------------------------------------
+
+  AuditComponent *auditModule = createAudit();
+
   //----------------------------------------------------------------------------------
   // Topology configuration
   //----------------------------------------------------------------------------------
 
   WifiMacHelper wifiMac;
   WifiHelper wifiHelper;
-  wifiHelper.SetStandard(WIFI_STANDARD_80211n_2_4GHZ);
+  WifiStandard wifiStandard = WIFI_STANDARD_80211n_2_4GHZ;
+  wifiHelper.SetStandard(wifiStandard);
   Config::SetDefault("ns3::LogDistancePropagationLossModel::ReferenceLoss",
                      DoubleValue(40.046));
+  auditModule->fileSim << "Wifi standard is " << wifiStandard << endl;
 
   /* Set up Legacy Channel */
   YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
@@ -430,25 +611,30 @@ int main(int argc, char *argv[]) {
   YansWifiPhyHelper wifiPhy;
   wifiPhy.SetChannel(wifiChannel.Create());
   // Set MIMO capabilities
-  wifiPhy.Set("Antennas", UintegerValue(4));
-  wifiPhy.Set("MaxSupportedTxSpatialStreams", UintegerValue(4));
-  wifiPhy.Set("MaxSupportedRxSpatialStreams", UintegerValue(4));
+  // wifiPhy.Set("Antennas", UintegerValue(4));
+  // wifiPhy.Set("MaxSupportedTxSpatialStreams", UintegerValue(4));
+  // wifiPhy.Set("MaxSupportedRxSpatialStreams", UintegerValue(4));
   // wifiPhy.SetErrorRateModel("ns3::YansErrorRateModel");
   // wifiHelper.SetRemoteStationManager("ns3::AarfWifiManager");
-  wifiHelper.SetRemoteStationManager("ns3::IdealWifiManager");
-  // wifiHelper.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode",
-  //                                    StringValue(phyRate), "ControlMode",
-  //                                    StringValue("ErpOfdmRate24Mbps"));
+  // wifiHelper.SetRemoteStationManager("ns3::IdealWifiManager");
+  wifiHelper.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode",
+                                     StringValue(phyRate), "ControlMode",
+                                     StringValue("ErpOfdmRate24Mbps"));
 
   // Here, we will create N nodes in a star.
   NS_LOG_INFO("Create nodes.");
+  uint32_t nServers = 1;
+  uint32_t nAps = 1;
   NodeContainer serverNode;
-  serverNode.Create(1);
+  serverNode.Create(nServers);
   NodeContainer apNode;
-  apNode.Create(1);
+  apNode.Create(nAps);
   NodeContainer staNodes;
   staNodes.Create(N);
   NodeContainer allNodes = NodeContainer(serverNode, apNode, staNodes);
+  auditModule->fileSim << "Number of servers is " << nServers << endl;
+  auditModule->fileSim << "Number of APs is " << nAps << endl;
+  auditModule->fileSim << "Number of STAs is " << N << endl;
 
   NodeContainer serverAp = NodeContainer(serverNode.Get(0), apNode.Get(0));
   CsmaHelper csma;
@@ -499,23 +685,37 @@ int main(int argc, char *argv[]) {
 
   // Later, we add IP addresses.
   NS_LOG_INFO("Assign IP Addresses.");
-  Ipv4AddressHelper address;
-  address.SetBase("192.168.0.0", "255.255.255.0");
-  Ipv4InterfaceContainer serverApInterface =
-      address.Assign(serverApDevice.Get(0));
-  Ipv4InterfaceContainer apInterface = address.Assign(bridgeDev);
-  Ipv4InterfaceContainer staInterface = address.Assign(staDevices);
+  Ipv6AddressHelper ipv6;
+  ipv6.SetBase(Ipv6Address("2001:1::"), Ipv6Prefix(64));
+  Ipv6InterfaceContainer serverApInterface = ipv6.Assign(serverApDevice);
+  serverApInterface.SetForwarding(1, true);
+  serverApInterface.SetDefaultRouteInAllNodes(1);
+  auditModule->fileSim << "Server IP is " << serverApInterface.GetAddress(0, 0)
+                       << endl;
+  Ipv6InterfaceContainer apInterface = ipv6.Assign(bridgeDev);
+  apInterface.SetForwarding(0, true);
+  apInterface.SetDefaultRouteInAllNodes(0);
+  auditModule->fileSim << "AP IP is " << apInterface.GetAddress(0, 0) << endl;
+  Ipv6InterfaceContainer staInterface = ipv6.Assign(staDevices);
+  staInterface.SetDefaultRouteInAllNodes(apInterface.GetAddress(0, 0));
+  auditModule->fileSim << "STA IP start with " << staInterface.GetAddress(0, 0)
+                       << endl;
 
   // Turn on global static routing
-  Ipv4GlobalRoutingHelper::PopulateRoutingTables();
+  // Ipv4GlobalRoutingHelper::PopulateRoutingTables();
+
+  // Ptr<Node> n0 = apNode.Get(0);
+
+  // StackHelper stackHelper;
+  // stackHelper.PrintRoutingTable(n0);
 
   //----------------------------------------------------------------------------------
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  DeviceComponent *deviceComponent = buildServerStructure();
+  DeviceComponent *deviceComponent = buildServerStructure(auditModule);
 
-  NS_LOG_INFO(deviceComponent);
+  // NS_LOG_INFO(deviceComponent);
 
   vector<Device *> devices =
       deviceComponent->authorizationComponent->configurationComponent->devices;
@@ -532,11 +732,37 @@ int main(int argc, char *argv[]) {
   // Schedule messages from dataset
   //----------------------------------------------------------------------------------
 
-  scheduleMessages(staNodes, devices, dataComponent);
+  scheduleMessages(staNodes, devices, dataComponent, auditModule);
 
   //----------------------------------------------------------------------------------
   // Output configuration
   //----------------------------------------------------------------------------------
+
+  createFile(auditModule->scenarioSimFile, auditModule->simDate,
+             auditModule->fileSim.str());
+  createFile(auditModule->messagesSimFile, auditModule->simDate,
+             auditModule->fileMsgs.str());
+  auditModule->outputMetrics();
+
+  // Callback Trace to Collect Messages in Device Enforcer Application
+  for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
+    if (i == 7) {
+      continue;
+    }
+    Ptr<Node> node = staNodes.Get(i);
+    Ptr<DeviceEnforcer> DeviceEnforcerApp =
+        DynamicCast<DeviceEnforcer>(node->GetApplication(0));
+    ostringstream paramTest;
+    paramTest << "/NodeList/" << (DeviceEnforcerApp->z_device->id)
+              << "/ApplicationList/*/$ns3::DeviceEnforcer/Traces";
+    DeviceEnforcerApp->m_traces.Connect(
+        MakeCallback(&AuditComponent::deviceEnforcerCallback, auditModule),
+        paramTest.str());
+    // Config::Connect(
+    //     paramTest.str(),
+    //     MakeCallback(&AuditComponent::deviceEnforcerCallback,
+    //     auditComponent));
+  }
 
   /* Enable Traces */
   if (pcapTracing) {
@@ -587,10 +813,10 @@ int main(int argc, char *argv[]) {
   flowMonitor = flowHelper.InstallAll();
 
   // Trace routing tables
-  Ipv4GlobalRoutingHelper g;
-  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>(
-      "dynamic-global-routing.routes", std::ios::out);
-  g.PrintRoutingTableAllAt(Seconds(12), routingStream);
+  // Ipv4GlobalRoutingHelper g;
+  // Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>(
+  //     "dynamic-global-routing.routes", std::ios::out);
+  // g.PrintRoutingTableAllAt(Seconds(12), routingStream);
 
   //----------------------------------------------------------------------------------
   // Call simulation

@@ -90,7 +90,10 @@ TypeId DeviceEnforcer::GetTypeId(void) {
               "ns3::PacketSink::SeqTsSizeCallback")
           .AddAttribute("Message", "The message to be sent", StringValue(),
                         MakeStringAccessor(&DeviceEnforcer::z_message),
-                        MakeStringChecker());
+                        MakeStringChecker())
+          .AddTraceSource("Traces", "Messages from node",
+                          MakeTraceSourceAccessor(&DeviceEnforcer::m_traces),
+                          "ns3::DeviceEnforcer::TracedCallback");
   return tid;
 }
 
@@ -127,7 +130,7 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
 {
   NS_LOG_INFO("=======================================================");
   NS_LOG_FUNCTION(this);
-  NS_LOG_INFO("Starting " << z_device_name << " @"
+  NS_LOG_INFO("Starting " << z_device->name << " @"
                           << Simulator::Now().As(Time::S));
 
   // Create the socket if not already
@@ -164,6 +167,9 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
                 << " return " << ret);
     m_socket->SetAllowBroadcast(true);
     // m_socket->ShutdownRecv();
+    m_traces(Inet6SocketAddress::ConvertFrom(m_local).GetIpv6(),
+             Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6(),
+             "Socket connect");
 
     m_socket->SetConnectCallback(
         MakeCallback(&DeviceEnforcer::ConnectionSucceeded, this),
@@ -191,7 +197,7 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
 void DeviceEnforcer::StopApplication() // Called at time specified by Stop
 {
   NS_LOG_FUNCTION(this);
-  NS_LOG_INFO("Stopping " << z_device_name << " @"
+  NS_LOG_INFO("Stopping " << z_device->name << " @"
                           << Simulator::Now().As(Time::S));
 
   CancelEvents();
@@ -313,6 +319,8 @@ void DeviceEnforcer::SendPacket() {
                   << " total Tx " << m_totBytes << " bytes");
       m_txTraceWithAddresses(packet, localAddress,
                              Inet6SocketAddress::ConvertFrom(m_peer));
+      m_traces(Inet6SocketAddress::ConvertFrom(m_local).GetIpv6(),
+               Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6(), z_message);
     }
   } else {
     NS_LOG_DEBUG("Unable to send packet; actual "
@@ -327,14 +335,17 @@ void DeviceEnforcer::SendPacket() {
 
 void DeviceEnforcer::ConnectionSucceeded(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
-  NS_LOG_INFO(z_device_name << " connected @" << Simulator::Now().As(Time::S));
+  NS_LOG_INFO(z_device->name << " connected @" << Simulator::Now().As(Time::S));
   m_connected = true;
+  m_traces(Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6(),
+           Inet6SocketAddress::ConvertFrom(m_local).GetIpv6(),
+           "Socket connected");
 }
 
 void DeviceEnforcer::ConnectionFailed(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
-  NS_FATAL_ERROR(z_device_name << " can't connect " << socket->GetErrno()
-                               << " @" << Simulator::Now().As(Time::S));
+  NS_FATAL_ERROR(z_device->name << " can't connect " << socket->GetErrno()
+                                << " @" << Simulator::Now().As(Time::S));
 }
 
 void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
@@ -371,16 +382,18 @@ void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
                   << packet->GetSize() << " bytes from "
                   << Inet6SocketAddress::ConvertFrom(from).GetIpv6() << " port "
                   << Inet6SocketAddress::ConvertFrom(from).GetPort());
+      m_traces(Inet6SocketAddress::ConvertFrom(from).GetIpv6(),
+               Inet6SocketAddress::ConvertFrom(m_local).GetIpv6(), newBuffer);
     }
   }
 
   if (newBuffer == "[Accepted]") {
-    NS_LOG_INFO(z_device_name
+    NS_LOG_INFO(z_device->name
                 << "(" << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
                 << ") has changed!");
 
   } else if (newBuffer == "[Refused]") {
-    NS_LOG_INFO(z_device_name
+    NS_LOG_INFO(z_device->name
                 << "(" << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
                 << ") has NOT changed!");
   }
@@ -403,9 +416,9 @@ void DeviceEnforcer::HandleAccept(Ptr<Socket> s, const Address &from) {
 // ZASH Application Logic
 //----------------------------------------------------------------------------------
 
-void DeviceEnforcer::SetDeviceName(string dn) {
-  NS_LOG_FUNCTION(this << dn);
-  z_device_name = dn;
+void DeviceEnforcer::SetDevice(Device *d) {
+  NS_LOG_FUNCTION(this << d);
+  z_device = d;
 }
 
 void DeviceEnforcer::SetMessage(string msg) {

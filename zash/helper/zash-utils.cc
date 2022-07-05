@@ -97,36 +97,32 @@ string getTimeOfSimulationStart() {
   tm *ltm = localtime(&now);
   ostringstream convert;
 
-  if (ltm->tm_mday < 10)
-    convert << "0";
-  convert << ltm->tm_mday;
+  convert << 1900 + ltm->tm_year << "-";
 
   if ((ltm->tm_mon + 1) < 10)
     convert << "0";
-  convert << ltm->tm_mon + 1;
+  convert << ltm->tm_mon + 1 << "-";
 
-  convert << 1900 + ltm->tm_year << "_";
+  if (ltm->tm_mday < 10)
+    convert << "0";
+  convert << ltm->tm_mday << "_";
 
   if (ltm->tm_hour < 10)
     convert << "0";
-  convert << ltm->tm_hour;
+  convert << ltm->tm_hour << "-";
 
   if (ltm->tm_min < 10)
     convert << "0";
-  convert << ltm->tm_min << endl << endl;
+  convert << ltm->tm_min;
 
   return convert.str();
 }
 
-void createFile(string fileName, string simDate,
-                           string content) {
+void createFile(string fileName, string simDate, string content) {
   ofstream fileSimRec;
   fileSimRec.open(fileName.c_str());
   fileSimRec << "**** ZASH file ****" << endl << endl;
-  fileSimRec << "Date: " << simDate.substr(0, 8).c_str() << " - "
-             << simDate.substr(9, 2).c_str() << ":"
-             << simDate.substr(11, 2).c_str() << "hs" << endl
-             << endl;
+  fileSimRec << "Date: " << simDate << endl << endl;
 
   fileSimRec << content.c_str();
 
