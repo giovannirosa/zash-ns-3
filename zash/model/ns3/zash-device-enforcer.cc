@@ -293,6 +293,7 @@ void DeviceEnforcer::SendPacket() {
               << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6());
 
   int actual = m_socket->Send(packet);
+  z_reqTime = Simulator::Now().ToDouble(Time::S);
   if ((unsigned)actual == m_pktSize) {
     m_txTrace(packet);
     m_totBytes += m_pktSize;
@@ -330,7 +331,6 @@ void DeviceEnforcer::SendPacket() {
   }
   m_residualBits = 0;
   m_lastStartTime = Simulator::Now();
-  ScheduleNextTx();
 }
 
 void DeviceEnforcer::ConnectionSucceeded(Ptr<Socket> socket) {
@@ -385,6 +385,13 @@ void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
       m_traces(Inet6SocketAddress::ConvertFrom(from).GetIpv6(),
                Inet6SocketAddress::ConvertFrom(m_local).GetIpv6(), newBuffer);
     }
+
+    z_respTime = Simulator::Now().ToDouble(Time::S);
+
+    double acrt = z_respTime - z_reqTime;
+
+    z_auditModule->accessControlRT =
+        (z_auditModule->accessControlRT + acrt) / 2.0;
   }
 
   if (newBuffer == "[Accepted]") {
@@ -424,8 +431,12 @@ void DeviceEnforcer::SetDevice(Device *d) {
 void DeviceEnforcer::SetMessage(string msg) {
   NS_LOG_FUNCTION(this << msg);
   m_pktSize = msg.size();
-  m_maxBytes = msg.size();
   z_message = msg;
+}
+
+void DeviceEnforcer::SetAuditModule(AuditComponent *a) {
+  NS_LOG_FUNCTION(this << a);
+  z_auditModule = a;
 }
 
 } // Namespace ns3

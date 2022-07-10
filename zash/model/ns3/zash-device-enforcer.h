@@ -15,6 +15,7 @@
 #include "ns3/seq-ts-size-header.h"
 #include "ns3/traced-callback.h"
 #include "ns3/zash-models.h"
+#include "ns3/zash-audit.h"
 
 namespace ns3 {
 
@@ -205,10 +206,18 @@ public:
   void SetMessage(string msg);
 
   void SetDevice(Device *d);
+  
+  void SetAuditModule(AuditComponent *a);
 
   string z_message;
 
   Device *z_device;
+
+  double z_reqTime;
+
+  double z_respTime;
+
+  AuditComponent *z_auditModule;
 };
 
 } // namespace ns3

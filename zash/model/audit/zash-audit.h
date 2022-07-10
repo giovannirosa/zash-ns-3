@@ -47,6 +47,8 @@ public:
   int criticalNumber = 0;
   int privacyRisk;
 
+  double accessControlRT = 0.0;
+
   string simDate;
 
   string folderTraces;

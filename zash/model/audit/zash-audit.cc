@@ -11,7 +11,7 @@ AuditEvent::AuditEvent(time_t t, Request *r) {
 
 AuditComponent::AuditComponent(string timeLog, string ft) {
   folderTraces = ft;
-  simDate = timeLog.substr(0, timeLog.size() - 2);
+  simDate = timeLog;
   // Define and assign log files names
   ostringstream convert;
   convert << folderTraces.c_str() << "zash_device_enforcer_traces_" << simDate
@@ -49,7 +49,6 @@ void AuditComponent::deviceEnforcerCallback(string path, Ipv6Address sourceIp,
   ostringstream convert;
   convert << folderTraces.c_str() << "messages/messages_" << sourceIp << ".txt";
 
-  NS_LOG_INFO(convert.str() << " - " << msg.str());
   // Save received messages individually by IP address
   appendFile(convert.str(), msg.str());
 }
@@ -64,6 +63,8 @@ void AuditComponent::outputMetrics() {
   fileSimRec << "Number of critical devices (|CD|) = " << criticalNumber
              << endl;
   fileSimRec << "Privacy Risk (PR) = " << privacyRisk << endl << endl;
+
+  fileSimRec << "Access Control Response Time (ACRT) = " << accessControlRT << endl << endl;
 
   // Close scenario simulation configuration file
   fileSimRec << "**** End of ZASH file ****" << endl;

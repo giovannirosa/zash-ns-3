@@ -148,8 +148,7 @@ AuditComponent *createAudit() {
 
   NS_LOG_INFO(tracesFolder);
   // Audit Module
-  AuditComponent *auditModule =
-      new AuditComponent(simDate, tracesFolder);
+  AuditComponent *auditModule = new AuditComponent(simDate, tracesFolder);
 
   string messagesFolder = tracesFolder + "messages/";
   // Creates a directory for messages simulation
@@ -373,7 +372,7 @@ void appsConfiguration(Ipv6InterfaceContainer serverApInterface,
                        double stop, NodeContainer serverNode,
                        NodeContainer staNodes,
                        Ipv6InterfaceContainer staInterface, string dataRate,
-                       vector<Device *> devices) {
+                       vector<Device *> devices, AuditComponent *auditModule) {
   // Create a server to receive these packets
   // Start at 0s
   // Stop at final
@@ -407,6 +406,7 @@ void appsConfiguration(Ipv6InterfaceContainer serverApInterface,
     DeviceEnforcerApp->SetAttribute("DataRate",
                                     DataRateValue(DataRate(dataRate)));
     DeviceEnforcerApp->SetDevice(devices[i]);
+    DeviceEnforcerApp->SetAuditModule(auditModule);
     DeviceEnforcerApp->SetStartTime(Seconds(startDevice));
     DeviceEnforcerApp->SetStopTime(Seconds(stop));
     startDevice += 0.2;
@@ -726,7 +726,7 @@ int main(int argc, char *argv[]) {
   //----------------------------------------------------------------------------------
 
   appsConfiguration(serverApInterface, deviceComponent, start, stop, serverNode,
-                    staNodes, staInterface, dataRate, devices);
+                    staNodes, staInterface, dataRate, devices, auditModule);
 
   //----------------------------------------------------------------------------------
   // Schedule messages from dataset
@@ -742,7 +742,6 @@ int main(int argc, char *argv[]) {
              auditModule->fileSim.str());
   createFile(auditModule->messagesSimFile, auditModule->simDate,
              auditModule->fileMsgs.str());
-  auditModule->outputMetrics();
 
   // Callback Trace to Collect Messages in Device Enforcer Application
   for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
@@ -828,6 +827,8 @@ int main(int argc, char *argv[]) {
   NS_LOG_INFO("Done.");
 
   flowMonitor->SerializeToXmlFile("flow.xml", true, true);
+
+  auditModule->outputMetrics();
 
   return 0;
 }
