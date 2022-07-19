@@ -64,11 +64,57 @@ void AuditComponent::outputMetrics() {
              << endl;
   fileSimRec << "Privacy Risk (PR) = " << privacyRisk << endl << endl;
 
-  fileSimRec << "Access Control Response Time (ACRT) = " << accessControlRT << endl << endl;
+  fileSimRec << "Access Control Response Time (ACRT) = " << accessControlRT
+             << " ms" << endl
+             << endl;
+
+  fileSimRec << "Number of user levels (|UL|) = " << userLevelNumber << endl;
+  fileSimRec << "Number of device classes (|DC|) = " << deviceClassNumber
+             << endl;
+  fileSimRec << "Number of actions (|A|) = " << actionNumber << endl;
+  fileSimRec << "Resources Isolation (RI) = " << resourceIsolation << endl
+             << endl;
+
+  fileSimRec << "Maximum number of devices (Dmax) = " << maxDeviceNumber
+             << endl;
+  fileSimRec << "Minimum number of devices (Dmin) = " << minDeviceNumber
+             << endl;
+  fileSimRec << "Device Extensibility (DE) = " << deviceExtensibility << endl
+             << endl;
+
+  fileSimRec << "Number of requests of requested access way (|RAC|) = "
+             << requestedAccessWayNumber << endl;
+  fileSimRec << "Number of requests of home access way (|HAC|) = "
+             << homeAccessWayNumber << endl;
+  fileSimRec << "Number of requests of personal access way (|PAC|) = "
+             << personalAccessWayNumber << endl;
+  fileSimRec << "Number of requests without intermediaries (|NI|) = "
+             << reqWithNoIntermediaryNumber << endl;
+  fileSimRec << "Number of requests with intermediaries (|I|) = "
+             << reqWithIntermediaryNumber << endl;
+  fileSimRec << "Access Control Enforcement (ACE) = "
+             << accessControlEnforcement << endl
+             << endl;
 
   // Close scenario simulation configuration file
   fileSimRec << "**** End of ZASH file ****" << endl;
   fileSimRec.close();
+}
+
+void AuditComponent::storeRequestMetrics(Request *req) {
+  if (req->context->accessWay == enums::AccessWay.at("REQUESTED")) {
+    ++requestedAccessWayNumber;
+    ++reqWithNoIntermediaryNumber;
+  } else if (req->context->accessWay == enums::AccessWay.at("HOUSE")) {
+    ++homeAccessWayNumber;
+    ++reqWithIntermediaryNumber;
+  } else {
+    ++personalAccessWayNumber;
+    ++reqWithIntermediaryNumber;
+  }
+
+  accessControlEnforcement =
+      reqWithNoIntermediaryNumber / reqWithIntermediaryNumber;
 }
 
 } // namespace ns3

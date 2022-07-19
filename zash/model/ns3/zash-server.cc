@@ -279,8 +279,10 @@ void ZashServer::HandlePacket(string buffer, Ptr<Socket> socket) {
     vector<string> tokens = strTokenize(buffer);
 
     int reqId = stoi(tokens[0]);
-    Device *device = deviceComponent->authorizationComponent->configurationComponent->devices[stoi(tokens[1])];
-    User *user = deviceComponent->authorizationComponent->configurationComponent->users[stoi(tokens[2])];
+    Device *device = deviceComponent->authorizationComponent
+                         ->configurationComponent->devices[stoi(tokens[1])];
+    User *user = deviceComponent->authorizationComponent->configurationComponent
+                     ->users[stoi(tokens[2])];
     Context *context = new Context(enums::AccessWay.at(tokens[3]),
                                    enums::Localization.at(tokens[4]),
                                    enums::Group.at(tokens[5]));
@@ -289,6 +291,8 @@ void ZashServer::HandlePacket(string buffer, Ptr<Socket> socket) {
     Request *req = new Request(reqId, device, user, context, action);
     time_t currentDate = strToTime(tokens[7].c_str());
     bool response = deviceComponent->listenRequest(req, currentDate);
+
+    deviceComponent->auditComponent->storeRequestMetrics(req);
 
     string respStr = response ? "[Accepted]" : "[Refused]";
 

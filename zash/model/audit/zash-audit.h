@@ -49,6 +49,22 @@ public:
 
   double accessControlRT = 0.0;
 
+  int userLevelNumber = 0;
+  int deviceClassNumber = 0;
+  int actionNumber = 0;
+  int resourceIsolation;
+
+  uint32_t minDeviceNumber = 0;
+  uint32_t maxDeviceNumber = 0;
+  uint32_t deviceExtensibility;
+
+  int requestedAccessWayNumber = 0;
+  int homeAccessWayNumber = 0;
+  int personalAccessWayNumber = 0;
+  int reqWithNoIntermediaryNumber = 0;
+  int reqWithIntermediaryNumber = 0;
+  double accessControlEnforcement;
+
   string simDate;
 
   string folderTraces;
@@ -90,6 +106,8 @@ public:
                               Ipv6Address destinyIP, string message);
 
   void outputMetrics();
+
+  void storeRequestMetrics(Request *req);
 };
 } // namespace ns3
 

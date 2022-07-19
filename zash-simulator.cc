@@ -264,6 +264,10 @@ DeviceComponent *buildServerStructure(AuditComponent *auditModule) {
     }
   }
 
+  auditModule->minDeviceNumber = devices.size();
+  auditModule->maxDeviceNumber = devices.size();
+  auditModule->deviceExtensibility = 0;
+
   auditModule->privacyRisk =
       auditModule->adminNumber * auditModule->criticalNumber;
 
@@ -333,12 +337,21 @@ DeviceComponent *buildServerStructure(AuditComponent *auditModule) {
     auditModule->fileSim << *ontology << endl;
   }
 
+  auditModule->userLevelNumber = enums::UserLevel.size();
+  auditModule->deviceClassNumber = enums::DeviceClass.size();
+  auditModule->actionNumber = enums::Action.size();
+
+  auditModule->resourceIsolation = auditModule->userLevelNumber *
+                                   auditModule->deviceClassNumber *
+                                   auditModule->actionNumber;
+
   // Behavior Module
   int blockThreshold = 3;
   int blockInterval = 24;
   int buildInterval = 32;
-  ConfigurationComponent *configurationComponent = new ConfigurationComponent(
-      blockThreshold, blockInterval, buildInterval, devices, users, ontologies);
+  ConfigurationComponent *configurationComponent =
+      new ConfigurationComponent(blockThreshold, blockInterval, buildInterval,
+                                 devices, users, ontologies, auditModule);
   auditModule->fileSim << "Other configuration parameters of simulation are:"
                        << endl;
   auditModule->fileSim << "Block Threshold: " << blockThreshold << endl;

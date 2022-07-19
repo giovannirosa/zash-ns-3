@@ -293,7 +293,7 @@ void DeviceEnforcer::SendPacket() {
               << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6());
 
   int actual = m_socket->Send(packet);
-  z_reqTime = Simulator::Now().ToDouble(Time::S);
+  z_reqTime = Simulator::Now().ToDouble(Time::MS);
   if ((unsigned)actual == m_pktSize) {
     m_txTrace(packet);
     m_totBytes += m_pktSize;
@@ -386,7 +386,7 @@ void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
                Inet6SocketAddress::ConvertFrom(m_local).GetIpv6(), newBuffer);
     }
 
-    z_respTime = Simulator::Now().ToDouble(Time::S);
+    z_respTime = Simulator::Now().ToDouble(Time::MS);
 
     double acrt = z_respTime - z_reqTime;
 
