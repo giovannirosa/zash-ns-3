@@ -68,6 +68,14 @@ void AuditComponent::outputMetrics() {
              << " ms" << endl
              << endl;
 
+  fileSimRec << "Access Control Distance (ACD) = " << accessControlDistance
+             << " hops" << endl
+             << endl;
+
+  fileSimRec << "Spatial and Temporal Locality (STL) = "
+             << spatialTemporalLocality << endl
+             << endl;
+
   fileSimRec << "Number of user levels (|UL|) = " << userLevelNumber << endl;
   fileSimRec << "Number of device classes (|DC|) = " << deviceClassNumber
              << endl;

@@ -65,6 +65,9 @@ public:
   int reqWithIntermediaryNumber = 0;
   double accessControlEnforcement;
 
+  int accessControlDistance = 2;
+  double spatialTemporalLocality;
+
   string simDate;
 
   string folderTraces;

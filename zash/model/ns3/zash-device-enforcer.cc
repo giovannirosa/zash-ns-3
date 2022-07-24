@@ -392,6 +392,8 @@ void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
 
     z_auditModule->accessControlRT =
         (z_auditModule->accessControlRT + acrt) / 2.0;
+    z_auditModule->spatialTemporalLocality =
+        z_auditModule->accessControlDistance * z_auditModule->accessControlRT;
   }
 
   if (newBuffer == "[Accepted]") {
