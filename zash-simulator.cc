@@ -455,6 +455,8 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
   vector<int> lastState;
   time_t firstDate = (time_t)(-1);
   int count = 0;
+  int dayCount = 0;
+  time_t lastDate;
   while (csv.FetchNextRow()) {
     // NS_LOG_INFO("Processing row " << csv.RowNumber() << "...");
     auditModule->fileMsgs << "Processing row " << csv.RowNumber() << "..."
@@ -482,6 +484,8 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
 
     if (difftime(firstDate, (time_t)(-1)) == 0) {
       firstDate = currentDate - 10;
+    } else if (extractDay(currentDate) != extractDay(lastDate)) {
+      ++dayCount;
     }
 
     string actStr;
@@ -535,9 +539,11 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
       dataComponent->lastState = currentState;
     }
     lastState = currentState;
+    lastDate = currentDate;
   }
 
   NS_LOG_INFO("Count of messages = " << count << endl);
+  NS_LOG_INFO("Count of days = " << dayCount << endl);
 };
 
 int main(int argc, char *argv[]) {
@@ -569,6 +575,8 @@ int main(int argc, char *argv[]) {
   string phyRate = "HtMcs7";      /* Physical layer bitrate. */
   double simulationTime = stop;   /* Simulation time in seconds. */
   bool pcapTracing = false;       /* PCAP Tracing is enabled or not. */
+  uint32_t startDay = 1;             /* Start day of the simulation. */
+  uint32_t endDay = 2;               /* End day of the simulation. */
 
   // Allow the user to override any of the defaults and the above
   // Config::SetDefault()s at run-time, via command-line arguments
@@ -579,7 +587,14 @@ int main(int argc, char *argv[]) {
   cmd.AddValue("phyRate", "Physical layer bitrate", phyRate);
   cmd.AddValue("simulationTime", "Simulation time in seconds", simulationTime);
   cmd.AddValue("pcap", "Enable/disable PCAP Tracing", pcapTracing);
+  cmd.AddValue("start", "Start day of the simulation", startDay);
+  cmd.AddValue("end", "End day of the simulation", endDay);
   cmd.Parse(argc, argv);
+
+  if (startDay < 1) {
+    cout << "ZASH - Error: start must be greater than 0" << endl;
+    return 1;
+  }
 
   // Config::SetDefault("ns3::TcpL4Protocol::SocketType",
   //                    TypeIdValue(TypeId::LookupByName("ns3::TcpNewReno")));

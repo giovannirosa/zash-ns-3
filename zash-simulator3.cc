@@ -80,7 +80,55 @@ using namespace std;
 
 NS_LOG_COMPONENT_DEFINE("ZASH");
 
-DeviceComponent *buildServerStructure() {
+AuditComponent *createAudit() {
+  string tracesFolder;
+  string simDate = getTimeOfSimulationStart();
+
+  tracesFolder = "zash_traces/";
+  errno = 0;
+  int dir = mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (dir < 0 && errno != EEXIST)
+    cout << "Fail creating directory for traces!" << endl;
+
+  tracesFolder.append(simDate + "/");
+
+  // Creates a directory for specific simulation
+  dir = mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (dir == -1)
+    cout << "Fail creating sub directory for specific traces!" << dir << endl;
+
+  NS_LOG_INFO(tracesFolder);
+  // Audit Module
+  AuditComponent *auditModule = new AuditComponent(simDate, tracesFolder);
+
+  string messagesFolder = tracesFolder + "messages/";
+  // Creates a directory for messages simulation
+  dir = mkdir(messagesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (dir == -1)
+    cout << "Fail creating sub directory for messages traces!" << dir << endl;
+
+  ostringstream convert;
+  convert << tracesFolder.c_str() << "zash_simulation_scenario_"
+          << auditModule->simDate << ".txt";
+  auditModule->scenarioSimFile = convert.str();
+
+  ostringstream convert2;
+  convert2 << tracesFolder.c_str() << "zash_simulation_messages_"
+           << auditModule->simDate << ".txt";
+  auditModule->messagesSimFile = convert2.str();
+
+  ostringstream convert3;
+  convert3 << tracesFolder.c_str() << "zash_simulation_metrics_"
+           << auditModule->simDate << ".txt";
+  auditModule->metricsSimFile = convert3.str();
+
+  // Save start seed in file
+  // fileSim << "Start seed: " << seed << endl << endl;
+
+  return auditModule;
+}
+
+DeviceComponent *buildServerStructure(AuditComponent *auditModule) {
   vector<User *> users = {
       new User(1, enums::UserLevel.at("ADMIN"), enums::Age.at("ADULT")),
       new User(2, enums::UserLevel.at("ADULT"), enums::Age.at("ADULT")),
@@ -209,12 +257,9 @@ DeviceComponent *buildServerStructure() {
       visitorCritical,    childCritical,    adultCritical,    adminCritical,
       visitorNonCritical, childNonCritical, adultNonCritical, adminNonCritical};
 
-  // Audit Module
-  AuditComponent *auditModule = new AuditComponent();
-
   // Behavior Module
-  ConfigurationComponent *configurationComponent =
-      new ConfigurationComponent(3, 24, 32, devices, users, ontologies);
+  ConfigurationComponent *configurationComponent = new ConfigurationComponent(
+      3, 24, 32, devices, users, ontologies, auditModule);
   NotificationComponent *notificationComponent =
       new NotificationComponent(configurationComponent);
 
@@ -238,7 +283,7 @@ DeviceComponent *buildServerStructure() {
   return deviceComponent;
 }
 
-void appsConfiguration(Ipv4InterfaceContainer serverApInterface,
+void appsConfiguration(vector<Ipv4InterfaceContainer> serverInterfaceList,
                        DeviceComponent *deviceComponent, double start,
                        double stop, NodeContainer serverNode,
                        NodeContainer staNodes,
@@ -274,7 +319,7 @@ void appsConfiguration(Ipv4InterfaceContainer serverApInterface,
     DeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
     DeviceEnforcerApp->SetAttribute("DataRate",
                                     DataRateValue(DataRate(dataRate)));
-    DeviceEnforcerApp->SetDeviceName(devices[i]->name);
+    DeviceEnforcerApp->SetDevice(devices[i]);
     DeviceEnforcerApp->SetStartTime(Seconds(startDevice));
     DeviceEnforcerApp->SetStopTime(Seconds(stop));
     startDevice += 0.2;
@@ -416,46 +461,18 @@ int main(int argc, char *argv[]) {
   cmd.AddValue("pcap", "Enable/disable PCAP Tracing", pcapTracing);
   cmd.Parse(argc, argv);
 
-  //----------------------------------------------------------------------------------
-  // Create a directory for traces (zash_traces) inside ns3 directory
-  //----------------------------------------------------------------------------------
-
-  // tracesFolder = "zash_traces/";
-  // errno = 0;
-  // int dir =
-  //     mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  // if (dir < 0 && errno != EEXIST)
-  //   cout << "Fail creating directory for traces!" << endl;
-
-  // tracesFolder.append(simDate.substr(0, simDate.size() - 2).c_str());
-  // tracesFolder.append("/");
-
-  // // Creates a directory for specific simulation
-  // dir = mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  // if (dir == -1)
-  //   cout << "Fail creating sub directory for specific traces!" << dir <<
-  //   endl;
-
-  // ostringstream convert;
-  // convert << tracesFolder.c_str() << "zash_simulation_scenario_"
-  //         << simDate.substr(0, simDate.size() - 2).c_str() << ".txt";
-  // scenarioSimFile = convert.str();
-
-  // // Create a string stream to store simulation scenario data
-  // stringstream fileSim;
-
-  // Save start seed in file
-  // fileSim << "Start seed: " << seed << endl << endl;
-
-  // Config::SetDefault("ns3::TcpL4Protocol::SocketType",
-  //                    TypeIdValue(TypeId::LookupByName("ns3::TcpNewReno")));
-
   /* Configure TCP Options */
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(payloadSize));
 
   Config::SetDefault("ns3::ArpCache::DeadTimeout", TimeValue(Seconds(1)));
   Config::SetDefault("ns3::ArpCache::PendingQueueSize",
                      UintegerValue(NUMBER_OF_DEVICES));
+
+  //----------------------------------------------------------------------------------
+  // Create a directory for traces (zash_traces) inside ns3 directory
+  //----------------------------------------------------------------------------------
+
+  AuditComponent *auditModule = createAudit();
 
   //----------------------------------------------------------------------------------
   // Topology configuration
@@ -502,20 +519,20 @@ int main(int argc, char *argv[]) {
   NodeContainer serverAp1 = NodeContainer(serverNode.Get(0), apNode.Get(1));
   NodeContainer serverAp2 = NodeContainer(serverNode.Get(0), apNode.Get(2));
   NodeContainer serverAp3 = NodeContainer(serverNode.Get(0), apNode.Get(3));
-  // CsmaHelper csma;
-  // csma.SetChannelAttribute("DataRate", StringValue("100Mbps"));
-  // csma.SetChannelAttribute("Delay", StringValue("1ms"));
-  // NetDeviceContainer serverAp0Device = csma.Install(serverAp0);
-  // NetDeviceContainer serverAp1Device = csma.Install(serverAp1);
-  // NetDeviceContainer serverAp2Device = csma.Install(serverAp2);
-  // NetDeviceContainer serverAp3Device = csma.Install(serverAp3);
-  PointToPointHelper p2p;
-  p2p.SetDeviceAttribute("DataRate", StringValue("100Mbps"));
-  p2p.SetChannelAttribute("Delay", StringValue("1ms"));
-  NetDeviceContainer serverAp0Device = p2p.Install(serverAp0);
-  NetDeviceContainer serverAp1Device = p2p.Install(serverAp1);
-  NetDeviceContainer serverAp2Device = p2p.Install(serverAp2);
-  NetDeviceContainer serverAp3Device = p2p.Install(serverAp3);
+  CsmaHelper csma;
+  csma.SetChannelAttribute("DataRate", StringValue("100Mbps"));
+  csma.SetChannelAttribute("Delay", StringValue("1ms"));
+  NetDeviceContainer serverAp0Device = csma.Install(serverAp0);
+  NetDeviceContainer serverAp1Device = csma.Install(serverAp1);
+  NetDeviceContainer serverAp2Device = csma.Install(serverAp2);
+  NetDeviceContainer serverAp3Device = csma.Install(serverAp3);
+  // PointToPointHelper p2p;
+  // p2p.SetDeviceAttribute("DataRate", StringValue("100Mbps"));
+  // p2p.SetChannelAttribute("Delay", StringValue("1ms"));
+  // NetDeviceContainer serverAp0Device = p2p.Install(serverAp0);
+  // NetDeviceContainer serverAp1Device = p2p.Install(serverAp1);
+  // NetDeviceContainer serverAp2Device = p2p.Install(serverAp2);
+  // NetDeviceContainer serverAp3Device = p2p.Install(serverAp3);
 
   /* Configure AP */
   NS_LOG_INFO("Configure AP");
@@ -593,11 +610,14 @@ int main(int argc, char *argv[]) {
 
   NS_LOG_INFO("Configure Bridge");
   BridgeHelper bridge;
-  NetDeviceContainer bridgeServer = bridge.Install(
-      serverNode.Get(0),
-      NetDeviceContainer(
-          NetDeviceContainer(serverAp0Device.Get(0), serverAp1Device.Get(0)),
-          NetDeviceContainer(serverAp2Device.Get(0), serverAp3Device.Get(0))));
+  NetDeviceContainer bridgeServer0 = bridge.Install(
+      serverNode.Get(0), NetDeviceContainer(serverAp0Device.Get(0)));
+  NetDeviceContainer bridgeServer1 = bridge.Install(
+      serverNode.Get(0), NetDeviceContainer(serverAp1Device.Get(0)));
+  NetDeviceContainer bridgeServer2 = bridge.Install(
+      serverNode.Get(0), NetDeviceContainer(serverAp2Device.Get(0)));
+  NetDeviceContainer bridgeServer3 = bridge.Install(
+      serverNode.Get(0), NetDeviceContainer(serverAp3Device.Get(0)));
   NetDeviceContainer bridgeDev0 =
       bridge.Install(apNode.Get(0), NetDeviceContainer(ap0Device.Get(0),
                                                        serverAp0Device.Get(1)));
@@ -630,9 +650,24 @@ int main(int argc, char *argv[]) {
   Ipv4AddressHelper address;
   address.SetBase("192.168.0.0", "255.255.255.0");
   NS_LOG_INFO("Assign server IP.");
-  Ipv4InterfaceContainer serverApInterface = address.Assign(bridgeServer);
-  NS_LOG_INFO(serverApInterface.GetN()
-              << " - " << serverApInterface.GetAddress(0));
+  Ipv4InterfaceContainer serverAp0Interface = address.Assign(bridgeServer0);
+  NS_LOG_INFO(serverAp0Interface.GetN()
+              << " - " << serverAp0Interface.GetAddress(0));
+
+  Ipv4InterfaceContainer serverAp1Interface = address.Assign(bridgeServer1);
+  NS_LOG_INFO(serverAp1Interface.GetN()
+              << " - " << serverAp1Interface.GetAddress(0));
+
+  Ipv4InterfaceContainer serverAp2Interface = address.Assign(bridgeServer2);
+  NS_LOG_INFO(serverAp2Interface.GetN()
+              << " - " << serverAp2Interface.GetAddress(0));
+
+  Ipv4InterfaceContainer serverAp3Interface = address.Assign(bridgeServer3);
+  NS_LOG_INFO(serverAp3Interface.GetN()
+              << " - " << serverAp3Interface.GetAddress(0));
+  vector<Ipv4InterfaceContainer> serverInterfaceList = {
+      serverAp0Interface, serverAp1Interface, serverAp2Interface, serverAp3Interface};
+
   NS_LOG_INFO("Assign AP0 IP.");
   Ipv4InterfaceContainer ap0Interface = address.Assign(bridgeDev0);
   NS_LOG_INFO(ap0Interface.GetN() << " - " << ap0Interface.GetAddress(0));
@@ -668,7 +703,7 @@ int main(int argc, char *argv[]) {
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  DeviceComponent *deviceComponent = buildServerStructure();
+  DeviceComponent *deviceComponent = buildServerStructure(auditModule);
 
   NS_LOG_INFO(deviceComponent);
 
@@ -680,7 +715,7 @@ int main(int argc, char *argv[]) {
   // Applications configuration
   //----------------------------------------------------------------------------------
 
-  appsConfiguration(serverApInterface, deviceComponent, start, stop, serverNode,
+  appsConfiguration(serverInterfaceList, deviceComponent, start, stop, serverNode,
                     staNodes, staInterfaceList, dataRate, devices);
 
   //----------------------------------------------------------------------------------
@@ -698,13 +733,13 @@ int main(int argc, char *argv[]) {
     wifiPhy.SetPcapDataLinkType(WifiPhyHelper::DLT_IEEE802_11_RADIO);
     wifiPhy.EnablePcap("AccessPoint", ap0Device);
     wifiPhy.EnablePcap("Station", staDevices0);
-    p2p.EnablePcap("Server", serverAp0Device);
+    csma.EnablePcap("Server", serverAp0Device);
   }
 
   // configure tracing
   AsciiTraceHelper ascii;
   // mobility.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
-  p2p.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
+  csma.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
 
   /* Stop Simulation */
   Simulator::Stop(Seconds(simulationTime + 1));
