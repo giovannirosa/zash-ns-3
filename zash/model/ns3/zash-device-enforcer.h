@@ -153,7 +153,7 @@ public:
   TracedCallback<Ptr<const Packet>, const Address &, const Address &>
       m_txTraceWithAddresses;
 
-  TracedCallback<Ipv6Address, Ipv6Address, string>
+  TracedCallback<Address, Address, string>
       m_traces; //!< Traced Callback: messages
 
   /// Callback for tracing the packet Tx events, includes source, destination,

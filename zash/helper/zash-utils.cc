@@ -53,6 +53,12 @@ int extractHour(time_t mtime) {
   return timeinfo->tm_hour;
 }
 
+int extractDay(time_t mtime) {
+  struct tm *timeinfo;
+  timeinfo = localtime(&mtime);
+  return timeinfo->tm_mday;
+}
+
 string vecToStr(vector<enums::Enum *> v) {
   stringstream ss;
   ss << "[";

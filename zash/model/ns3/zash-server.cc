@@ -161,9 +161,15 @@ void ZashServer::HandleRead(Ptr<Socket> socket) {
     size_t endOfMsg = newBuffer.find("]");
     newBuffer = newBuffer.substr(0, endOfMsg + 1).c_str();
 
-    NS_LOG_INFO("Received packet from "
-                << Inet6SocketAddress::ConvertFrom(from).GetIpv6()
-                << " with message = " << newBuffer);
+    if (InetSocketAddress::IsMatchingType(from)) {
+      NS_LOG_INFO("Received packet from "
+                  << InetSocketAddress::ConvertFrom(from).GetIpv4()
+                  << " with message = " << newBuffer);
+    } else {
+      NS_LOG_INFO("Received packet from "
+                  << Inet6SocketAddress::ConvertFrom(from).GetIpv6()
+                  << " with message = " << newBuffer);
+    }
 
     m_totalRx += packet->GetSize();
     if (InetSocketAddress::IsMatchingType(from)) {
@@ -251,13 +257,25 @@ void ZashServer::HandlePeerError(Ptr<Socket> socket) {
 }
 
 bool ZashServer::HandleConnectRequest(Ptr<Socket> socket, const Address &from) {
-  NS_LOG_FUNCTION(this << socket
-                       << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
+  if (InetSocketAddress::IsMatchingType(from)) {
+    NS_LOG_FUNCTION(this << socket
+                         << InetSocketAddress::ConvertFrom(from).GetIpv4());
+  } else {
+    NS_LOG_FUNCTION(this << socket
+                         << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
+  }
+
   return true;
 }
 
 void ZashServer::HandleAccept(Ptr<Socket> s, const Address &from) {
-  NS_LOG_FUNCTION(this << s << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
+  if (InetSocketAddress::IsMatchingType(from)) {
+    NS_LOG_FUNCTION(this << s
+                         << InetSocketAddress::ConvertFrom(from).GetIpv4());
+  } else {
+    NS_LOG_FUNCTION(this << s
+                         << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
+  }
   s->SetRecvCallback(MakeCallback(&ZashServer::HandleRead, this));
   m_socketList.push_back(s);
 }

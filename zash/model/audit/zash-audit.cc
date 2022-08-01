@@ -35,19 +35,27 @@ void AuditComponent::appendFile(string file, string msg) {
   stream.close();
 }
 
-void AuditComponent::deviceEnforcerCallback(string path, Ipv6Address sourceIp,
-                                            Ipv6Address destinyIP,
-                                            string message) {
+void AuditComponent::deviceEnforcerCallback(string path, Address sourceIp,
+                                            Address destinyIP, string message) {
+  stringstream sourceIpStr;
+  stringstream destinyIpStr;
+  if (InetSocketAddress::IsMatchingType(sourceIp)) {
+    sourceIpStr << InetSocketAddress::ConvertFrom(sourceIp).GetIpv4();
+    destinyIpStr << InetSocketAddress::ConvertFrom(destinyIP).GetIpv4();
+  } else {
+    sourceIpStr << Inet6SocketAddress::ConvertFrom(sourceIp).GetIpv6();
+    destinyIpStr << Inet6SocketAddress::ConvertFrom(destinyIP).GetIpv6();
+  }
   double timeReceived = Simulator::Now().GetSeconds();
   ostringstream msg;
-  msg << timeReceived << "\t" << sourceIp << "\t" << destinyIP << "\t"
+  msg << timeReceived << "\t" << sourceIpStr.str() << "\t" << destinyIpStr.str() << "\t"
       << message << endl;
 
   // // Save all emergency messages sent in only one file
   // appendFile(deviceEnforcerStream, deviceEnforcerFile, msg.str());
 
   ostringstream convert;
-  convert << folderTraces.c_str() << "messages/messages_" << sourceIp << ".txt";
+  convert << folderTraces.c_str() << "messages/messages_" << sourceIpStr.str() << ".txt";
 
   // Save received messages individually by IP address
   appendFile(convert.str(), msg.str());

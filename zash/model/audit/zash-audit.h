@@ -7,6 +7,8 @@
 
 #include "ns3/address-utils.h"
 #include "ns3/address.h"
+#include "ns3/inet-socket-address.h"
+#include "ns3/inet6-socket-address.h"
 #include "ns3/simulator.h"
 #include "ns3/zash-models.h"
 #include "ns3/zash-utils.h"
@@ -105,8 +107,8 @@ public:
    * \param destinyIP IP address from server
    * \param message message exchanged
    */
-  void deviceEnforcerCallback(string path, Ipv6Address sourceIp,
-                              Ipv6Address destinyIP, string message);
+  void deviceEnforcerCallback(string path, Address sourceIp,
+                              Address destinyIP, string message);
 
   void outputMetrics();
 

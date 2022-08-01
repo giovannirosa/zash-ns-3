@@ -70,6 +70,13 @@ time_t strToTime(const char *str);
 int extractHour(time_t mtime);
 
 /*
+ * Extract day of month from time
+ * \param mtime time
+ * \returns day of month
+ */
+int extractDay(time_t mtime);
+
+/*
  * Format from vector of enums to text
  * \param v vector of enums
  * \returns formatted text
