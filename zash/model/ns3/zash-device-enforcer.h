@@ -25,7 +25,7 @@ class Socket;
 
 /**
  * \ingroup applications
- * \defgroup onoff DeviceEnforcer
+ * \defgroup onoff ZashDeviceEnforcer
  *
  * This traffic generator follows an On/Off pattern: after
  * Application::StartApplication
@@ -76,7 +76,7 @@ class Socket;
  * the header via trace sources.  Note that the continuity of the sequence
  * number may be disrupted across On/Off cycles.
  */
-class DeviceEnforcer : public Application {
+class ZashDeviceEnforcer : public Application {
 public:
   /**
    * \brief Get the type ID.
@@ -84,9 +84,9 @@ public:
    */
   static TypeId GetTypeId(void);
 
-  DeviceEnforcer();
+  ZashDeviceEnforcer();
 
-  virtual ~DeviceEnforcer();
+  virtual ~ZashDeviceEnforcer();
 
   /**
    * \brief Set the total number of bytes to send.

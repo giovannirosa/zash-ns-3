@@ -28,33 +28,33 @@
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE("DeviceEnforcer");
+NS_LOG_COMPONENT_DEFINE("ZashDeviceEnforcer");
 
-NS_OBJECT_ENSURE_REGISTERED(DeviceEnforcer);
+NS_OBJECT_ENSURE_REGISTERED(ZashDeviceEnforcer);
 
-TypeId DeviceEnforcer::GetTypeId(void) {
+TypeId ZashDeviceEnforcer::GetTypeId(void) {
   static TypeId tid =
-      TypeId("ns3::DeviceEnforcer")
+      TypeId("ns3::ZashDeviceEnforcer")
           .SetParent<Application>()
           .SetGroupName("Applications")
-          .AddConstructor<DeviceEnforcer>()
+          .AddConstructor<ZashDeviceEnforcer>()
           .AddAttribute("DataRate", "The data rate in on state.",
                         DataRateValue(DataRate("500kb/s")),
-                        MakeDataRateAccessor(&DeviceEnforcer::m_cbrRate),
+                        MakeDataRateAccessor(&ZashDeviceEnforcer::m_cbrRate),
                         MakeDataRateChecker())
           .AddAttribute("PacketSize", "The size of packets sent in on state",
                         UintegerValue(512),
-                        MakeUintegerAccessor(&DeviceEnforcer::m_pktSize),
+                        MakeUintegerAccessor(&ZashDeviceEnforcer::m_pktSize),
                         MakeUintegerChecker<uint32_t>(1))
           .AddAttribute("Remote", "The address of the destination",
                         AddressValue(),
-                        MakeAddressAccessor(&DeviceEnforcer::m_peer),
+                        MakeAddressAccessor(&ZashDeviceEnforcer::m_peer),
                         MakeAddressChecker())
           .AddAttribute("Local",
                         "The Address on which to bind the socket. If not set, "
                         "it is generated automatically.",
                         AddressValue(),
-                        MakeAddressAccessor(&DeviceEnforcer::m_local),
+                        MakeAddressAccessor(&ZashDeviceEnforcer::m_local),
                         MakeAddressChecker())
           .AddAttribute(
               "MaxBytes",
@@ -62,60 +62,60 @@ TypeId DeviceEnforcer::GetTypeId(void) {
               "no packet is sent again, even in on state. The value zero means "
               "that there is no limit.",
               UintegerValue(0),
-              MakeUintegerAccessor(&DeviceEnforcer::m_maxBytes),
+              MakeUintegerAccessor(&ZashDeviceEnforcer::m_maxBytes),
               MakeUintegerChecker<uint64_t>())
           .AddAttribute("Protocol",
                         "The type of protocol to use. This should be "
                         "a subclass of ns3::SocketFactory",
                         TypeIdValue(TcpSocketFactory::GetTypeId()),
-                        MakeTypeIdAccessor(&DeviceEnforcer::m_tid),
+                        MakeTypeIdAccessor(&ZashDeviceEnforcer::m_tid),
                         // This should check for SocketFactory as a parent
                         MakeTypeIdChecker())
           .AddAttribute(
               "EnableSeqTsSizeHeader",
               "Enable use of SeqTsSizeHeader for sequence number and timestamp",
               BooleanValue(false),
-              MakeBooleanAccessor(&DeviceEnforcer::m_enableSeqTsSizeHeader),
+              MakeBooleanAccessor(&ZashDeviceEnforcer::m_enableSeqTsSizeHeader),
               MakeBooleanChecker())
           .AddTraceSource("Tx", "A new packet is created and is sent",
-                          MakeTraceSourceAccessor(&DeviceEnforcer::m_txTrace),
+                          MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_txTrace),
                           "ns3::Packet::TracedCallback")
           .AddTraceSource(
               "TxWithAddresses", "A new packet is created and is sent",
-              MakeTraceSourceAccessor(&DeviceEnforcer::m_txTraceWithAddresses),
+              MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_txTraceWithAddresses),
               "ns3::Packet::TwoAddressTracedCallback")
           .AddTraceSource(
               "TxWithSeqTsSize", "A new packet is created with SeqTsSizeHeader",
-              MakeTraceSourceAccessor(&DeviceEnforcer::m_txTraceWithSeqTsSize),
+              MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_txTraceWithSeqTsSize),
               "ns3::PacketSink::SeqTsSizeCallback")
           .AddAttribute("Message", "The message to be sent", StringValue(),
-                        MakeStringAccessor(&DeviceEnforcer::z_message),
+                        MakeStringAccessor(&ZashDeviceEnforcer::z_message),
                         MakeStringChecker())
           .AddTraceSource("Traces", "Messages from node",
-                          MakeTraceSourceAccessor(&DeviceEnforcer::m_traces),
-                          "ns3::DeviceEnforcer::TracedCallback");
+                          MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_traces),
+                          "ns3::ZashDeviceEnforcer::TracedCallback");
   return tid;
 }
 
-DeviceEnforcer::DeviceEnforcer()
+ZashDeviceEnforcer::ZashDeviceEnforcer()
     : m_socket(0), m_connected(false), m_residualBits(0),
       m_lastStartTime(Seconds(0)), m_totBytes(0), m_unsentPacket(0) {
   NS_LOG_FUNCTION(this);
 }
 
-DeviceEnforcer::~DeviceEnforcer() { NS_LOG_FUNCTION(this); }
+ZashDeviceEnforcer::~ZashDeviceEnforcer() { NS_LOG_FUNCTION(this); }
 
-void DeviceEnforcer::SetMaxBytes(uint64_t maxBytes) {
+void ZashDeviceEnforcer::SetMaxBytes(uint64_t maxBytes) {
   NS_LOG_FUNCTION(this << maxBytes);
   m_maxBytes = maxBytes;
 }
 
-Ptr<Socket> DeviceEnforcer::GetSocket(void) const {
+Ptr<Socket> ZashDeviceEnforcer::GetSocket(void) const {
   NS_LOG_FUNCTION(this);
   return m_socket;
 }
 
-void DeviceEnforcer::DoDispose(void) {
+void ZashDeviceEnforcer::DoDispose(void) {
   NS_LOG_FUNCTION(this);
 
   CancelEvents();
@@ -126,7 +126,7 @@ void DeviceEnforcer::DoDispose(void) {
 }
 
 // Application Methods
-void DeviceEnforcer::StartApplication() // Called at time specified by Start
+void ZashDeviceEnforcer::StartApplication() // Called at time specified by Start
 {
   NS_LOG_INFO("=======================================================");
   NS_LOG_FUNCTION(this);
@@ -185,17 +185,17 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
     // m_socket->ShutdownRecv();
 
     m_socket->SetConnectCallback(
-        MakeCallback(&DeviceEnforcer::ConnectionSucceeded, this),
-        MakeCallback(&DeviceEnforcer::ConnectionFailed, this));
+        MakeCallback(&ZashDeviceEnforcer::ConnectionSucceeded, this),
+        MakeCallback(&ZashDeviceEnforcer::ConnectionFailed, this));
 
-    m_socket->SetRecvCallback(MakeCallback(&DeviceEnforcer::HandleRead, this));
+    m_socket->SetRecvCallback(MakeCallback(&ZashDeviceEnforcer::HandleRead, this));
     m_socket->SetRecvPktInfo(true);
     m_socket->SetAcceptCallback(
         MakeNullCallback<bool, Ptr<Socket>, const Address &>(),
-        MakeCallback(&DeviceEnforcer::HandleAccept, this));
+        MakeCallback(&ZashDeviceEnforcer::HandleAccept, this));
     m_socket->SetCloseCallbacks(
-        MakeCallback(&DeviceEnforcer::HandlePeerClose, this),
-        MakeCallback(&DeviceEnforcer::HandlePeerError, this));
+        MakeCallback(&ZashDeviceEnforcer::HandlePeerClose, this),
+        MakeCallback(&ZashDeviceEnforcer::HandlePeerError, this));
   }
   m_cbrRateFailSafe = m_cbrRate;
 
@@ -207,7 +207,7 @@ void DeviceEnforcer::StartApplication() // Called at time specified by Start
   // StartSending();
 }
 
-void DeviceEnforcer::StopApplication() // Called at time specified by Stop
+void ZashDeviceEnforcer::StopApplication() // Called at time specified by Stop
 {
   NS_LOG_FUNCTION(this);
   NS_LOG_INFO("Stopping " << z_device->name << " @"
@@ -226,11 +226,11 @@ void DeviceEnforcer::StopApplication() // Called at time specified by Stop
                   << " return " << ret);
     }
   } else {
-    NS_LOG_WARN("DeviceEnforcer found null socket to close in StopApplication");
+    NS_LOG_WARN("ZashDeviceEnforcer found null socket to close in StopApplication");
   }
 }
 
-void DeviceEnforcer::CancelEvents() {
+void ZashDeviceEnforcer::CancelEvents() {
   NS_LOG_FUNCTION(this);
 
   if (m_sendEvent.IsRunning() &&
@@ -252,7 +252,7 @@ void DeviceEnforcer::CancelEvents() {
 }
 
 // Event handlers
-void DeviceEnforcer::StartSending(string message) {
+void ZashDeviceEnforcer::StartSending(string message) {
   NS_LOG_INFO("=======================================================");
   NS_LOG_FUNCTION(this);
   SetMessage(message);
@@ -261,7 +261,7 @@ void DeviceEnforcer::StartSending(string message) {
 }
 
 // Private helpers
-void DeviceEnforcer::ScheduleNextTx() {
+void ZashDeviceEnforcer::ScheduleNextTx() {
   NS_LOG_FUNCTION(this);
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes) {
@@ -274,13 +274,13 @@ void DeviceEnforcer::ScheduleNextTx() {
         static_cast<double>(m_cbrRate.GetBitRate()))); // Time till next packet
     NS_LOG_LOGIC("nextTime = " << nextTime.As(Time::S));
     m_sendEvent =
-        Simulator::Schedule(nextTime, &DeviceEnforcer::SendPacket, this);
+        Simulator::Schedule(nextTime, &ZashDeviceEnforcer::SendPacket, this);
   } else { // All done, cancel any pending events
     // StopApplication();
   }
 }
 
-void DeviceEnforcer::SendPacket() {
+void ZashDeviceEnforcer::SendPacket() {
   NS_LOG_FUNCTION(this);
 
   NS_ASSERT(m_sendEvent.IsExpired());
@@ -357,20 +357,20 @@ void DeviceEnforcer::SendPacket() {
   m_lastStartTime = Simulator::Now();
 }
 
-void DeviceEnforcer::ConnectionSucceeded(Ptr<Socket> socket) {
+void ZashDeviceEnforcer::ConnectionSucceeded(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
   NS_LOG_INFO(z_device->name << " connected @" << Simulator::Now().As(Time::S));
   m_connected = true;
   m_traces(m_peer, m_local, "Socket connected");
 }
 
-void DeviceEnforcer::ConnectionFailed(Ptr<Socket> socket) {
+void ZashDeviceEnforcer::ConnectionFailed(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
   NS_FATAL_ERROR(z_device->name << " can't connect " << socket->GetErrno()
                                 << " @" << Simulator::Now().As(Time::S));
 }
 
-void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
+void ZashDeviceEnforcer::HandleRead(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
   NS_LOG_INFO("Handling read zash device...");
   Ptr<Packet> packet;
@@ -443,35 +443,35 @@ void DeviceEnforcer::HandleRead(Ptr<Socket> socket) {
   }
 }
 
-void DeviceEnforcer::HandlePeerClose(Ptr<Socket> socket) {
+void ZashDeviceEnforcer::HandlePeerClose(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
 }
 
-void DeviceEnforcer::HandlePeerError(Ptr<Socket> socket) {
+void ZashDeviceEnforcer::HandlePeerError(Ptr<Socket> socket) {
   NS_LOG_FUNCTION(this << socket);
 }
 
-void DeviceEnforcer::HandleAccept(Ptr<Socket> s, const Address &from) {
+void ZashDeviceEnforcer::HandleAccept(Ptr<Socket> s, const Address &from) {
   NS_LOG_FUNCTION(this << s << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
-  s->SetRecvCallback(MakeCallback(&DeviceEnforcer::HandleRead, this));
+  s->SetRecvCallback(MakeCallback(&ZashDeviceEnforcer::HandleRead, this));
 }
 
 //----------------------------------------------------------------------------------
 // ZASH Application Logic
 //----------------------------------------------------------------------------------
 
-void DeviceEnforcer::SetDevice(Device *d) {
+void ZashDeviceEnforcer::SetDevice(Device *d) {
   NS_LOG_FUNCTION(this << d);
   z_device = d;
 }
 
-void DeviceEnforcer::SetMessage(string msg) {
+void ZashDeviceEnforcer::SetMessage(string msg) {
   NS_LOG_FUNCTION(this << msg);
   m_pktSize = msg.size();
   z_message = msg;
 }
 
-void DeviceEnforcer::SetAuditModule(AuditComponent *a) {
+void ZashDeviceEnforcer::SetAuditModule(AuditComponent *a) {
   NS_LOG_FUNCTION(this << a);
   z_auditModule = a;
 }

@@ -400,10 +400,10 @@ void appsConfiguration(Ipv6InterfaceContainer serverApInterface,
   ZashServerApp->SetStopTime(Seconds(stop));
   serverNode.Get(0)->AddApplication(ZashServerApp);
 
-  // Start at 1s
+  // Start at 5s
   // Each start 0.2s apart
   // Stop at final
-  double startDevice = start + 1.0;
+  double startDevice = start + 5.0;
   for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
     if (i == 7) {
       continue;
@@ -411,28 +411,29 @@ void appsConfiguration(Ipv6InterfaceContainer serverApInterface,
 
     Address nodeAddress(
         Inet6SocketAddress(staInterface.GetAddress(i, 0), 50000));
-    Ptr<DeviceEnforcer> DeviceEnforcerApp = CreateObject<DeviceEnforcer>();
-    DeviceEnforcerApp->SetAttribute("Protocol",
-                                    TypeIdValue(TcpSocketFactory::GetTypeId()));
-    DeviceEnforcerApp->SetAttribute("Local", AddressValue(nodeAddress));
-    DeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
-    DeviceEnforcerApp->SetAttribute("DataRate",
-                                    DataRateValue(DataRate(dataRate)));
-    DeviceEnforcerApp->SetDevice(devices[i]);
-    DeviceEnforcerApp->SetAuditModule(auditModule);
-    DeviceEnforcerApp->SetStartTime(Seconds(startDevice));
-    DeviceEnforcerApp->SetStopTime(Seconds(stop));
+    Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
+        CreateObject<ZashDeviceEnforcer>();
+    ZashDeviceEnforcerApp->SetAttribute(
+        "Protocol", TypeIdValue(TcpSocketFactory::GetTypeId()));
+    ZashDeviceEnforcerApp->SetAttribute("Local", AddressValue(nodeAddress));
+    ZashDeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
+    ZashDeviceEnforcerApp->SetAttribute("DataRate",
+                                        DataRateValue(DataRate(dataRate)));
+    ZashDeviceEnforcerApp->SetDevice(devices[i]);
+    ZashDeviceEnforcerApp->SetAuditModule(auditModule);
+    ZashDeviceEnforcerApp->SetStartTime(Seconds(startDevice));
+    ZashDeviceEnforcerApp->SetStopTime(Seconds(stop));
     startDevice += 0.2;
 
     Ptr<Node> node = staNodes.Get(i);
-    node->AddApplication(DeviceEnforcerApp);
+    node->AddApplication(ZashDeviceEnforcerApp);
     NS_LOG_INFO("Installed device " << i);
   }
 }
 
 void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
-                      DataComponent *dataComponent,
-                      AuditComponent *auditModule) {
+                      DataComponent *dataComponent, AuditComponent *auditModule,
+                      int startDay, int endDay) {
   int user = 0;
   string accessWay = "PERSONAL";
   string localization = "INTERNAL";
@@ -454,8 +455,8 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
   CsvReader csv(dataset);
   vector<int> lastState;
   time_t firstDate = (time_t)(-1);
-  int count = 0;
-  int dayCount = 0;
+  int msgCount = 0;
+  int dayCount = 1;
   time_t lastDate;
   while (csv.FetchNextRow()) {
     // NS_LOG_INFO("Processing row " << csv.RowNumber() << "...");
@@ -498,7 +499,7 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
       continue;
     }
 
-    if (lastState.size() > 0) {
+    if (lastState.size() > 0 && dayCount >= startDay && dayCount <= endDay) {
       vector<uint32_t> changes;
 
       for (uint32_t i = 0; i < NUMBER_OF_DEVICES; ++i) {
@@ -524,11 +525,11 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
         auditModule->fileMsgs
             << "Device enforcer scheduled with message = " << request << endl;
         Ptr<Node> node = staNodes.Get(change);
-        Ptr<DeviceEnforcer> DeviceEnforcerApp =
-            DynamicCast<DeviceEnforcer>(node->GetApplication(0));
-        Simulator::Schedule(Seconds(diff), &DeviceEnforcer::StartSending,
-                            DeviceEnforcerApp, request);
-        count++;
+        Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
+            DynamicCast<ZashDeviceEnforcer>(node->GetApplication(0));
+        Simulator::Schedule(Seconds(diff), &ZashDeviceEnforcer::StartSending,
+                            ZashDeviceEnforcerApp, request);
+        msgCount++;
         // NS_LOG_INFO(devices[change]->name << " will change at " << diff
         //                                   << " seconds");
         auditModule->fileMsgs << devices[change]->name << " will change at "
@@ -542,8 +543,8 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
     lastDate = currentDate;
   }
 
-  NS_LOG_INFO("Count of messages = " << count << endl);
-  NS_LOG_INFO("Count of days = " << dayCount << endl);
+  auditModule->fileMsgs << "Count of messages = " << msgCount << endl;
+  auditModule->fileMsgs << "Count of days = " << dayCount << endl;
 };
 
 int main(int argc, char *argv[]) {
@@ -553,7 +554,7 @@ int main(int argc, char *argv[]) {
   // Users may find it convenient to turn on explicit debugging
   // for selected modules; the below lines suggest how to do this
   LogComponentEnable("ZASH", LOG_LEVEL_ALL);
-  LogComponentEnable("DeviceEnforcer", LOG_LEVEL_ALL);
+  LogComponentEnable("ZashDeviceEnforcer", LOG_LEVEL_ALL);
   LogComponentEnable("ZashServer", LOG_LEVEL_ALL);
   // LogComponentEnable("ArpL3Protocol", LOG_LEVEL_INFO);
   LogComponentEnable("AuditComponent", LOG_LEVEL_INFO);
@@ -575,8 +576,8 @@ int main(int argc, char *argv[]) {
   string phyRate = "HtMcs7";      /* Physical layer bitrate. */
   double simulationTime = stop;   /* Simulation time in seconds. */
   bool pcapTracing = false;       /* PCAP Tracing is enabled or not. */
-  uint32_t startDay = 1;             /* Start day of the simulation. */
-  uint32_t endDay = 2;               /* End day of the simulation. */
+  uint32_t startDay = 1;          /* Start day of the simulation. */
+  uint32_t endDay = 2;            /* End day of the simulation. */
 
   // Allow the user to override any of the defaults and the above
   // Config::SetDefault()s at run-time, via command-line arguments
@@ -593,6 +594,10 @@ int main(int argc, char *argv[]) {
 
   if (startDay < 1) {
     cout << "ZASH - Error: start must be greater than 0" << endl;
+    return 1;
+  }
+  if (startDay > endDay) {
+    cout << "ZASH - Error: start must be greater than end" << endl;
     return 1;
   }
 
@@ -673,14 +678,18 @@ int main(int argc, char *argv[]) {
   /* Configure AP */
   NS_LOG_INFO("Configure AP");
   Ssid ssid = Ssid("network");
-  wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(ssid));
+  wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(ssid), "BeaconInterval",
+                  TimeValue(MicroSeconds(4096000)), "BsrLifetime",
+                  TimeValue(MilliSeconds(800)));
 
   NetDeviceContainer apDevice;
   apDevice = wifiHelper.Install(wifiPhy, wifiMac, apNode);
 
   /* Configure STA */
   NS_LOG_INFO("Configure STA");
-  wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid));
+  wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid),
+                  "WaitBeaconTimeout", TimeValue(MilliSeconds(4800)),
+                  "AssocRequestTimeout", TimeValue(Seconds(20)));
 
   NetDeviceContainer staDevices;
   staDevices = wifiHelper.Install(wifiPhy, wifiMac, staNodes);
@@ -760,7 +769,8 @@ int main(int argc, char *argv[]) {
   // Schedule messages from dataset
   //----------------------------------------------------------------------------------
 
-  scheduleMessages(staNodes, devices, dataComponent, auditModule);
+  scheduleMessages(staNodes, devices, dataComponent, auditModule, startDay,
+                   endDay);
 
   //----------------------------------------------------------------------------------
   // Output configuration
@@ -777,12 +787,12 @@ int main(int argc, char *argv[]) {
       continue;
     }
     Ptr<Node> node = staNodes.Get(i);
-    Ptr<DeviceEnforcer> DeviceEnforcerApp =
-        DynamicCast<DeviceEnforcer>(node->GetApplication(0));
+    Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
+        DynamicCast<ZashDeviceEnforcer>(node->GetApplication(0));
     ostringstream paramTest;
-    paramTest << "/NodeList/" << (DeviceEnforcerApp->z_device->id)
-              << "/ApplicationList/*/$ns3::DeviceEnforcer/Traces";
-    DeviceEnforcerApp->m_traces.Connect(
+    paramTest << "/NodeList/" << (ZashDeviceEnforcerApp->z_device->id)
+              << "/ApplicationList/*/$ns3::ZashDeviceEnforcer/Traces";
+    ZashDeviceEnforcerApp->m_traces.Connect(
         MakeCallback(&AuditComponent::deviceEnforcerCallback, auditModule),
         paramTest.str());
     // Config::Connect(
@@ -800,9 +810,9 @@ int main(int argc, char *argv[]) {
   }
 
   // configure tracing
-  AsciiTraceHelper ascii;
+  // AsciiTraceHelper ascii;
   // mobility.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
-  csma.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
+  // csma.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
 
   /* Stop Simulation */
   Simulator::Stop(Seconds(simulationTime + 1));
@@ -835,9 +845,9 @@ int main(int argc, char *argv[]) {
                                Seconds(5));
 
   // Flow monitor
-  Ptr<FlowMonitor> flowMonitor;
-  FlowMonitorHelper flowHelper;
-  flowMonitor = flowHelper.InstallAll();
+  // Ptr<FlowMonitor> flowMonitor;
+  // FlowMonitorHelper flowHelper;
+  // flowMonitor = flowHelper.InstallAll();
 
   // Trace routing tables
   // Ipv4GlobalRoutingHelper g;
@@ -854,7 +864,7 @@ int main(int argc, char *argv[]) {
   Simulator::Destroy();
   NS_LOG_INFO("Done.");
 
-  flowMonitor->SerializeToXmlFile("flow.xml", true, true);
+  // flowMonitor->SerializeToXmlFile("flow.xml", true, true);
 
   auditModule->outputMetrics();
 
