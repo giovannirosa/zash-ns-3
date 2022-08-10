@@ -77,46 +77,50 @@ TypeId ZashDeviceEnforcer::GetTypeId(void) {
               BooleanValue(false),
               MakeBooleanAccessor(&ZashDeviceEnforcer::m_enableSeqTsSizeHeader),
               MakeBooleanChecker())
-          .AddTraceSource("Tx", "A new packet is created and is sent",
-                          MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_txTrace),
-                          "ns3::Packet::TracedCallback")
           .AddTraceSource(
-              "TxWithAddresses", "A new packet is created and is sent",
-              MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_txTraceWithAddresses),
-              "ns3::Packet::TwoAddressTracedCallback")
-          .AddTraceSource(
-              "TxWithSeqTsSize", "A new packet is created with SeqTsSizeHeader",
-              MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_txTraceWithSeqTsSize),
-              "ns3::PacketSink::SeqTsSizeCallback")
+              "Tx", "A new packet is created and is sent",
+              MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_txTrace),
+              "ns3::Packet::TracedCallback")
+          .AddTraceSource("TxWithAddresses",
+                          "A new packet is created and is sent",
+                          MakeTraceSourceAccessor(
+                              &ZashDeviceEnforcer::m_txTraceWithAddresses),
+                          "ns3::Packet::TwoAddressTracedCallback")
+          .AddTraceSource("TxWithSeqTsSize",
+                          "A new packet is created with SeqTsSizeHeader",
+                          MakeTraceSourceAccessor(
+                              &ZashDeviceEnforcer::m_txTraceWithSeqTsSize),
+                          "ns3::PacketSink::SeqTsSizeCallback")
           .AddAttribute("Message", "The message to be sent", StringValue(),
                         MakeStringAccessor(&ZashDeviceEnforcer::z_message),
                         MakeStringChecker())
-          .AddTraceSource("Traces", "Messages from node",
-                          MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_traces),
-                          "ns3::ZashDeviceEnforcer::TracedCallback");
+          .AddTraceSource(
+              "Traces", "Messages from node",
+              MakeTraceSourceAccessor(&ZashDeviceEnforcer::m_traces),
+              "ns3::ZashDeviceEnforcer::TracedCallback");
   return tid;
 }
 
 ZashDeviceEnforcer::ZashDeviceEnforcer()
     : m_socket(0), m_connected(false), m_residualBits(0),
       m_lastStartTime(Seconds(0)), m_totBytes(0), m_unsentPacket(0) {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
 }
 
-ZashDeviceEnforcer::~ZashDeviceEnforcer() { NS_LOG_FUNCTION(this); }
+ZashDeviceEnforcer::~ZashDeviceEnforcer() {}
 
 void ZashDeviceEnforcer::SetMaxBytes(uint64_t maxBytes) {
-  NS_LOG_FUNCTION(this << maxBytes);
+  // NS_LOG_FUNCTION(this << maxBytes);
   m_maxBytes = maxBytes;
 }
 
 Ptr<Socket> ZashDeviceEnforcer::GetSocket(void) const {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
   return m_socket;
 }
 
 void ZashDeviceEnforcer::DoDispose(void) {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
 
   CancelEvents();
   m_socket = 0;
@@ -128,10 +132,10 @@ void ZashDeviceEnforcer::DoDispose(void) {
 // Application Methods
 void ZashDeviceEnforcer::StartApplication() // Called at time specified by Start
 {
-  NS_LOG_INFO("=======================================================");
-  NS_LOG_FUNCTION(this);
-  NS_LOG_INFO("Starting " << z_device->name << " @"
-                          << Simulator::Now().As(Time::S));
+  z_auditModule->fileLog
+      << "=======================================================" << endl;
+  z_auditModule->fileLog << "Starting " << z_device->name << " @"
+                         << Simulator::Now().As(Time::S) << endl;
 
   // Create the socket if not already
   if (!m_socket) {
@@ -139,14 +143,14 @@ void ZashDeviceEnforcer::StartApplication() // Called at time specified by Start
     int ret = -1;
 
     if (InetSocketAddress::IsMatchingType(m_peer)) {
-      NS_LOG_INFO("Socket bind "
-                  << InetSocketAddress::ConvertFrom(m_local).GetIpv4() << " to "
-                  << InetSocketAddress::ConvertFrom(m_peer).GetIpv4());
+      z_auditModule->fileLog
+          << "Socket bind " << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
+          << " to " << InetSocketAddress::ConvertFrom(m_peer).GetIpv4() << endl;
     } else {
-      NS_LOG_INFO("Socket bind "
-                  << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
-                  << " to "
-                  << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6());
+      z_auditModule->fileLog
+          << "Socket bind "
+          << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6() << " to "
+          << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6() << endl;
     }
 
     if (!m_local.IsInvalid()) {
@@ -172,14 +176,15 @@ void ZashDeviceEnforcer::StartApplication() // Called at time specified by Start
     ret = m_socket->Connect(m_peer);
     m_socket->SetAllowBroadcast(true);
     if (InetSocketAddress::IsMatchingType(m_peer)) {
-      NS_LOG_INFO("Socket connect "
-                  << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
-                  << " return " << ret);
+      z_auditModule->fileLog << "Socket connect "
+                             << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
+                             << " return " << ret << endl;
 
     } else {
-      NS_LOG_INFO("Socket connect "
-                  << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6()
-                  << " return " << ret);
+      z_auditModule->fileLog
+          << "Socket connect "
+          << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6() << " return "
+          << ret << endl;
     }
     m_traces(m_local, m_peer, "Socket connect");
     // m_socket->ShutdownRecv();
@@ -188,7 +193,8 @@ void ZashDeviceEnforcer::StartApplication() // Called at time specified by Start
         MakeCallback(&ZashDeviceEnforcer::ConnectionSucceeded, this),
         MakeCallback(&ZashDeviceEnforcer::ConnectionFailed, this));
 
-    m_socket->SetRecvCallback(MakeCallback(&ZashDeviceEnforcer::HandleRead, this));
+    m_socket->SetRecvCallback(
+        MakeCallback(&ZashDeviceEnforcer::HandleRead, this));
     m_socket->SetRecvPktInfo(true);
     m_socket->SetAcceptCallback(
         MakeNullCallback<bool, Ptr<Socket>, const Address &>(),
@@ -209,29 +215,31 @@ void ZashDeviceEnforcer::StartApplication() // Called at time specified by Start
 
 void ZashDeviceEnforcer::StopApplication() // Called at time specified by Stop
 {
-  NS_LOG_FUNCTION(this);
-  NS_LOG_INFO("Stopping " << z_device->name << " @"
-                          << Simulator::Now().As(Time::S));
+  // NS_LOG_FUNCTION(this);
+  z_auditModule->fileLog << "Stopping " << z_device->name << " @"
+                         << Simulator::Now().As(Time::S) << endl;
 
   CancelEvents();
   if (m_socket != 0) {
     int ret = m_socket->Close();
     if (InetSocketAddress::IsMatchingType(m_peer)) {
-      NS_LOG_INFO("Socket closed "
-                  << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
-                  << " return " << ret);
+      z_auditModule->fileLog << "Socket closed "
+                             << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
+                             << " return " << ret << endl;
     } else {
-      NS_LOG_INFO("Socket closed "
-                  << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6()
-                  << " return " << ret);
+      z_auditModule->fileLog
+          << "Socket closed "
+          << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6() << " return "
+          << ret << endl;
     }
   } else {
-    NS_LOG_WARN("ZashDeviceEnforcer found null socket to close in StopApplication");
+    NS_LOG_WARN(
+        "ZashDeviceEnforcer found null socket to close in StopApplication");
   }
 }
 
 void ZashDeviceEnforcer::CancelEvents() {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
 
   if (m_sendEvent.IsRunning() &&
       m_cbrRateFailSafe == m_cbrRate) { // Cancel the pending send packet event
@@ -253,16 +261,17 @@ void ZashDeviceEnforcer::CancelEvents() {
 
 // Event handlers
 void ZashDeviceEnforcer::StartSending(string message) {
-  NS_LOG_INFO("=======================================================");
-  NS_LOG_FUNCTION(this);
+  z_auditModule->fileLog
+      << "=======================================================" << endl;
   SetMessage(message);
   m_lastStartTime = Simulator::Now();
-  ScheduleNextTx(); // Schedule the send packet event
+  // ScheduleNextTx(); // Schedule the send packet event
+  SendPacket();
 }
 
 // Private helpers
 void ZashDeviceEnforcer::ScheduleNextTx() {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes) {
     NS_ABORT_MSG_IF(m_residualBits > m_pktSize * 8,
@@ -272,7 +281,7 @@ void ZashDeviceEnforcer::ScheduleNextTx() {
     Time nextTime(Seconds(
         bits /
         static_cast<double>(m_cbrRate.GetBitRate()))); // Time till next packet
-    NS_LOG_LOGIC("nextTime = " << nextTime.As(Time::S));
+    NS_LOG_LOGIC("nextTime = " << nextTime.As(Time::MS));
     m_sendEvent =
         Simulator::Schedule(nextTime, &ZashDeviceEnforcer::SendPacket, this);
   } else { // All done, cancel any pending events
@@ -281,8 +290,6 @@ void ZashDeviceEnforcer::ScheduleNextTx() {
 }
 
 void ZashDeviceEnforcer::SendPacket() {
-  NS_LOG_FUNCTION(this);
-
   NS_ASSERT(m_sendEvent.IsExpired());
 
   Ptr<Packet> packet;
@@ -301,20 +308,24 @@ void ZashDeviceEnforcer::SendPacket() {
     m_txTraceWithSeqTsSize(packet, from, to, header);
     packet->AddHeader(header);
   } else {
-    NS_LOG_INFO("Creating packet with " << z_message.size() << " size and '"
-                                        << z_message << "' message");
+    z_auditModule->fileLog << "Creating packet with " << z_message.size()
+                           << " size and '" << z_message << "' message" << endl;
     packet = Create<Packet>(
         reinterpret_cast<const uint8_t *>(z_message.c_str()), z_message.size());
   }
 
   if (InetSocketAddress::IsMatchingType(m_peer)) {
-    NS_LOG_INFO("Sending packet from "
-                << InetSocketAddress::ConvertFrom(m_local).GetIpv4() << " to "
-                << InetSocketAddress::ConvertFrom(m_peer).GetIpv4());
+    z_auditModule->fileLog << "Sending packet from "
+                           << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
+                           << " to "
+                           << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
+                           << endl;
   } else {
-    NS_LOG_INFO("Sending packet from "
-                << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6() << " to "
-                << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6());
+    z_auditModule->fileLog << "Sending packet from "
+                           << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
+                           << " to "
+                           << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6()
+                           << endl;
   }
 
   int actual = m_socket->Send(packet);
@@ -327,23 +338,21 @@ void ZashDeviceEnforcer::SendPacket() {
     m_socket->GetSockName(localAddress);
     m_traces(m_local, m_peer, z_message);
     if (InetSocketAddress::IsMatchingType(m_peer)) {
-      NS_LOG_INFO("At time " << Simulator::Now().As(Time::S)
-                             << " on-off application sent " << packet->GetSize()
-                             << " bytes to "
-                             << InetSocketAddress::ConvertFrom(m_peer).GetIpv4()
-                             << " port "
-                             << InetSocketAddress::ConvertFrom(m_peer).GetPort()
-                             << " total Tx " << m_totBytes << " bytes");
+      z_auditModule->fileLog
+          << "At time " << Simulator::Now().As(Time::S)
+          << " on-off application sent " << packet->GetSize() << " bytes to "
+          << InetSocketAddress::ConvertFrom(m_peer).GetIpv4() << " port "
+          << InetSocketAddress::ConvertFrom(m_peer).GetPort() << " total Tx "
+          << m_totBytes << " bytes" << endl;
       m_txTraceWithAddresses(packet, localAddress,
                              InetSocketAddress::ConvertFrom(m_peer));
     } else if (Inet6SocketAddress::IsMatchingType(m_peer)) {
-      NS_LOG_INFO("At time "
-                  << Simulator::Now().As(Time::S) << " on-off application sent "
-                  << packet->GetSize() << " bytes to "
-                  << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6()
-                  << " port "
-                  << Inet6SocketAddress::ConvertFrom(m_peer).GetPort()
-                  << " total Tx " << m_totBytes << " bytes");
+      z_auditModule->fileLog
+          << "At time " << Simulator::Now().As(Time::S)
+          << " on-off application sent " << packet->GetSize() << " bytes to "
+          << Inet6SocketAddress::ConvertFrom(m_peer).GetIpv6() << " port "
+          << Inet6SocketAddress::ConvertFrom(m_peer).GetPort() << " total Tx "
+          << m_totBytes << " bytes" << endl;
       m_txTraceWithAddresses(packet, localAddress,
                              Inet6SocketAddress::ConvertFrom(m_peer));
     }
@@ -358,21 +367,22 @@ void ZashDeviceEnforcer::SendPacket() {
 }
 
 void ZashDeviceEnforcer::ConnectionSucceeded(Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << socket);
-  NS_LOG_INFO(z_device->name << " connected @" << Simulator::Now().As(Time::S));
+  // NS_LOG_FUNCTION(this << socket);
+  z_auditModule->fileLog << z_device->name << " connected @"
+                         << Simulator::Now().As(Time::S) << endl;
   m_connected = true;
   m_traces(m_peer, m_local, "Socket connected");
 }
 
 void ZashDeviceEnforcer::ConnectionFailed(Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << socket);
+  // NS_LOG_FUNCTION(this << socket);
   NS_FATAL_ERROR(z_device->name << " can't connect " << socket->GetErrno()
                                 << " @" << Simulator::Now().As(Time::S));
 }
 
 void ZashDeviceEnforcer::HandleRead(Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << socket);
-  NS_LOG_INFO("Handling read zash device...");
+  // NS_LOG_FUNCTION(this << socket);
+  z_auditModule->fileLog << "Handling read zash device..." << endl;
   Ptr<Packet> packet;
   Address from;
   string newBuffer;
@@ -390,23 +400,23 @@ void ZashDeviceEnforcer::HandleRead(Ptr<Socket> socket) {
     m_traces(from, m_local, newBuffer);
 
     if (InetSocketAddress::IsMatchingType(from)) {
-      NS_LOG_INFO("Received packet from "
-                  << InetSocketAddress::ConvertFrom(from).GetIpv4()
-                  << " with message = " << newBuffer);
-      NS_LOG_INFO("At time "
-                  << Simulator::Now().As(Time::S) << " packet sink received "
-                  << packet->GetSize() << " bytes from "
-                  << InetSocketAddress::ConvertFrom(from).GetIpv4() << " port "
-                  << InetSocketAddress::ConvertFrom(from).GetPort());
+      z_auditModule->fileLog << "Received packet from "
+                             << InetSocketAddress::ConvertFrom(from).GetIpv4()
+                             << " with message = " << newBuffer << endl;
+      z_auditModule->fileLog
+          << "At time " << Simulator::Now().As(Time::S)
+          << " packet sink received " << packet->GetSize() << " bytes from "
+          << InetSocketAddress::ConvertFrom(from).GetIpv4() << " port "
+          << InetSocketAddress::ConvertFrom(from).GetPort() << endl;
     } else if (Inet6SocketAddress::IsMatchingType(from)) {
-      NS_LOG_INFO("Received packet from "
-                  << Inet6SocketAddress::ConvertFrom(from).GetIpv6()
-                  << " with message = " << newBuffer);
-      NS_LOG_INFO("At time "
-                  << Simulator::Now().As(Time::S) << " packet sink received "
-                  << packet->GetSize() << " bytes from "
-                  << Inet6SocketAddress::ConvertFrom(from).GetIpv6() << " port "
-                  << Inet6SocketAddress::ConvertFrom(from).GetPort());
+      z_auditModule->fileLog << "Received packet from "
+                             << Inet6SocketAddress::ConvertFrom(from).GetIpv6()
+                             << " with message = " << newBuffer << endl;
+      z_auditModule->fileLog
+          << "At time " << Simulator::Now().As(Time::S)
+          << " packet sink received " << packet->GetSize() << " bytes from "
+          << Inet6SocketAddress::ConvertFrom(from).GetIpv6() << " port "
+          << Inet6SocketAddress::ConvertFrom(from).GetPort() << endl;
     }
 
     z_respTime = Simulator::Now().ToDouble(Time::MS);
@@ -421,38 +431,43 @@ void ZashDeviceEnforcer::HandleRead(Ptr<Socket> socket) {
 
   if (newBuffer == "[Accepted]") {
     if (InetSocketAddress::IsMatchingType(m_peer)) {
-      NS_LOG_INFO(z_device->name
-                  << "(" << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
-                  << ") has changed!");
+      z_auditModule->fileLog
+          << z_device->name << "("
+          << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
+          << ") has changed!" << endl;
     } else {
-      NS_LOG_INFO(z_device->name
-                  << "(" << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
-                  << ") has changed!");
+      z_auditModule->fileLog
+          << z_device->name << "("
+          << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
+          << ") has changed!" << endl;
     }
 
   } else if (newBuffer == "[Refused]") {
     if (InetSocketAddress::IsMatchingType(m_peer)) {
-      NS_LOG_INFO(z_device->name
-                  << "(" << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
-                  << ") has NOT changed!");
+      z_auditModule->fileLog
+          << z_device->name << "("
+          << InetSocketAddress::ConvertFrom(m_local).GetIpv4()
+          << ") has NOT changed!" << endl;
     } else {
-      NS_LOG_INFO(z_device->name
-                  << "(" << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
-                  << ") has NOT changed!");
+      z_auditModule->fileLog
+          << z_device->name << "("
+          << Inet6SocketAddress::ConvertFrom(m_local).GetIpv6()
+          << ") has NOT changed!" << endl;
     }
   }
 }
 
 void ZashDeviceEnforcer::HandlePeerClose(Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << socket);
+  // NS_LOG_FUNCTION(this << socket);
 }
 
 void ZashDeviceEnforcer::HandlePeerError(Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << socket);
+  // NS_LOG_FUNCTION(this << socket);
 }
 
 void ZashDeviceEnforcer::HandleAccept(Ptr<Socket> s, const Address &from) {
-  NS_LOG_FUNCTION(this << s << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
+  // NS_LOG_FUNCTION(this << s <<
+  // Inet6SocketAddress::ConvertFrom(from).GetIpv6());
   s->SetRecvCallback(MakeCallback(&ZashDeviceEnforcer::HandleRead, this));
 }
 
@@ -461,18 +476,18 @@ void ZashDeviceEnforcer::HandleAccept(Ptr<Socket> s, const Address &from) {
 //----------------------------------------------------------------------------------
 
 void ZashDeviceEnforcer::SetDevice(Device *d) {
-  NS_LOG_FUNCTION(this << d);
+  // NS_LOG_FUNCTION(this << d);
   z_device = d;
 }
 
 void ZashDeviceEnforcer::SetMessage(string msg) {
-  NS_LOG_FUNCTION(this << msg);
+  // NS_LOG_FUNCTION(this << msg);
   m_pktSize = msg.size();
   z_message = msg;
 }
 
 void ZashDeviceEnforcer::SetAuditModule(AuditComponent *a) {
-  NS_LOG_FUNCTION(this << a);
+  // NS_LOG_FUNCTION(this << a);
   z_auditModule = a;
 }
 

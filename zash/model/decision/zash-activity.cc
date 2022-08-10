@@ -14,26 +14,26 @@ ActivityComponent::ActivityComponent(DataComponent *d,
 bool ActivityComponent::verifyActivity(
     Request *req, time_t currentDate,
     function<bool(Request *, time_t)> explicitAuthentication) {
-  cout << "Activity Component" << endl;
+  *auditComponent->zashOutput << "Activity Component" << endl;
   checkBuilding(currentDate);
   vector<int> lastState = dataComponent->lastState;
   vector<int> currentState = dataComponent->currentState;
   if (!isMarkovBuilding) {
-    cout << "Verify activities" << endl;
-    cout << "From: " << vecToStr(lastState) << endl;
-    cout << "To: " << vecToStr(currentState) << endl;
+    *auditComponent->zashOutput << "Verify activities" << endl;
+    *auditComponent->zashOutput << "From: " << vecToStr(lastState) << endl;
+    *auditComponent->zashOutput << "To: " << vecToStr(currentState) << endl;
     float prob = markovChain->getProbability(currentState, lastState);
-    cout << "Probability = " << prob << endl;
+    *auditComponent->zashOutput << "Probability = " << prob << endl;
     if (prob < PROB_THRESHOLD) {
       auditComponent->activityFail.push_back(new AuditEvent(currentDate, req));
-      cout << "Activity is NOT valid! Requires proof of identity!" << endl;
+      *auditComponent->zashOutput << "Activity is NOT valid! Requires proof of identity!" << endl;
       if (!explicitAuthentication(req, currentDate)) {
         return false;
       }
     }
-    cout << "Activity is valid!" << endl;
+    *auditComponent->zashOutput << "Activity is valid!" << endl;
   } else {
-    cout << "Markov Chain is still building" << endl;
+    *auditComponent->zashOutput << "Markov Chain is still building" << endl;
   }
   markovChain->buildTransition(currentState, lastState);
   return true;
@@ -46,9 +46,7 @@ void ActivityComponent::checkBuilding(time_t currentDate) {
                                   60; // add days
   } else if (isMarkovBuilding && difftime(currentDate, limitDate) > 0) {
     isMarkovBuilding = false;
-    cout << "Markov Chain stopped building transition matrix at ";
-    printFormattedTime(currentDate);
-    cout << endl;
+    *auditComponent->zashOutput << "Markov Chain stopped building transition matrix at " << formatTime(currentDate) << endl;
   }
 }
 

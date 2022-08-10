@@ -24,8 +24,7 @@ public:
   AuditEvent(time_t t, Request *r);
 
   friend ostream &operator<<(ostream &out, AuditEvent const &a) {
-    printFormattedTime(a.time, out);
-    out << " - " << *a.request << endl;
+    out << formatTime(a.time) << " - " << *a.request << endl;
     return out;
   }
 };
@@ -77,11 +76,19 @@ public:
   string scenarioSimFile;
   string messagesSimFile;
   string metricsSimFile;
+  string execSimFile;
+  string logSimFile;
 
   // Create a string stream to store simulation scenario data
   stringstream fileSim;
   // Create a string stream to store simulation messages data
   stringstream fileMsgs;
+  // Create a string stream to store simulated executions
+  stringstream fileExec;
+  // Create a string stream to store main simulation log
+  stringstream fileLog;
+  // Create a string stream to store zash output
+  stringstream *zashOutput = &fileLog;
 
   AuditComponent(string timeLog, string folderTraces);
 
@@ -107,8 +114,8 @@ public:
    * \param destinyIP IP address from server
    * \param message message exchanged
    */
-  void deviceEnforcerCallback(string path, Address sourceIp,
-                              Address destinyIP, string message);
+  void deviceEnforcerCallback(string path, Address sourceIp, Address destinyIP,
+                              string message);
 
   void outputMetrics();
 

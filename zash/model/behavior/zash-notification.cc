@@ -3,13 +3,14 @@
 namespace ns3 {
 
 NotificationComponent::NotificationComponent() {}
-NotificationComponent::NotificationComponent(ConfigurationComponent *c) {
+NotificationComponent::NotificationComponent(ConfigurationComponent *c, AuditComponent *a) {
   configurationComponent = c;
+  auditComponent = a;
 }
 
 void NotificationComponent::alertUsers(User *blockedUser) {
   for (User *user : configurationComponent->users) {
-    cout << "User " << user->id << " received message: 'User "
+    *auditComponent->zashOutput << "User " << user->id << " received message: 'User "
          << blockedUser->id << " is blocked!'";
   }
 }

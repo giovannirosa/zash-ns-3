@@ -42,32 +42,30 @@ ContextComponent::ContextComponent(ConfigurationComponent *c,
 bool ContextComponent::verifyContext(
     Request *req, time_t currentDate,
     function<bool(Request *, time_t)> explicitAuthentication) {
-  cout << "Context Component" << endl;
+  *auditComponent->zashOutput << "Context Component" << endl;
   calculateTime(req, currentDate);
   checkBuilding(currentDate);
   if (isTimeBuilding) {
-    cout << "Time probability is still building" << endl;
+    *auditComponent->zashOutput << "Time probability is still building" << endl;
     req->context->time = enums::TimeClass.at("COMMON");
   }
-  cout << "Verify context " << *req->context << " with " << *req->user
-       << " at ";
-  printFormattedTime(currentDate);
-  cout << endl;
+  *auditComponent->zashOutput << "Verify context " << *req->context << " with "
+                              << *req->user << " at " << formatTime(currentDate) << endl;
   int expectedDevice = req->device->deviceClass->weight + req->action->weight;
   int expectedUser = req->user->userLevel->weight + req->action->weight;
   int expected = min(max(expectedDevice, expectedUser), 100);
   int calculated = min(calculateTrust(req->context, req->user), 100);
-  cout << "Trust level is " << calculated << " and expected is " << expected
-       << endl;
+  *auditComponent->zashOutput << "Trust level is " << calculated
+                              << " and expected is " << expected << endl;
   if (calculated < expected) {
     auditComponent->contextFail.push_back(new AuditEvent(currentDate, req));
-    cout << "Trust level is BELOW expected! Requires proof of identity!"
-         << endl;
+    *auditComponent->zashOutput
+        << "Trust level is BELOW expected! Requires proof of identity!" << endl;
     if (!explicitAuthentication(req, currentDate)) {
       return false;
     }
   }
-  cout << "Trust level is ABOVE expected!" << endl;
+  *auditComponent->zashOutput << "Trust level is ABOVE expected!" << endl;
   return true;
 }
 
@@ -78,9 +76,9 @@ void ContextComponent::checkBuilding(time_t currentDate) {
                                   60; // add days
   } else if (isTimeBuilding && difftime(currentDate, limitDate) > 0) {
     isTimeBuilding = false;
-    cout << "Time context stopped building probabilities at ";
-    printFormattedTime(currentDate);
-    cout << endl;
+    *auditComponent->zashOutput
+        << "Time context stopped building probabilities at "
+        << formatTime(currentDate) << endl;
   }
 }
 
@@ -120,8 +118,9 @@ void ContextComponent::calculateTime(Request *req, time_t currentDate) {
 
 void ContextComponent::recalculateProbabilities(TimeObject *timeObj, int time) {
   ++timeObj->totalOcc;
-  cout << timeObj->device->name << " | " << timeObj->action->key << " | "
-       << timeObj->userLevel->key << endl;
+  *auditComponent->zashOutput << timeObj->device->name << " | "
+                              << timeObj->action->key << " | "
+                              << timeObj->userLevel->key << endl;
   for (TimePercentage *timePct : timeObj->times) {
     if (timePct->time == time) {
       ++timePct->occurrences;

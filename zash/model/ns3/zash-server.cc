@@ -64,30 +64,30 @@ TypeId ZashServer::GetTypeId(void) {
 }
 
 ZashServer::ZashServer() {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
   m_socket = 0;
   m_totalRx = 0;
 }
 
-ZashServer::~ZashServer() { NS_LOG_FUNCTION(this); }
+ZashServer::~ZashServer() {}
 
 uint64_t ZashServer::GetTotalRx() const {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
   return m_totalRx;
 }
 
 Ptr<Socket> ZashServer::GetListeningSocket(void) const {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
   return m_socket;
 }
 
 std::list<Ptr<Socket>> ZashServer::GetAcceptedSockets(void) const {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
   return m_socketList;
 }
 
 void ZashServer::DoDispose(void) {
-  NS_LOG_FUNCTION(this);
+  // NS_LOG_FUNCTION(this);
   m_socket = 0;
   m_socketList.clear();
 
@@ -98,8 +98,8 @@ void ZashServer::DoDispose(void) {
 // Application Methods
 void ZashServer::StartApplication() // Called at time specified by Start
 {
-  NS_LOG_FUNCTION(this);
-  NS_LOG_INFO("Starting zash packet sink...");
+  // NS_LOG_FUNCTION(this);
+  deviceComponent->auditComponent->fileLog << "Starting Zash Server..." << endl;
   // Create the socket if not already
   if (!m_socket) {
     m_socket = Socket::CreateSocket(GetNode(), m_tid);
@@ -128,8 +128,8 @@ void ZashServer::StartApplication() // Called at time specified by Start
 
 void ZashServer::StopApplication() // Called at time specified by Stop
 {
-  NS_LOG_FUNCTION(this);
-  NS_LOG_INFO("Stopping zash packet sink...");
+  // NS_LOG_FUNCTION(this);
+  deviceComponent->auditComponent->fileLog << "Stopping Zash Server..." << endl;
   while (!m_socketList.empty()) // these are accepted sockets, close them
   {
     Ptr<Socket> acceptedSocket = m_socketList.front();
@@ -143,8 +143,9 @@ void ZashServer::StopApplication() // Called at time specified by Stop
 }
 
 void ZashServer::HandleRead(Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << socket);
-  NS_LOG_INFO("Handling read zash packet sink...");
+  // NS_LOG_FUNCTION(this << socket);
+  deviceComponent->auditComponent->fileLog << "Handling read Zash Server..."
+                                           << endl;
   Ptr<Packet> packet;
   Address from;
   Address localAddress;
@@ -162,30 +163,32 @@ void ZashServer::HandleRead(Ptr<Socket> socket) {
     newBuffer = newBuffer.substr(0, endOfMsg + 1).c_str();
 
     if (InetSocketAddress::IsMatchingType(from)) {
-      NS_LOG_INFO("Received packet from "
-                  << InetSocketAddress::ConvertFrom(from).GetIpv4()
-                  << " with message = " << newBuffer);
+      deviceComponent->auditComponent->fileLog
+          << "Received packet from "
+          << InetSocketAddress::ConvertFrom(from).GetIpv4()
+          << " with message = " << newBuffer << endl;
     } else {
-      NS_LOG_INFO("Received packet from "
-                  << Inet6SocketAddress::ConvertFrom(from).GetIpv6()
-                  << " with message = " << newBuffer);
+      deviceComponent->auditComponent->fileLog
+          << "Received packet from "
+          << Inet6SocketAddress::ConvertFrom(from).GetIpv6()
+          << " with message = " << newBuffer << endl;
     }
 
     m_totalRx += packet->GetSize();
     if (InetSocketAddress::IsMatchingType(from)) {
-      NS_LOG_INFO("At time "
-                  << Simulator::Now().As(Time::S) << " packet sink received "
-                  << packet->GetSize() << " bytes from "
-                  << InetSocketAddress::ConvertFrom(from).GetIpv4() << " port "
-                  << InetSocketAddress::ConvertFrom(from).GetPort()
-                  << " total Rx " << m_totalRx << " bytes");
+      deviceComponent->auditComponent->fileLog
+          << "At time " << Simulator::Now().As(Time::S)
+          << " packet sink received " << packet->GetSize() << " bytes from "
+          << InetSocketAddress::ConvertFrom(from).GetIpv4() << " port "
+          << InetSocketAddress::ConvertFrom(from).GetPort() << " total Rx "
+          << m_totalRx << " bytes" << endl;
     } else if (Inet6SocketAddress::IsMatchingType(from)) {
-      NS_LOG_INFO("At time "
-                  << Simulator::Now().As(Time::S) << " packet sink received "
-                  << packet->GetSize() << " bytes from "
-                  << Inet6SocketAddress::ConvertFrom(from).GetIpv6() << " port "
-                  << Inet6SocketAddress::ConvertFrom(from).GetPort()
-                  << " total Rx " << m_totalRx << " bytes");
+      deviceComponent->auditComponent->fileLog
+          << "At time " << Simulator::Now().As(Time::S)
+          << " packet sink received " << packet->GetSize() << " bytes from "
+          << Inet6SocketAddress::ConvertFrom(from).GetIpv6() << " port "
+          << Inet6SocketAddress::ConvertFrom(from).GetPort() << " total Rx "
+          << m_totalRx << " bytes" << endl;
     }
 
     if (!m_rxTrace.IsEmpty() || !m_rxTraceWithAddresses.IsEmpty() ||
@@ -249,33 +252,33 @@ void ZashServer::PacketReceived(const Ptr<Packet> &p, const Address &from,
 }
 
 void ZashServer::HandlePeerClose(Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << socket);
+  // NS_LOG_FUNCTION(this << socket);
 }
 
 void ZashServer::HandlePeerError(Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << socket);
+  // NS_LOG_FUNCTION(this << socket);
 }
 
 bool ZashServer::HandleConnectRequest(Ptr<Socket> socket, const Address &from) {
-  if (InetSocketAddress::IsMatchingType(from)) {
-    NS_LOG_FUNCTION(this << socket
-                         << InetSocketAddress::ConvertFrom(from).GetIpv4());
-  } else {
-    NS_LOG_FUNCTION(this << socket
-                         << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
-  }
+  // if (InetSocketAddress::IsMatchingType(from)) {
+  //   NS_LOG_FUNCTION(this << socket
+  //                        << InetSocketAddress::ConvertFrom(from).GetIpv4());
+  // } else {
+  //   NS_LOG_FUNCTION(this << socket
+  //                        << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
+  // }
 
   return true;
 }
 
 void ZashServer::HandleAccept(Ptr<Socket> s, const Address &from) {
-  if (InetSocketAddress::IsMatchingType(from)) {
-    NS_LOG_FUNCTION(this << s
-                         << InetSocketAddress::ConvertFrom(from).GetIpv4());
-  } else {
-    NS_LOG_FUNCTION(this << s
-                         << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
-  }
+  // if (InetSocketAddress::IsMatchingType(from)) {
+  //   NS_LOG_FUNCTION(this << s
+  //                        << InetSocketAddress::ConvertFrom(from).GetIpv4());
+  // } else {
+  //   NS_LOG_FUNCTION(this << s
+  //                        << Inet6SocketAddress::ConvertFrom(from).GetIpv6());
+  // }
   s->SetRecvCallback(MakeCallback(&ZashServer::HandleRead, this));
   m_socketList.push_back(s);
 }
@@ -285,12 +288,12 @@ void ZashServer::HandleAccept(Ptr<Socket> s, const Address &from) {
 //----------------------------------------------------------------------------------
 
 void ZashServer::SetDeviceComponent(DeviceComponent *dc) {
-  NS_LOG_FUNCTION(this << dc);
+  // NS_LOG_FUNCTION(this << dc);
   deviceComponent = dc;
 }
 
 void ZashServer::HandlePacket(string buffer, Ptr<Socket> socket) {
-  NS_LOG_FUNCTION(this << buffer);
+  // NS_LOG_FUNCTION(this << buffer);
   if (!buffer.empty()) {
     buffer = buffer.substr(1);
     buffer = buffer.substr(0, buffer.size() - 1);
@@ -312,13 +315,14 @@ void ZashServer::HandlePacket(string buffer, Ptr<Socket> socket) {
 
     deviceComponent->auditComponent->storeRequestMetrics(req);
 
-    string respStr = response ? "[Accepted]" : "[Refused]";
+    if (device->active) {
+      string respStr = response ? "[Accepted]" : "[Refused]";
 
-    Ptr<Packet> packet = Create<Packet>(
-        reinterpret_cast<const uint8_t *>(respStr.c_str()), respStr.size());
+      Ptr<Packet> packet = Create<Packet>(
+          reinterpret_cast<const uint8_t *>(respStr.c_str()), respStr.size());
 
-    socket->Send(packet);
-    // NS_LOG_INFO(response);
+      socket->Send(packet);
+    }
   }
 }
 

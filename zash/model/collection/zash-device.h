@@ -6,11 +6,11 @@
 #include <functional>
 #include <iostream>
 
+#include "ns3/packet-sink.h"
 #include "ns3/zash-audit.h"
 #include "ns3/zash-authorization.h"
 #include "ns3/zash-data.h"
 #include "ns3/zash-models.h"
-#include "ns3/packet-sink.h"
 
 #define PROOF_EXPIRATION 10 // minutes
 
@@ -27,9 +27,8 @@ public:
   Proof(int u, enums::Enum *a, time_t d);
 
   friend ostream &operator<<(ostream &out, Proof const &p) {
-    out << "Proof[" << p.user << "," << p.accessWay->key << ",";
-    printFormattedTime(p.date, out);
-    out << "]";
+    out << "Proof[" << p.user << "," << p.accessWay->key << ","
+        << formatTime(p.date) << "]";
     return out;
   }
 };

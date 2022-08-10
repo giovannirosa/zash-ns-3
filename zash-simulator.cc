@@ -146,7 +146,7 @@ AuditComponent *createAudit() {
   if (dir == -1)
     cout << "Fail creating sub directory for specific traces!" << dir << endl;
 
-  NS_LOG_INFO(tracesFolder);
+  // auditModule->fileLog << tracesFolder < endl;
   // Audit Module
   AuditComponent *auditModule = new AuditComponent(simDate, tracesFolder);
 
@@ -170,6 +170,16 @@ AuditComponent *createAudit() {
   convert3 << tracesFolder.c_str() << "zash_simulation_metrics_"
            << auditModule->simDate << ".txt";
   auditModule->metricsSimFile = convert3.str();
+
+  ostringstream convert4;
+  convert4 << tracesFolder.c_str() << "zash_simulation_simulated_"
+           << auditModule->simDate << ".txt";
+  auditModule->execSimFile = convert4.str();
+
+  ostringstream convert5;
+  convert5 << tracesFolder.c_str() << "zash_log_" << auditModule->simDate
+           << ".txt";
+  auditModule->logSimFile = convert5.str();
 
   // Save start seed in file
   // fileSim << "Start seed: " << seed << endl << endl;
@@ -358,7 +368,7 @@ DeviceComponent *buildServerStructure(AuditComponent *auditModule) {
   auditModule->fileSim << "Block Interval: " << blockInterval << endl;
   auditModule->fileSim << "Build Interval: " << buildInterval << endl;
   NotificationComponent *notificationComponent =
-      new NotificationComponent(configurationComponent);
+      new NotificationComponent(configurationComponent, auditModule);
 
   // Collection Module
   DataComponent *dataComponent = new DataComponent();
@@ -427,13 +437,13 @@ void appsConfiguration(Ipv6InterfaceContainer serverApInterface,
 
     Ptr<Node> node = staNodes.Get(i);
     node->AddApplication(ZashDeviceEnforcerApp);
-    NS_LOG_INFO("Installed device " << i);
+    auditModule->fileLog << "Installed device " << i << endl;
   }
 }
 
 void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
-                      DataComponent *dataComponent, AuditComponent *auditModule,
-                      int startDay, int endDay) {
+                      vector<User *> users, DeviceComponent *deviceComponent,
+                      AuditComponent *auditModule, int startDay, int endDay) {
   int user = 0;
   string accessWay = "PERSONAL";
   string localization = "INTERNAL";
@@ -449,17 +459,17 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
 
   int idReq = 0;
 
-  NS_LOG_INFO("Opening dataset...");
+  auditModule->fileLog << "Opening dataset..." << endl;
   string dataset = "data/d6_2m_0tm.csv";
   auditModule->fileMsgs << "Dataset is: " << dataset << endl;
   CsvReader csv(dataset);
   vector<int> lastState;
   time_t firstDate = (time_t)(-1);
   int msgCount = 0;
-  int dayCount = 1;
-  time_t lastDate;
+  int dayCount = 0;
+  int simDayCount = 0;
+  time_t lastDate = (time_t)(-1);
   while (csv.FetchNextRow()) {
-    // NS_LOG_INFO("Processing row " << csv.RowNumber() << "...");
     auditModule->fileMsgs << "Processing row " << csv.RowNumber() << "..."
                           << endl;
     // Ignore blank lines and header
@@ -483,10 +493,25 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
     csv.GetValue(DATE_COL, timeStr);
     time_t currentDate = strToTime(timeStr.c_str());
 
-    if (difftime(firstDate, (time_t)(-1)) == 0) {
-      firstDate = currentDate - 10;
+    if (difftime(lastDate, (time_t)(-1)) == 0) {
+      // firstDate = currentDate - 20; //
+      ++dayCount;
+      auditModule->fileMsgs << "Processing day " << dayCount << "..." << endl;
     } else if (extractDay(currentDate) != extractDay(lastDate)) {
       ++dayCount;
+      auditModule->fileMsgs << "Processing day " << dayCount << "..." << endl;
+      if (dayCount >= startDay && dayCount <= endDay) {
+        ++simDayCount;
+      }
+    }
+
+    if (dayCount == startDay && difftime(firstDate, (time_t)(-1)) == 0) {
+      firstDate = currentDate - 20;
+    }
+
+    if (endDay > 0 && dayCount >= endDay) {
+      auditModule->fileMsgs << "Stopped at day " << endDay << endl;
+      break;
     }
 
     string actStr;
@@ -499,7 +524,7 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
       continue;
     }
 
-    if (lastState.size() > 0 && dayCount >= startDay && dayCount <= endDay) {
+    if (lastState.size() > 0) {
       vector<uint32_t> changes;
 
       for (uint32_t i = 0; i < NUMBER_OF_DEVICES; ++i) {
@@ -521,23 +546,40 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
                          "," + to_string(user) + "," + accessWay + "," +
                          localization + "," + group + "," + action + "," +
                          formatTime(currentDate) + "]";
-        // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
-        auditModule->fileMsgs
-            << "Device enforcer scheduled with message = " << request << endl;
-        Ptr<Node> node = staNodes.Get(change);
-        Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
-            DynamicCast<ZashDeviceEnforcer>(node->GetApplication(0));
-        Simulator::Schedule(Seconds(diff), &ZashDeviceEnforcer::StartSending,
-                            ZashDeviceEnforcerApp, request);
-        msgCount++;
-        // NS_LOG_INFO(devices[change]->name << " will change at " << diff
-        //                                   << " seconds");
-        auditModule->fileMsgs << devices[change]->name << " will change at "
-                              << diff << " seconds" << endl;
-        diff += 0.2;
+
+        if (dayCount < startDay) {
+          auditModule->fileMsgs
+              << "*Zash Server simulated with message = " << request << endl;
+          auditModule->fileExec
+              << "*Zash Server simulated with message = " << request << endl;
+          auditModule->zashOutput = &auditModule->fileExec;
+          Context *context = new Context(enums::AccessWay.at(accessWay),
+                                         enums::Localization.at(localization),
+                                         enums::Group.at(group));
+          enums::Enum *actionEnum = enums::Action.at(action);
+          Request *req = new Request(++idReq, devices[change], users[user],
+                                     context, actionEnum);
+          deviceComponent->listenRequest(req, currentDate);
+        } else {
+          // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
+          auditModule->fileMsgs
+              << "Device enforcer scheduled with message = " << request << endl;
+          auditModule->zashOutput = &auditModule->fileLog;
+          Ptr<Node> node = staNodes.Get(change);
+          Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
+              DynamicCast<ZashDeviceEnforcer>(node->GetApplication(0));
+          Simulator::Schedule(Seconds(diff), &ZashDeviceEnforcer::StartSending,
+                              ZashDeviceEnforcerApp, request);
+          msgCount++;
+          // NS_LOG_INFO(devices[change]->name << " will change at " << diff
+          //                                   << " seconds");
+          auditModule->fileMsgs << devices[change]->name << " will change at "
+                                << diff << " seconds" << endl;
+          diff += 0.2;
+        }
       }
     } else {
-      dataComponent->lastState = currentState;
+      deviceComponent->dataComponent->lastState = currentState;
     }
     lastState = currentState;
     lastDate = currentDate;
@@ -545,6 +587,9 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
 
   auditModule->fileMsgs << "Count of messages = " << msgCount << endl;
   auditModule->fileMsgs << "Count of days = " << dayCount << endl;
+  auditModule->fileMsgs << "Count of simulated days = " << simDayCount << endl;
+  auditModule->fileMsgs << "Count of executed days = "
+                        << (dayCount - simDayCount) << endl;
 };
 
 int main(int argc, char *argv[]) {
@@ -574,10 +619,9 @@ int main(int argc, char *argv[]) {
   uint32_t payloadSize = 1448;    /* Transport layer payload size in bytes. */
   string dataRate = "100Mbps";    /* Application layer datarate. */
   string phyRate = "HtMcs7";      /* Physical layer bitrate. */
-  double simulationTime = stop;   /* Simulation time in seconds. */
   bool pcapTracing = false;       /* PCAP Tracing is enabled or not. */
-  uint32_t startDay = 1;          /* Start day of the simulation. */
-  uint32_t endDay = 2;            /* End day of the simulation. */
+  uint32_t startDay = 2;          /* Start day of the simulation. */
+  uint32_t endDay = 3;            /* End day of the simulation. */
 
   // Allow the user to override any of the defaults and the above
   // Config::SetDefault()s at run-time, via command-line arguments
@@ -586,7 +630,6 @@ int main(int argc, char *argv[]) {
   cmd.AddValue("payloadSize", "Payload size in bytes", payloadSize);
   cmd.AddValue("dataRate", "Application data ate", dataRate);
   cmd.AddValue("phyRate", "Physical layer bitrate", phyRate);
-  cmd.AddValue("simulationTime", "Simulation time in seconds", simulationTime);
   cmd.AddValue("pcap", "Enable/disable PCAP Tracing", pcapTracing);
   cmd.AddValue("start", "Start day of the simulation", startDay);
   cmd.AddValue("end", "End day of the simulation", endDay);
@@ -600,6 +643,9 @@ int main(int argc, char *argv[]) {
     cout << "ZASH - Error: start must be greater than end" << endl;
     return 1;
   }
+
+  // stop = (endDay - startDay) * 86400;
+  double simulationTime = stop; /* Simulation time in seconds. */
 
   // Config::SetDefault("ns3::TcpL4Protocol::SocketType",
   //                    TypeIdValue(TypeId::LookupByName("ns3::TcpNewReno")));
@@ -655,7 +701,7 @@ int main(int argc, char *argv[]) {
                                      StringValue("ErpOfdmRate24Mbps"));
 
   // Here, we will create N nodes in a star.
-  NS_LOG_INFO("Create nodes.");
+  auditModule->fileLog << "Create nodes." << endl;
   uint32_t nServers = 1;
   uint32_t nAps = 1;
   NodeContainer serverNode;
@@ -676,7 +722,7 @@ int main(int argc, char *argv[]) {
   NetDeviceContainer serverApDevice = csma.Install(serverAp);
 
   /* Configure AP */
-  NS_LOG_INFO("Configure AP");
+  auditModule->fileLog << "Configure AP" << endl;
   Ssid ssid = Ssid("network");
   wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(ssid), "BeaconInterval",
                   TimeValue(MicroSeconds(4096000)), "BsrLifetime",
@@ -686,7 +732,7 @@ int main(int argc, char *argv[]) {
   apDevice = wifiHelper.Install(wifiPhy, wifiMac, apNode);
 
   /* Configure STA */
-  NS_LOG_INFO("Configure STA");
+  auditModule->fileLog << "Configure STA" << endl;
   wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid),
                   "WaitBeaconTimeout", TimeValue(MilliSeconds(4800)),
                   "AssocRequestTimeout", TimeValue(Seconds(20)));
@@ -698,7 +744,7 @@ int main(int argc, char *argv[]) {
               "ShortGuardIntervalSupported",
               BooleanValue(true));
 
-  NS_LOG_INFO("Configure Bridge");
+  auditModule->fileLog << "Configure Bridge" << endl;
   BridgeHelper bridge;
   NetDeviceContainer bridgeDev;
   bridgeDev =
@@ -706,7 +752,7 @@ int main(int argc, char *argv[]) {
                                                        serverApDevice.Get(1)));
 
   /* Mobility model */
-  NS_LOG_INFO("Configure mobility");
+  auditModule->fileLog << "Configure mobility" << endl;
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> positionAlloc =
       CreateObject<ListPositionAllocator>();
@@ -721,7 +767,7 @@ int main(int argc, char *argv[]) {
   internet.Install(allNodes);
 
   // Later, we add IP addresses.
-  NS_LOG_INFO("Assign IP Addresses.");
+  auditModule->fileLog << "Assign IP Addresses." << endl;
   Ipv6AddressHelper ipv6;
   ipv6.SetBase(Ipv6Address("2001:1::"), Ipv6Prefix(64));
   Ipv6InterfaceContainer serverApInterface = ipv6.Assign(serverApDevice);
@@ -756,7 +802,8 @@ int main(int argc, char *argv[]) {
 
   vector<Device *> devices =
       deviceComponent->authorizationComponent->configurationComponent->devices;
-  DataComponent *dataComponent = deviceComponent->dataComponent;
+  vector<User *> users =
+      deviceComponent->authorizationComponent->configurationComponent->users;
 
   //----------------------------------------------------------------------------------
   // Applications configuration
@@ -769,8 +816,8 @@ int main(int argc, char *argv[]) {
   // Schedule messages from dataset
   //----------------------------------------------------------------------------------
 
-  scheduleMessages(staNodes, devices, dataComponent, auditModule, startDay,
-                   endDay);
+  scheduleMessages(staNodes, devices, users, deviceComponent, auditModule,
+                   startDay, endDay);
 
   //----------------------------------------------------------------------------------
   // Output configuration
@@ -780,6 +827,8 @@ int main(int argc, char *argv[]) {
              auditModule->fileSim.str());
   createFile(auditModule->messagesSimFile, auditModule->simDate,
              auditModule->fileMsgs.str());
+  createFile(auditModule->execSimFile, auditModule->simDate,
+             auditModule->fileExec.str());
 
   // Callback Trace to Collect Messages in Device Enforcer Application
   for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
@@ -859,14 +908,16 @@ int main(int argc, char *argv[]) {
   // Call simulation
   //----------------------------------------------------------------------------------
 
-  NS_LOG_INFO("Run Simulation.");
+  auditModule->fileLog << "Run Simulation." << endl;
   Simulator::Run();
   Simulator::Destroy();
-  NS_LOG_INFO("Done.");
+  auditModule->fileLog << "Done." << endl;
 
   // flowMonitor->SerializeToXmlFile("flow.xml", true, true);
 
   auditModule->outputMetrics();
+  createFile(auditModule->logSimFile, auditModule->simDate,
+             auditModule->fileLog.str());
 
   return 0;
 }

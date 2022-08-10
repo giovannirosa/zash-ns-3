@@ -17,12 +17,12 @@ AuthorizationComponent::AuthorizationComponent(
 bool AuthorizationComponent::authorizeRequest(
     Request *req, time_t currentDate,
     function<bool(Request *, time_t)> explicitAuthentication) {
-  cout << "Authorization Component" << endl;
-  cout << "Processing Request: " << req->id << endl;
+  *auditComponent->zashOutput << "Authorization Component" << endl;
+  *auditComponent->zashOutput << "Processing Request: " << req->id << endl;
   checkUsers(currentDate);
   if (req->user->blocked) {
     ++auditComponent->reqDenied;
-    cout << "USER IS BLOCKED - Request is NOT authorized!" << endl;
+    *auditComponent->zashOutput << "USER IS BLOCKED - Request is NOT authorized!" << endl;
     return false;
   }
   if (!ontologyComponent->verifyOntology(req, currentDate) ||
@@ -31,20 +31,20 @@ bool AuthorizationComponent::authorizeRequest(
       !activityComponent->verifyActivity(req, currentDate,
                                          explicitAuthentication)) {
     req->user->rejected.push_back(currentDate);
-    cout << "User have now " << req->user->rejected.size()
+    *auditComponent->zashOutput << "User have now " << req->user->rejected.size()
          << " rejected requests!" << endl;
     if (req->user->rejected.size() > (size_t)configurationComponent->blockThreshold) {
       auditComponent->blocks.push_back(new AuditEvent(currentDate, req));
       req->user->blocked = true;
-      cout << "User " << req->user->id << " is blocked!" << endl;
+      *auditComponent->zashOutput << "User " << req->user->id << " is blocked!" << endl;
       notificationComponent->alertUsers(req->user);
     }
     ++auditComponent->reqDenied;
-    cout << "Request is NOT authorized!" << endl;
+    *auditComponent->zashOutput << "Request is NOT authorized!" << endl;
     return false;
   }
   ++auditComponent->reqGranted;
-  cout << "Request is authorized!" << endl;
+  *auditComponent->zashOutput << "Request is authorized!" << endl;
   return true;
 }
 

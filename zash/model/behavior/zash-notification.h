@@ -11,8 +11,9 @@ namespace ns3 {
 class NotificationComponent {
 public:
   ConfigurationComponent *configurationComponent;
+  AuditComponent *auditComponent;
   NotificationComponent();
-  NotificationComponent(ConfigurationComponent *c);
+  NotificationComponent(ConfigurationComponent *c, AuditComponent *a);
 
   void alertUsers(User *blockedUser);
 };
