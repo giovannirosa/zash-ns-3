@@ -80,106 +80,58 @@
 using namespace ns3;
 using namespace std;
 
-NS_LOG_COMPONENT_DEFINE("ZASH");
+NS_LOG_COMPONENT_DEFINE ("ZASH");
 
-/**
- * \class StackHelper
- * \brief Helper to set or get some IPv6 information about nodes.
- */
-// class StackHelper {
-// public:
-//   /**
-//    * \brief Add an address to a IPv6 node.
-//    * \param n node
-//    * \param interface interface index
-//    * \param address IPv6 address to add
-//    */
-//   inline void AddAddress(Ptr<Node> &n, uint32_t interface,
-//                          Ipv6Address address) {
-//     Ptr<Ipv6> ipv6 = n->GetObject<Ipv6>();
-//     ipv6->AddAddress(interface, address);
-//   };
-
-//   /**
-//    * \brief Print the routing table.
-//    * \param n the node
-//    */
-//   inline void PrintRoutingTable(Ptr<Node> &n) {
-//     Ptr<Ipv6StaticRouting> routing = 0;
-//     Ipv6StaticRoutingHelper routingHelper;
-//     Ptr<Ipv6> ipv6 = n->GetObject<Ipv6>();
-//     uint32_t nbRoutes = 0;
-//     Ipv6RoutingTableEntry route;
-
-//     routing = routingHelper.GetStaticRouting(ipv6);
-
-//     std::cout << "Routing table of " << n << " : " << std::endl;
-//     std::cout << "Destination\t"
-//               << "Gateway\t"
-//               << "Interface\t"
-//               << "Prefix to use" << std::endl;
-
-//     nbRoutes = routing->GetNRoutes();
-//     for (uint32_t i = 0; i < nbRoutes; i++) {
-//       route = routing->GetRoute(i);
-//       std::cout << route.GetDest() << "\t" << route.GetGateway() << "\t"
-//                 << route.GetInterface() << "\t" << route.GetPrefixToUse()
-//                 << "\t" << std::endl;
-//     }
-//   }
-// }
-
-AuditComponent *createAudit() {
+AuditComponent *
+createAudit ()
+{
   string tracesFolder;
-  string simDate = getTimeOfSimulationStart();
+  string simDate = getTimeOfSimulationStart ();
 
   tracesFolder = "zash_traces/";
   errno = 0;
-  int dir = mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  int dir = mkdir (tracesFolder.c_str (), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   if (dir < 0 && errno != EEXIST)
     cout << "Fail creating directory for traces!" << endl;
 
-  tracesFolder.append(simDate + "/");
+  tracesFolder.append (simDate + "/");
 
   // Creates a directory for specific simulation
-  dir = mkdir(tracesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  dir = mkdir (tracesFolder.c_str (), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   if (dir == -1)
     cout << "Fail creating sub directory for specific traces!" << dir << endl;
 
   // auditModule->fileLog << tracesFolder < endl;
   // Audit Module
-  AuditComponent *auditModule = new AuditComponent(simDate, tracesFolder);
+  AuditComponent *auditModule = new AuditComponent (simDate, tracesFolder);
 
   string messagesFolder = tracesFolder + "messages/";
   // Creates a directory for messages simulation
-  dir = mkdir(messagesFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  dir = mkdir (messagesFolder.c_str (), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   if (dir == -1)
     cout << "Fail creating sub directory for messages traces!" << dir << endl;
 
   ostringstream convert;
-  convert << tracesFolder.c_str() << "zash_simulation_scenario_"
-          << auditModule->simDate << ".txt";
-  auditModule->scenarioSimFile = convert.str();
+  convert << tracesFolder.c_str () << "zash_simulation_scenario_" << auditModule->simDate << ".txt";
+  auditModule->scenarioSimFile = convert.str ();
 
   ostringstream convert2;
-  convert2 << tracesFolder.c_str() << "zash_simulation_messages_"
-           << auditModule->simDate << ".txt";
-  auditModule->messagesSimFile = convert2.str();
+  convert2 << tracesFolder.c_str () << "zash_simulation_messages_" << auditModule->simDate
+           << ".txt";
+  auditModule->messagesSimFile = convert2.str ();
 
   ostringstream convert3;
-  convert3 << tracesFolder.c_str() << "zash_simulation_metrics_"
-           << auditModule->simDate << ".txt";
-  auditModule->metricsSimFile = convert3.str();
+  convert3 << tracesFolder.c_str () << "zash_simulation_metrics_" << auditModule->simDate << ".txt";
+  auditModule->metricsSimFile = convert3.str ();
 
   ostringstream convert4;
-  convert4 << tracesFolder.c_str() << "zash_simulation_simulated_"
-           << auditModule->simDate << ".txt";
-  auditModule->execSimFile = convert4.str();
+  convert4 << tracesFolder.c_str () << "zash_simulation_simulated_" << auditModule->simDate
+           << ".txt";
+  auditModule->execSimFile = convert4.str ();
 
   ostringstream convert5;
-  convert5 << tracesFolder.c_str() << "zash_log_" << auditModule->simDate
-           << ".txt";
-  auditModule->logSimFile = convert5.str();
+  convert5 << tracesFolder.c_str () << "zash_log_" << auditModule->simDate << ".txt";
+  auditModule->logSimFile = convert5.str ();
 
   // Save start seed in file
   // fileSim << "Start seed: " << seed << endl << endl;
@@ -187,270 +139,253 @@ AuditComponent *createAudit() {
   return auditModule;
 }
 
-DeviceComponent *buildServerStructure(AuditComponent *auditModule) {
-  vector<User *> users = {
-      new User(1, enums::UserLevel.at("ADMIN"), enums::Age.at("ADULT")),
-      new User(2, enums::UserLevel.at("ADULT"), enums::Age.at("ADULT")),
-      new User(3, enums::UserLevel.at("CHILD"), enums::Age.at("TEEN")),
-      new User(4, enums::UserLevel.at("CHILD"), enums::Age.at("KID")),
-      new User(5, enums::UserLevel.at("VISITOR"), enums::Age.at("ADULT"))};
+DeviceComponent *
+buildServerStructure (AuditComponent *auditModule)
+{
+  vector<User *> users = {new User (1, enums::UserLevel.at ("ADMIN"), enums::Age.at ("ADULT")),
+                          new User (2, enums::UserLevel.at ("ADULT"), enums::Age.at ("ADULT")),
+                          new User (3, enums::UserLevel.at ("CHILD"), enums::Age.at ("TEEN")),
+                          new User (4, enums::UserLevel.at ("CHILD"), enums::Age.at ("KID")),
+                          new User (5, enums::UserLevel.at ("VISITOR"), enums::Age.at ("ADULT"))};
 
-  auditModule->fileSim << "Users of simulation are " << users.size() << ":"
-                       << endl;
-  for (User *user : users) {
-    auditModule->fileSim << *user << endl;
-    if (user->userLevel == enums::UserLevel.at("ADMIN")) {
-      ++auditModule->adminNumber;
+  auditModule->fileSim << "Users of simulation are " << users.size () << ":" << endl;
+  for (User *user : users)
+    {
+      auditModule->fileSim << *user << endl;
+      if (user->userLevel == enums::UserLevel.at ("ADMIN"))
+        {
+          ++auditModule->adminNumber;
+        }
     }
-  }
 
   vector<Device *> devices = {
-      new Device(1, "Wardrobe", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BEDROOM, true), // wardrobe
-      new Device(2, "TV", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::LIVINGROOM, true), // tv
-      new Device(3, "Oven", enums::DeviceClass.at("CRITICAL"), enums::KITCHEN,
-                 true), // oven
-      new Device(4, "Office Light", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::OFFICE, true), // officeLight
-      new Device(5, "Office Door Lock", enums::DeviceClass.at("CRITICAL"),
-                 enums::OFFICE, true), // officeDoorLock
-      new Device(6, "Office Door", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::OFFICE, true), // officeDoor
-      new Device(7, "Office Carpet", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::OFFICE, false), // officeCarp
-      new Device(8, "Office", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::OFFICE, false), // office
-      new Device(9, "Main Door Lock", enums::DeviceClass.at("CRITICAL"),
-                 enums::HOUSE, true), // mainDoorLock
-      new Device(10, "Main Door", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::HOUSE, true), // mainDoor
-      new Device(11, "Living Light", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::LIVINGROOM, true), // livingLight
-      new Device(12, "Living Carpet", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::LIVINGROOM, false), // livingCarp
-      new Device(13, "Kitchen Light", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::KITCHEN, true), // kitchenLight
-      new Device(14, "Kitchen Door Lock", enums::DeviceClass.at("CRITICAL"),
-                 enums::KITCHEN, true), // kitchenDoorLock
-      new Device(15, "Kitchen Door", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::KITCHEN, true), // kitchenDoor
-      new Device(16, "Kitchen Carpet", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::KITCHEN, false), // kitchenCarp
-      new Device(17, "Hallway Light", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::HOUSE, true), // hallwayLight
-      new Device(18, "Fridge", enums::DeviceClass.at("CRITICAL"),
-                 enums::KITCHEN, true), // fridge
-      new Device(19, "Couch", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::LIVINGROOM, false), // couch
-      new Device(20, "Bedroom Light", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BEDROOM, true), // bedroomLight
-      new Device(21, "Bedroom Door Lock", enums::DeviceClass.at("CRITICAL"),
-                 enums::BEDROOM, true), // bedroomDoorLock
-      new Device(22, "Bedroom Door", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BEDROOM, true), // bedroomDoor
-      new Device(23, "Bedroom Carpet", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BEDROOM, false), // bedroomCarp
-      new Device(24, "Bed Table Lamp", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BEDROOM, true), // bedTableLamp
-      new Device(25, "Bed", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BEDROOM, false), // bed
-      new Device(26, "Bathroom Light", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BATHROOM, true), // bathroomLight
-      new Device(27, "Bathroom Door Lock", enums::DeviceClass.at("CRITICAL"),
-                 enums::BATHROOM, true), // bathroomDoorLock
-      new Device(28, "Bathroom Door", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BATHROOM, true), // bathroomDoor
-      new Device(29, "Bathroom Carpet", enums::DeviceClass.at("NONCRITICAL"),
-                 enums::BATHROOM, false) // bathroomCarp
+      new Device (1, "Wardrobe", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+                  true), // wardrobe
+      new Device (2, "TV", enums::DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM, true), // tv
+      new Device (3, "Oven", enums::DeviceClass.at ("CRITICAL"), enums::KITCHEN,
+                  true), // oven
+      new Device (4, "Office Light", enums::DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
+                  true), // officeLight
+      new Device (5, "Office Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::OFFICE,
+                  true), // officeDoorLock
+      new Device (6, "Office Door", enums::DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
+                  true), // officeDoor
+      new Device (7, "Office Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
+                  false), // officeCarp
+      new Device (8, "Office", enums::DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
+                  false), // office
+      new Device (9, "Main Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::HOUSE,
+                  true), // mainDoorLock
+      new Device (10, "Main Door", enums::DeviceClass.at ("NONCRITICAL"), enums::HOUSE,
+                  true), // mainDoor
+      new Device (11, "Living Light", enums::DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
+                  true), // livingLight
+      new Device (12, "Living Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
+                  false), // livingCarp
+      new Device (13, "Kitchen Light", enums::DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
+                  true), // kitchenLight
+      new Device (14, "Kitchen Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::KITCHEN,
+                  true), // kitchenDoorLock
+      new Device (15, "Kitchen Door", enums::DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
+                  true), // kitchenDoor
+      new Device (16, "Kitchen Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
+                  false), // kitchenCarp
+      new Device (17, "Hallway Light", enums::DeviceClass.at ("NONCRITICAL"), enums::HOUSE,
+                  true), // hallwayLight
+      new Device (18, "Fridge", enums::DeviceClass.at ("CRITICAL"), enums::KITCHEN, true), // fridge
+      new Device (19, "Couch", enums::DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
+                  false), // couch
+      new Device (20, "Bedroom Light", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+                  true), // bedroomLight
+      new Device (21, "Bedroom Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::BEDROOM,
+                  true), // bedroomDoorLock
+      new Device (22, "Bedroom Door", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+                  true), // bedroomDoor
+      new Device (23, "Bedroom Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+                  false), // bedroomCarp
+      new Device (24, "Bed Table Lamp", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+                  true), // bedTableLamp
+      new Device (25, "Bed", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM, false), // bed
+      new Device (26, "Bathroom Light", enums::DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
+                  true), // bathroomLight
+      new Device (27, "Bathroom Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::BATHROOM,
+                  true), // bathroomDoorLock
+      new Device (28, "Bathroom Door", enums::DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
+                  true), // bathroomDoor
+      new Device (29, "Bathroom Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
+                  false) // bathroomCarp
   };
 
-  auditModule->fileSim << "Devices of simulation are " << devices.size() << ":"
-                       << endl;
-  for (Device *device : devices) {
-    auditModule->fileSim << *device << endl;
-    if (device->deviceClass == enums::DeviceClass.at("CRITICAL")) {
-      ++auditModule->criticalNumber;
+  auditModule->fileSim << "Devices of simulation are " << devices.size () << ":" << endl;
+  for (Device *device : devices)
+    {
+      auditModule->fileSim << *device << endl;
+      if (device->deviceClass == enums::DeviceClass.at ("CRITICAL"))
+        {
+          ++auditModule->criticalNumber;
+        }
     }
-  }
 
-  auditModule->minDeviceNumber = devices.size();
-  auditModule->maxDeviceNumber = devices.size();
+  auditModule->minDeviceNumber = devices.size ();
+  auditModule->maxDeviceNumber = devices.size ();
   auditModule->deviceExtensibility = 0;
 
-  auditModule->privacyRisk =
-      auditModule->adminNumber * auditModule->criticalNumber;
+  auditModule->privacyRisk = auditModule->adminNumber * auditModule->criticalNumber;
 
   vector<enums::Enum *> visitorCriticalCap = {};
-  Ontology *visitorCritical =
-      new Ontology(enums::UserLevel.at("VISITOR"),
-                   enums::DeviceClass.at("CRITICAL"), visitorCriticalCap);
+  Ontology *visitorCritical = new Ontology (enums::UserLevel.at ("VISITOR"),
+                                            enums::DeviceClass.at ("CRITICAL"), visitorCriticalCap);
 
-  vector<enums::Enum *> childCriticalCap = {enums::Action.at("VIEW")};
-  childCriticalCap.insert(childCriticalCap.end(), visitorCriticalCap.begin(),
-                          visitorCriticalCap.end());
-  Ontology *childCritical =
-      new Ontology(enums::UserLevel.at("CHILD"),
-                   enums::DeviceClass.at("CRITICAL"), childCriticalCap);
+  vector<enums::Enum *> childCriticalCap = {enums::Action.at ("VIEW")};
+  childCriticalCap.insert (childCriticalCap.end (), visitorCriticalCap.begin (),
+                           visitorCriticalCap.end ());
+  Ontology *childCritical = new Ontology (enums::UserLevel.at ("CHILD"),
+                                          enums::DeviceClass.at ("CRITICAL"), childCriticalCap);
 
-  vector<enums::Enum *> adultCriticalCap = {enums::Action.at("CONTROL")};
-  adultCriticalCap.insert(adultCriticalCap.end(), childCriticalCap.begin(),
-                          childCriticalCap.end());
-  Ontology *adultCritical =
-      new Ontology(enums::UserLevel.at("ADULT"),
-                   enums::DeviceClass.at("CRITICAL"), adultCriticalCap);
+  vector<enums::Enum *> adultCriticalCap = {enums::Action.at ("CONTROL")};
+  adultCriticalCap.insert (adultCriticalCap.end (), childCriticalCap.begin (),
+                           childCriticalCap.end ());
+  Ontology *adultCritical = new Ontology (enums::UserLevel.at ("ADULT"),
+                                          enums::DeviceClass.at ("CRITICAL"), adultCriticalCap);
 
-  vector<enums::Enum *> adminCriticalCap = {enums::Action.at("MANAGE")};
-  adminCriticalCap.insert(adminCriticalCap.end(), adultCriticalCap.begin(),
-                          adultCriticalCap.end());
-  Ontology *adminCritical =
-      new Ontology(enums::UserLevel.at("ADMIN"),
-                   enums::DeviceClass.at("CRITICAL"), adminCriticalCap);
+  vector<enums::Enum *> adminCriticalCap = {enums::Action.at ("MANAGE")};
+  adminCriticalCap.insert (adminCriticalCap.end (), adultCriticalCap.begin (),
+                           adultCriticalCap.end ());
+  Ontology *adminCritical = new Ontology (enums::UserLevel.at ("ADMIN"),
+                                          enums::DeviceClass.at ("CRITICAL"), adminCriticalCap);
 
-  vector<enums::Enum *> visitorNonCriticalCap = {enums::Action.at("VIEW"),
-                                                 enums::Action.at("CONTROL")};
+  vector<enums::Enum *> visitorNonCriticalCap = {enums::Action.at ("VIEW"),
+                                                 enums::Action.at ("CONTROL")};
   Ontology *visitorNonCritical =
-      new Ontology(enums::UserLevel.at("VISITOR"),
-                   enums::DeviceClass.at("NONCRITICAL"), visitorNonCriticalCap);
+      new Ontology (enums::UserLevel.at ("VISITOR"), enums::DeviceClass.at ("NONCRITICAL"),
+                    visitorNonCriticalCap);
 
   vector<enums::Enum *> childNonCriticalCap = {};
-  childNonCriticalCap.insert(childNonCriticalCap.end(),
-                             visitorNonCriticalCap.begin(),
-                             visitorNonCriticalCap.end());
-  Ontology *childNonCritical =
-      new Ontology(enums::UserLevel.at("CHILD"),
-                   enums::DeviceClass.at("NONCRITICAL"), childNonCriticalCap);
+  childNonCriticalCap.insert (childNonCriticalCap.end (), visitorNonCriticalCap.begin (),
+                              visitorNonCriticalCap.end ());
+  Ontology *childNonCritical = new Ontology (
+      enums::UserLevel.at ("CHILD"), enums::DeviceClass.at ("NONCRITICAL"), childNonCriticalCap);
 
-  vector<enums::Enum *> adultNonCriticalCap = {enums::Action.at("MANAGE")};
-  adultNonCriticalCap.insert(adultNonCriticalCap.end(),
-                             childNonCriticalCap.begin(),
-                             childNonCriticalCap.end());
-  Ontology *adultNonCritical =
-      new Ontology(enums::UserLevel.at("ADULT"),
-                   enums::DeviceClass.at("NONCRITICAL"), adultNonCriticalCap);
+  vector<enums::Enum *> adultNonCriticalCap = {enums::Action.at ("MANAGE")};
+  adultNonCriticalCap.insert (adultNonCriticalCap.end (), childNonCriticalCap.begin (),
+                              childNonCriticalCap.end ());
+  Ontology *adultNonCritical = new Ontology (
+      enums::UserLevel.at ("ADULT"), enums::DeviceClass.at ("NONCRITICAL"), adultNonCriticalCap);
 
   vector<enums::Enum *> adminNonCriticalCap = {};
-  adminNonCriticalCap.insert(adminNonCriticalCap.end(),
-                             adultNonCriticalCap.begin(),
-                             adultNonCriticalCap.end());
-  Ontology *adminNonCritical =
-      new Ontology(enums::UserLevel.at("ADMIN"),
-                   enums::DeviceClass.at("NONCRITICAL"), adminNonCriticalCap);
+  adminNonCriticalCap.insert (adminNonCriticalCap.end (), adultNonCriticalCap.begin (),
+                              adultNonCriticalCap.end ());
+  Ontology *adminNonCritical = new Ontology (
+      enums::UserLevel.at ("ADMIN"), enums::DeviceClass.at ("NONCRITICAL"), adminNonCriticalCap);
 
-  vector<Ontology *> ontologies = {
-      visitorCritical,    childCritical,    adultCritical,    adminCritical,
-      visitorNonCritical, childNonCritical, adultNonCritical, adminNonCritical};
+  vector<Ontology *> ontologies = {visitorCritical,  childCritical,      adultCritical,
+                                   adminCritical,    visitorNonCritical, childNonCritical,
+                                   adultNonCritical, adminNonCritical};
 
-  auditModule->fileSim << "Ontologies of simulation are " << ontologies.size()
-                       << ":" << endl;
-  for (Ontology *ontology : ontologies) {
-    auditModule->fileSim << *ontology << endl;
-  }
+  auditModule->fileSim << "Ontologies of simulation are " << ontologies.size () << ":" << endl;
+  for (Ontology *ontology : ontologies)
+    {
+      auditModule->fileSim << *ontology << endl;
+    }
 
-  auditModule->userLevelNumber = enums::UserLevel.size();
-  auditModule->deviceClassNumber = enums::DeviceClass.size();
-  auditModule->actionNumber = enums::Action.size();
+  auditModule->userLevelNumber = enums::UserLevel.size ();
+  auditModule->deviceClassNumber = enums::DeviceClass.size ();
+  auditModule->actionNumber = enums::Action.size ();
 
-  auditModule->resourceIsolation = auditModule->userLevelNumber *
-                                   auditModule->deviceClassNumber *
-                                   auditModule->actionNumber;
+  auditModule->resourceIsolation =
+      auditModule->userLevelNumber * auditModule->deviceClassNumber * auditModule->actionNumber;
 
   // Behavior Module
   int blockThreshold = 3;
   int blockInterval = 24;
   int buildInterval = 32;
-  ConfigurationComponent *configurationComponent =
-      new ConfigurationComponent(blockThreshold, blockInterval, buildInterval,
-                                 devices, users, ontologies, auditModule);
-  auditModule->fileSim << "Other configuration parameters of simulation are:"
-                       << endl;
+  ConfigurationComponent *configurationComponent = new ConfigurationComponent (
+      blockThreshold, blockInterval, buildInterval, devices, users, ontologies, auditModule);
+  auditModule->fileSim << "Other configuration parameters of simulation are:" << endl;
   auditModule->fileSim << "Block Threshold: " << blockThreshold << endl;
   auditModule->fileSim << "Block Interval: " << blockInterval << endl;
   auditModule->fileSim << "Build Interval: " << buildInterval << endl;
   NotificationComponent *notificationComponent =
-      new NotificationComponent(configurationComponent, auditModule);
+      new NotificationComponent (configurationComponent, auditModule);
 
   // Collection Module
-  DataComponent *dataComponent = new DataComponent();
+  DataComponent *dataComponent = new DataComponent ();
 
   // Decision Module
   OntologyComponent *ontologyComponent =
-      new OntologyComponent(configurationComponent, auditModule);
-  ContextComponent *contextComponent =
-      new ContextComponent(configurationComponent, auditModule);
+      new OntologyComponent (configurationComponent, auditModule);
+  ContextComponent *contextComponent = new ContextComponent (configurationComponent, auditModule);
   ActivityComponent *activityComponent =
-      new ActivityComponent(dataComponent, configurationComponent, auditModule);
-  AuthorizationComponent *authorizationComponent = new AuthorizationComponent(
-      configurationComponent, ontologyComponent, contextComponent,
-      activityComponent, notificationComponent, auditModule);
+      new ActivityComponent (dataComponent, configurationComponent, auditModule);
+  AuthorizationComponent *authorizationComponent =
+      new AuthorizationComponent (configurationComponent, ontologyComponent, contextComponent,
+                                  activityComponent, notificationComponent, auditModule);
 
   DeviceComponent *deviceComponent =
-      new DeviceComponent(authorizationComponent, dataComponent, auditModule);
+      new DeviceComponent (authorizationComponent, dataComponent, auditModule);
 
   return deviceComponent;
 };
 
-void appsConfiguration(Ipv6InterfaceContainer serverApInterface,
-                       DeviceComponent *deviceComponent, double start,
-                       double stop, NodeContainer serverNode,
-                       NodeContainer staNodes,
-                       Ipv6InterfaceContainer staInterface, string dataRate,
-                       vector<Device *> devices, AuditComponent *auditModule) {
+void
+appsConfiguration (Ipv6InterfaceContainer serverApInterface, DeviceComponent *deviceComponent,
+                   double start, double stop, NodeContainer serverNode, NodeContainer staNodes,
+                   Ipv6InterfaceContainer staInterface, string dataRate, vector<Device *> devices,
+                   AuditComponent *auditModule)
+{
   // Create a server to receive these packets
   // Start at 0s
   // Stop at final
-  Address serverAddress(
-      Inet6SocketAddress(serverApInterface.GetAddress(0, 0), 50000));
-  Ptr<ZashServer> ZashServerApp = CreateObject<ZashServer>();
-  ZashServerApp->SetAttribute("Protocol",
-                              TypeIdValue(TcpSocketFactory::GetTypeId()));
-  ZashServerApp->SetAttribute("Local", AddressValue(serverAddress));
-  ZashServerApp->SetDeviceComponent(deviceComponent);
-  ZashServerApp->SetStartTime(Seconds(start));
-  ZashServerApp->SetStopTime(Seconds(stop));
-  serverNode.Get(0)->AddApplication(ZashServerApp);
+  Address serverAddress (Inet6SocketAddress (serverApInterface.GetAddress (0, 0), 50000));
+  Ptr<ZashServer> ZashServerApp = CreateObject<ZashServer> ();
+  ZashServerApp->SetAttribute ("Protocol", TypeIdValue (TcpSocketFactory::GetTypeId ()));
+  ZashServerApp->SetAttribute ("Local", AddressValue (serverAddress));
+  ZashServerApp->SetDeviceComponent (deviceComponent);
+  ZashServerApp->SetStartTime (Seconds (start));
+  ZashServerApp->SetStopTime (Seconds (stop));
+  serverNode.Get (0)->AddApplication (ZashServerApp);
 
   // Start at 5s
   // Each start 0.2s apart
   // Stop at final
   double startDevice = start + 5.0;
-  for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
-    if (i == 7) {
-      continue;
+  for (uint32_t i = 0; i < staNodes.GetN (); ++i)
+    {
+      if (i == 7)
+        {
+          continue;
+        }
+
+      Address nodeAddress (Inet6SocketAddress (staInterface.GetAddress (i, 0), 50000));
+      Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp = CreateObject<ZashDeviceEnforcer> ();
+      ZashDeviceEnforcerApp->SetAttribute ("Protocol",
+                                           TypeIdValue (TcpSocketFactory::GetTypeId ()));
+      ZashDeviceEnforcerApp->SetAttribute ("Local", AddressValue (nodeAddress));
+      ZashDeviceEnforcerApp->SetAttribute ("Remote", AddressValue (serverAddress));
+      ZashDeviceEnforcerApp->SetAttribute ("DataRate", DataRateValue (DataRate (dataRate)));
+      ZashDeviceEnforcerApp->SetDevice (devices[i]);
+      ZashDeviceEnforcerApp->SetAuditModule (auditModule);
+      ZashDeviceEnforcerApp->SetStartTime (Seconds (startDevice));
+      ZashDeviceEnforcerApp->SetStopTime (Seconds (stop));
+      startDevice += 0.2;
+
+      Ptr<Node> node = staNodes.Get (i);
+      node->AddApplication (ZashDeviceEnforcerApp);
+      auditModule->fileLog << "Installed device " << i << endl;
     }
-
-    Address nodeAddress(
-        Inet6SocketAddress(staInterface.GetAddress(i, 0), 50000));
-    Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
-        CreateObject<ZashDeviceEnforcer>();
-    ZashDeviceEnforcerApp->SetAttribute(
-        "Protocol", TypeIdValue(TcpSocketFactory::GetTypeId()));
-    ZashDeviceEnforcerApp->SetAttribute("Local", AddressValue(nodeAddress));
-    ZashDeviceEnforcerApp->SetAttribute("Remote", AddressValue(serverAddress));
-    ZashDeviceEnforcerApp->SetAttribute("DataRate",
-                                        DataRateValue(DataRate(dataRate)));
-    ZashDeviceEnforcerApp->SetDevice(devices[i]);
-    ZashDeviceEnforcerApp->SetAuditModule(auditModule);
-    ZashDeviceEnforcerApp->SetStartTime(Seconds(startDevice));
-    ZashDeviceEnforcerApp->SetStopTime(Seconds(stop));
-    startDevice += 0.2;
-
-    Ptr<Node> node = staNodes.Get(i);
-    node->AddApplication(ZashDeviceEnforcerApp);
-    auditModule->fileLog << "Installed device " << i << endl;
-  }
 }
 
-void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
-                      vector<User *> users, DeviceComponent *deviceComponent,
-                      AuditComponent *auditModule, int startDay, int endDay) {
+void
+scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User *> users,
+                  DeviceComponent *deviceComponent, AuditComponent *auditModule, int startDay,
+                  int endDay)
+{
   int user = 0;
   string accessWay = "PERSONAL";
   string localization = "INTERNAL";
   string group = "ALONE";
   string action = "CONTROL";
-  auditModule->fileSim << "Devices interaction have the following properties: "
-                       << endl;
+  auditModule->fileSim << "Devices interaction have the following properties: " << endl;
   auditModule->fileSim << "User: " << user << endl;
   auditModule->fileSim << "Access Way: " << accessWay << endl;
   auditModule->fileSim << "Localization: " << localization << endl;
@@ -462,147 +397,166 @@ void scheduleMessages(NodeContainer staNodes, vector<Device *> devices,
   auditModule->fileLog << "Opening dataset..." << endl;
   string dataset = "data/d6_2m_0tm.csv";
   auditModule->fileMsgs << "Dataset is: " << dataset << endl;
-  CsvReader csv(dataset);
+  CsvReader csv (dataset);
   vector<int> lastState;
-  time_t firstDate = (time_t)(-1);
+  time_t firstDate = (time_t) (-1);
   int msgCount = 0;
   int dayCount = 0;
   int simDayCount = 0;
-  time_t lastDate = (time_t)(-1);
-  while (csv.FetchNextRow()) {
-    auditModule->fileMsgs << "Processing row " << csv.RowNumber() << "..."
-                          << endl;
-    // Ignore blank lines and header
-    if (csv.RowNumber() == 1 || csv.IsBlankRow()) {
-      continue;
-    }
-
-    // Expecting vector
-    vector<int> currentState(NUMBER_OF_DEVICES);
-    bool ok = true;
-    for (size_t i = 0; i < currentState.size(); ++i) {
-      ok |= csv.GetValue(i, currentState[i]);
-    }
-    if (!ok) {
-      // Handle error, then
-      NS_LOG_ERROR("Error parsing csv file, row number: " + csv.RowNumber());
-      continue;
-    }
-
-    string timeStr;
-    csv.GetValue(DATE_COL, timeStr);
-    time_t currentDate = strToTime(timeStr.c_str());
-
-    if (difftime(lastDate, (time_t)(-1)) == 0) {
-      // firstDate = currentDate - 20; //
-      ++dayCount;
-      auditModule->fileMsgs << "Processing day " << dayCount << "..." << endl;
-    } else if (extractDay(currentDate) != extractDay(lastDate)) {
-      ++dayCount;
-      auditModule->fileMsgs << "Processing day " << dayCount << "..." << endl;
-      if (dayCount >= startDay && dayCount <= endDay) {
-        ++simDayCount;
-      }
-    }
-
-    if (dayCount == startDay && difftime(firstDate, (time_t)(-1)) == 0) {
-      firstDate = currentDate - 20;
-    }
-
-    if (endDay > 0 && dayCount >= endDay) {
-      auditModule->fileMsgs << "Stopped at day " << endDay << endl;
-      break;
-    }
-
-    string actStr;
-    csv.GetValue(ACTIVITY_COL, actStr);
-
-    // NS_LOG_INFO(vecToStr(currentState));
-    auditModule->fileMsgs << vecToStr(currentState) << endl;
-
-    if (currentState == lastState) {
-      continue;
-    }
-
-    if (lastState.size() > 0) {
-      vector<uint32_t> changes;
-
-      for (uint32_t i = 0; i < NUMBER_OF_DEVICES; ++i) {
-        if (lastState[i] != currentState[i]) {
-          changes.push_back(i);
-        }
-      }
-
-      double diff = difftime(currentDate, firstDate);
-      for (uint32_t change : changes) {
-        if (change > staNodes.GetN() - 1 || change == 7) {
+  time_t lastDate = (time_t) (-1);
+  while (csv.FetchNextRow ())
+    {
+      auditModule->fileMsgs << "Processing row " << csv.RowNumber () << "..." << endl;
+      // Ignore blank lines and header
+      if (csv.RowNumber () == 1 || csv.IsBlankRow ())
+        {
           continue;
         }
-        // NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
-        auditModule->fileMsgs << formatTime(currentDate) << " - " << actStr
-                              << endl;
 
-        string request = "[" + to_string(++idReq) + "," + to_string(change) +
-                         "," + to_string(user) + "," + accessWay + "," +
-                         localization + "," + group + "," + action + "," +
-                         formatTime(currentDate) + "]";
-
-        if (dayCount < startDay) {
-          auditModule->fileMsgs
-              << "*Zash Server simulated with message = " << request << endl;
-          auditModule->fileExec
-              << "*Zash Server simulated with message = " << request << endl;
-          auditModule->zashOutput = &auditModule->fileExec;
-          Context *context = new Context(enums::AccessWay.at(accessWay),
-                                         enums::Localization.at(localization),
-                                         enums::Group.at(group));
-          enums::Enum *actionEnum = enums::Action.at(action);
-          Request *req = new Request(++idReq, devices[change], users[user],
-                                     context, actionEnum);
-          deviceComponent->listenRequest(req, currentDate);
-        } else {
-          // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
-          auditModule->fileMsgs
-              << "Device enforcer scheduled with message = " << request << endl;
-          auditModule->zashOutput = &auditModule->fileLog;
-          Ptr<Node> node = staNodes.Get(change);
-          Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
-              DynamicCast<ZashDeviceEnforcer>(node->GetApplication(0));
-          Simulator::Schedule(Seconds(diff), &ZashDeviceEnforcer::StartSending,
-                              ZashDeviceEnforcerApp, request);
-          msgCount++;
-          // NS_LOG_INFO(devices[change]->name << " will change at " << diff
-          //                                   << " seconds");
-          auditModule->fileMsgs << devices[change]->name << " will change at "
-                                << diff << " seconds" << endl;
-          diff += 0.2;
+      // Expecting vector
+      vector<int> currentState (NUMBER_OF_DEVICES);
+      bool ok = true;
+      for (size_t i = 0; i < currentState.size (); ++i)
+        {
+          ok |= csv.GetValue (i, currentState[i]);
         }
-      }
-    } else {
-      deviceComponent->dataComponent->lastState = currentState;
+      if (!ok)
+        {
+          // Handle error, then
+          NS_LOG_ERROR ("Error parsing csv file, row number: " + csv.RowNumber ());
+          continue;
+        }
+
+      string timeStr;
+      csv.GetValue (DATE_COL, timeStr);
+      time_t currentDate = strToTime (timeStr.c_str ());
+
+      if (difftime (lastDate, (time_t) (-1)) == 0)
+        {
+          // firstDate = currentDate - 20; //
+          ++dayCount;
+          auditModule->fileMsgs << "Processing day " << dayCount << "..." << endl;
+        }
+      else if (extractDay (currentDate) != extractDay (lastDate))
+        {
+          ++dayCount;
+          auditModule->fileMsgs << "Processing day " << dayCount << "..." << endl;
+          if (startDay != 0 && dayCount >= startDay && dayCount <= endDay)
+            {
+              ++simDayCount;
+            }
+        }
+
+      if ((startDay == 0 || dayCount == startDay) && difftime (firstDate, (time_t) (-1)) == 0)
+        {
+          firstDate = currentDate - 20;
+        }
+
+      if (endDay > 0 && dayCount >= endDay)
+        {
+          auditModule->fileMsgs << "Stopped at day " << endDay << endl;
+          break;
+        }
+
+      string actStr;
+      csv.GetValue (ACTIVITY_COL, actStr);
+
+      // NS_LOG_INFO(vecToStr(currentState));
+      auditModule->fileMsgs << vecToStr (currentState) << endl;
+
+      if (currentState == lastState)
+        {
+          continue;
+        }
+
+      if (lastState.size () > 0)
+        {
+          vector<uint32_t> changes;
+
+          for (uint32_t i = 0; i < NUMBER_OF_DEVICES; ++i)
+            {
+              if (lastState[i] != currentState[i])
+                {
+                  changes.push_back (i);
+                }
+            }
+
+          double diff = difftime (currentDate, firstDate);
+          for (uint32_t change : changes)
+            {
+              if (change > staNodes.GetN () - 1 || change == 7)
+                {
+                  continue;
+                }
+              // NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
+              auditModule->fileMsgs << formatTime (currentDate) << " - " << actStr << endl;
+
+              string request = "[" + to_string (++idReq) + "," + to_string (change) + "," +
+                               to_string (user) + "," + accessWay + "," + localization + "," +
+                               group + "," + action + "," + formatTime (currentDate) + "]";
+
+              if (dayCount < startDay)
+                {
+                  auditModule->fileMsgs << "*Zash Server simulated with message = " << request
+                                        << endl;
+                  auditModule->fileExec << "*Zash Server simulated with message = " << request
+                                        << endl;
+                  auditModule->zashOutput = &auditModule->fileExec;
+                  Context *context =
+                      new Context (enums::AccessWay.at (accessWay),
+                                   enums::Localization.at (localization), enums::Group.at (group));
+                  enums::Enum *actionEnum = enums::Action.at (action);
+                  Request *req =
+                      new Request (++idReq, devices[change], users[user], context, actionEnum);
+                  deviceComponent->listenRequest (req, currentDate);
+                }
+              else
+                {
+                  // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
+                  auditModule->fileMsgs << "Device enforcer scheduled with message = " << request
+                                        << endl;
+                  auditModule->zashOutput = &auditModule->fileLog;
+                  Ptr<Node> node = staNodes.Get (change);
+                  Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
+                      DynamicCast<ZashDeviceEnforcer> (node->GetApplication (0));
+                  Simulator::Schedule (Seconds (diff), &ZashDeviceEnforcer::StartSending,
+                                       ZashDeviceEnforcerApp, request);
+                  msgCount++;
+                  // NS_LOG_INFO(devices[change]->name << " will change at " << diff
+                  //                                   << " seconds");
+                  auditModule->fileMsgs << devices[change]->name << " will change at " << diff
+                                        << " seconds" << endl;
+                  diff += 0.2;
+                }
+            }
+        }
+      else
+        {
+          deviceComponent->dataComponent->lastState = currentState;
+        }
+      lastState = currentState;
+      lastDate = currentDate;
     }
-    lastState = currentState;
-    lastDate = currentDate;
-  }
 
   auditModule->fileMsgs << "Count of messages = " << msgCount << endl;
   auditModule->fileMsgs << "Count of days = " << dayCount << endl;
   auditModule->fileMsgs << "Count of simulated days = " << simDayCount << endl;
-  auditModule->fileMsgs << "Count of executed days = "
-                        << (dayCount - simDayCount) << endl;
+  auditModule->fileMsgs << "Count of executed days = " << (dayCount - simDayCount) << endl;
 };
 
-int main(int argc, char *argv[]) {
+int
+main (int argc, char *argv[])
+{
   //----------------------------------------------------------------------------------
   // Simulation logs
   //----------------------------------------------------------------------------------
   // Users may find it convenient to turn on explicit debugging
   // for selected modules; the below lines suggest how to do this
-  LogComponentEnable("ZASH", LOG_LEVEL_ALL);
-  LogComponentEnable("ZashDeviceEnforcer", LOG_LEVEL_ALL);
-  LogComponentEnable("ZashServer", LOG_LEVEL_ALL);
+  LogComponentEnable ("ZASH", LOG_LEVEL_ALL);
+  LogComponentEnable ("ZashDeviceEnforcer", LOG_LEVEL_ALL);
+  LogComponentEnable ("ZashServer", LOG_LEVEL_ALL);
   // LogComponentEnable("ArpL3Protocol", LOG_LEVEL_INFO);
-  LogComponentEnable("AuditComponent", LOG_LEVEL_INFO);
+  LogComponentEnable ("AuditComponent", LOG_LEVEL_INFO);
 
   //----------------------------------------------------------------------------------
   // Simulation variables
@@ -610,39 +564,41 @@ int main(int argc, char *argv[]) {
   // Set up some default values for the simulation.
   // The below value configures the default behavior of global routing.
   // By default, it is disabled.  To respond to interface events, set to true
-  Config::SetDefault("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents",
-                     BooleanValue(true));
+  Config::SetDefault ("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents", BooleanValue (true));
   double start = 0.0;
   // double stop = 86400.0;
-  double stop = 200.0;
+  double stop = 4966270.0;
+  // double stop = 200.0;
   uint32_t N = NUMBER_OF_DEVICES; // number of nodes in the star
-  uint32_t payloadSize = 1448;    /* Transport layer payload size in bytes. */
-  string dataRate = "100Mbps";    /* Application layer datarate. */
-  string phyRate = "HtMcs7";      /* Physical layer bitrate. */
-  bool pcapTracing = false;       /* PCAP Tracing is enabled or not. */
-  uint32_t startDay = 2;          /* Start day of the simulation. */
-  uint32_t endDay = 3;            /* End day of the simulation. */
+  uint32_t payloadSize = 1448; /* Transport layer payload size in bytes. */
+  string dataRate = "100Mbps"; /* Application layer datarate. */
+  string phyRate = "HtMcs7"; /* Physical layer bitrate. */
+  bool pcapTracing = false; /* PCAP Tracing is enabled or not. */
+  uint32_t startDay = 0; /* Start day of the simulation. */
+  uint32_t endDay = 0; /* End day of the simulation. */
 
   // Allow the user to override any of the defaults and the above
   // Config::SetDefault()s at run-time, via command-line arguments
-  CommandLine cmd(__FILE__);
-  cmd.AddValue("nNodes", "Number of nodes to place in the star", N);
-  cmd.AddValue("payloadSize", "Payload size in bytes", payloadSize);
-  cmd.AddValue("dataRate", "Application data ate", dataRate);
-  cmd.AddValue("phyRate", "Physical layer bitrate", phyRate);
-  cmd.AddValue("pcap", "Enable/disable PCAP Tracing", pcapTracing);
-  cmd.AddValue("start", "Start day of the simulation", startDay);
-  cmd.AddValue("end", "End day of the simulation", endDay);
-  cmd.Parse(argc, argv);
+  CommandLine cmd (__FILE__);
+  cmd.AddValue ("nNodes", "Number of nodes to place in the star", N);
+  cmd.AddValue ("payloadSize", "Payload size in bytes", payloadSize);
+  cmd.AddValue ("dataRate", "Application data ate", dataRate);
+  cmd.AddValue ("phyRate", "Physical layer bitrate", phyRate);
+  cmd.AddValue ("pcap", "Enable/disable PCAP Tracing", pcapTracing);
+  cmd.AddValue ("start", "Start day of the simulation", startDay);
+  cmd.AddValue ("end", "End day of the simulation", endDay);
+  cmd.Parse (argc, argv);
 
-  if (startDay < 1) {
-    cout << "ZASH - Error: start must be greater than 0" << endl;
-    return 1;
-  }
-  if (startDay > endDay) {
-    cout << "ZASH - Error: start must be greater than end" << endl;
-    return 1;
-  }
+  if (startDay != 0 && startDay < 1)
+    {
+      cout << "ZASH - Error: start must be greater than 0" << endl;
+      return 1;
+    }
+  if (startDay != 0 && endDay != 0 && startDay > endDay)
+    {
+      cout << "ZASH - Error: start must be greater than end" << endl;
+      return 1;
+    }
 
   // stop = (endDay - startDay) * 86400;
   double simulationTime = stop; /* Simulation time in seconds. */
@@ -651,7 +607,7 @@ int main(int argc, char *argv[]) {
   //                    TypeIdValue(TypeId::LookupByName("ns3::TcpNewReno")));
 
   /* Configure TCP Options */
-  Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(payloadSize));
+  Config::SetDefault ("ns3::TcpSocket::SegmentSize", UintegerValue (payloadSize));
 
   // Config::SetDefault("ns3::ArpCache::DeadTimeout",
   //                    TimeValue(MilliSeconds(500)));
@@ -665,7 +621,7 @@ int main(int argc, char *argv[]) {
   // Create a directory for traces (zash_traces) inside ns3 directory
   //----------------------------------------------------------------------------------
 
-  AuditComponent *auditModule = createAudit();
+  AuditComponent *auditModule = createAudit ();
 
   //----------------------------------------------------------------------------------
   // Topology configuration
@@ -673,14 +629,13 @@ int main(int argc, char *argv[]) {
 
   WifiMacHelper wifiMac;
   WifiHelper wifiHelper;
-  WifiStandard wifiStandard = WIFI_STANDARD_80211n_2_4GHZ;
-  wifiHelper.SetStandard(wifiStandard);
-  Config::SetDefault("ns3::LogDistancePropagationLossModel::ReferenceLoss",
-                     DoubleValue(40.046));
+  WifiStandard wifiStandard = WIFI_STANDARD_80211n;
+  wifiHelper.SetStandard (wifiStandard);
+  Config::SetDefault ("ns3::LogDistancePropagationLossModel::ReferenceLoss", DoubleValue (40.046));
   auditModule->fileSim << "Wifi standard is " << wifiStandard << endl;
 
   /* Set up Legacy Channel */
-  YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default();
+  YansWifiChannelHelper wifiChannel = YansWifiChannelHelper::Default ();
   // wifiChannel.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
   // wifiChannel.AddPropagationLoss("ns3::FriisPropagationLossModel",
   // "Frequency",
@@ -688,7 +643,7 @@ int main(int argc, char *argv[]) {
 
   /* Setup Physical Layer */
   YansWifiPhyHelper wifiPhy;
-  wifiPhy.SetChannel(wifiChannel.Create());
+  wifiPhy.SetChannel (wifiChannel.Create ());
   // Set MIMO capabilities
   // wifiPhy.Set("Antennas", UintegerValue(4));
   // wifiPhy.Set("MaxSupportedTxSpatialStreams", UintegerValue(4));
@@ -696,93 +651,89 @@ int main(int argc, char *argv[]) {
   // wifiPhy.SetErrorRateModel("ns3::YansErrorRateModel");
   // wifiHelper.SetRemoteStationManager("ns3::AarfWifiManager");
   // wifiHelper.SetRemoteStationManager("ns3::IdealWifiManager");
-  wifiHelper.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode",
-                                     StringValue(phyRate), "ControlMode",
-                                     StringValue("ErpOfdmRate24Mbps"));
+  wifiHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager", "DataMode",
+                                      StringValue (phyRate), "ControlMode",
+                                      StringValue ("ErpOfdmRate24Mbps"));
 
   // Here, we will create N nodes in a star.
   auditModule->fileLog << "Create nodes." << endl;
   uint32_t nServers = 1;
   uint32_t nAps = 1;
   NodeContainer serverNode;
-  serverNode.Create(nServers);
+  serverNode.Create (nServers);
   NodeContainer apNode;
-  apNode.Create(nAps);
+  apNode.Create (nAps);
   NodeContainer staNodes;
-  staNodes.Create(N);
-  NodeContainer allNodes = NodeContainer(serverNode, apNode, staNodes);
+  staNodes.Create (N);
+  NodeContainer allNodes = NodeContainer (serverNode, apNode, staNodes);
   auditModule->fileSim << "Number of servers is " << nServers << endl;
   auditModule->fileSim << "Number of APs is " << nAps << endl;
   auditModule->fileSim << "Number of STAs is " << N << endl;
 
-  NodeContainer serverAp = NodeContainer(serverNode.Get(0), apNode.Get(0));
+  NodeContainer serverAp = NodeContainer (serverNode.Get (0), apNode.Get (0));
   CsmaHelper csma;
-  csma.SetChannelAttribute("DataRate", StringValue("100Mbps"));
-  csma.SetChannelAttribute("Delay", StringValue("1ms"));
-  NetDeviceContainer serverApDevice = csma.Install(serverAp);
+  csma.SetChannelAttribute ("DataRate", StringValue ("100Mbps"));
+  csma.SetChannelAttribute ("Delay", StringValue ("1ms"));
+  NetDeviceContainer serverApDevice = csma.Install (serverAp);
 
   /* Configure AP */
   auditModule->fileLog << "Configure AP" << endl;
-  Ssid ssid = Ssid("network");
-  wifiMac.SetType("ns3::ApWifiMac", "Ssid", SsidValue(ssid), "BeaconInterval",
-                  TimeValue(MicroSeconds(4096000)), "BsrLifetime",
-                  TimeValue(MilliSeconds(800)));
+  Ssid ssid = Ssid ("network");
+  wifiMac.SetType ("ns3::ApWifiMac", "Ssid", SsidValue (ssid), "BeaconInterval",
+                   TimeValue (MicroSeconds (4096000)), "BsrLifetime",
+                   TimeValue (MilliSeconds (800)));
 
   NetDeviceContainer apDevice;
-  apDevice = wifiHelper.Install(wifiPhy, wifiMac, apNode);
+  apDevice = wifiHelper.Install (wifiPhy, wifiMac, apNode);
 
   /* Configure STA */
   auditModule->fileLog << "Configure STA" << endl;
-  wifiMac.SetType("ns3::StaWifiMac", "Ssid", SsidValue(ssid),
-                  "WaitBeaconTimeout", TimeValue(MilliSeconds(4800)),
-                  "AssocRequestTimeout", TimeValue(Seconds(20)));
+  wifiMac.SetType ("ns3::StaWifiMac", "Ssid", SsidValue (ssid), "WaitBeaconTimeout",
+                   TimeValue (MilliSeconds (4800)), "AssocRequestTimeout",
+                   TimeValue (Seconds (20)));
 
   NetDeviceContainer staDevices;
-  staDevices = wifiHelper.Install(wifiPhy, wifiMac, staNodes);
+  staDevices = wifiHelper.Install (wifiPhy, wifiMac, staNodes);
 
-  Config::Set("/NodeList//DeviceList//$ns3::WifiNetDevice/HtConfiguration/"
-              "ShortGuardIntervalSupported",
-              BooleanValue(true));
+  Config::Set ("/NodeList//DeviceList//$ns3::WifiNetDevice/HtConfiguration/"
+               "ShortGuardIntervalSupported",
+               BooleanValue (true));
 
   auditModule->fileLog << "Configure Bridge" << endl;
   BridgeHelper bridge;
   NetDeviceContainer bridgeDev;
-  bridgeDev =
-      bridge.Install(apNode.Get(0), NetDeviceContainer(apDevice.Get(0),
-                                                       serverApDevice.Get(1)));
+  bridgeDev = bridge.Install (apNode.Get (0),
+                              NetDeviceContainer (apDevice.Get (0), serverApDevice.Get (1)));
 
   /* Mobility model */
   auditModule->fileLog << "Configure mobility" << endl;
   MobilityHelper mobility;
-  Ptr<ListPositionAllocator> positionAlloc =
-      CreateObject<ListPositionAllocator>();
-  positionAlloc->Add("data/positions.csv");
+  Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
+  positionAlloc->Add ("data/positions.csv");
 
-  mobility.SetPositionAllocator(positionAlloc);
-  mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
-  mobility.Install(allNodes);
+  mobility.SetPositionAllocator (positionAlloc);
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobility.Install (allNodes);
 
   // Install network stacks on the nodes
   InternetStackHelper internet;
-  internet.Install(allNodes);
+  internet.Install (allNodes);
 
   // Later, we add IP addresses.
   auditModule->fileLog << "Assign IP Addresses." << endl;
   Ipv6AddressHelper ipv6;
-  ipv6.SetBase(Ipv6Address("2001:1::"), Ipv6Prefix(64));
-  Ipv6InterfaceContainer serverApInterface = ipv6.Assign(serverApDevice);
-  serverApInterface.SetForwarding(1, true);
-  serverApInterface.SetDefaultRouteInAllNodes(1);
-  auditModule->fileSim << "Server IP is " << serverApInterface.GetAddress(0, 0)
-                       << endl;
-  Ipv6InterfaceContainer apInterface = ipv6.Assign(bridgeDev);
-  apInterface.SetForwarding(0, true);
-  apInterface.SetDefaultRouteInAllNodes(0);
-  auditModule->fileSim << "AP IP is " << apInterface.GetAddress(0, 0) << endl;
-  Ipv6InterfaceContainer staInterface = ipv6.Assign(staDevices);
-  staInterface.SetDefaultRouteInAllNodes(apInterface.GetAddress(0, 0));
-  auditModule->fileSim << "STA IP start with " << staInterface.GetAddress(0, 0)
-                       << endl;
+  ipv6.SetBase (Ipv6Address ("2001:1::"), Ipv6Prefix (64));
+  Ipv6InterfaceContainer serverApInterface = ipv6.Assign (serverApDevice);
+  serverApInterface.SetForwarding (1, true);
+  serverApInterface.SetDefaultRouteInAllNodes (1);
+  auditModule->fileSim << "Server IP is " << serverApInterface.GetAddress (0, 0) << endl;
+  Ipv6InterfaceContainer apInterface = ipv6.Assign (bridgeDev);
+  apInterface.SetForwarding (0, true);
+  apInterface.SetDefaultRouteInAllNodes (0);
+  auditModule->fileSim << "AP IP is " << apInterface.GetAddress (0, 0) << endl;
+  Ipv6InterfaceContainer staInterface = ipv6.Assign (staDevices);
+  staInterface.SetDefaultRouteInAllNodes (apInterface.GetAddress (0, 0));
+  auditModule->fileSim << "STA IP start with " << staInterface.GetAddress (0, 0) << endl;
 
   // Turn on global static routing
   // Ipv4GlobalRoutingHelper::PopulateRoutingTables();
@@ -796,67 +747,64 @@ int main(int argc, char *argv[]) {
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  DeviceComponent *deviceComponent = buildServerStructure(auditModule);
+  DeviceComponent *deviceComponent = buildServerStructure (auditModule);
 
   // NS_LOG_INFO(deviceComponent);
 
   vector<Device *> devices =
       deviceComponent->authorizationComponent->configurationComponent->devices;
-  vector<User *> users =
-      deviceComponent->authorizationComponent->configurationComponent->users;
+  vector<User *> users = deviceComponent->authorizationComponent->configurationComponent->users;
 
   //----------------------------------------------------------------------------------
   // Applications configuration
   //----------------------------------------------------------------------------------
 
-  appsConfiguration(serverApInterface, deviceComponent, start, stop, serverNode,
-                    staNodes, staInterface, dataRate, devices, auditModule);
+  appsConfiguration (serverApInterface, deviceComponent, start, stop, serverNode, staNodes,
+                     staInterface, dataRate, devices, auditModule);
 
   //----------------------------------------------------------------------------------
   // Schedule messages from dataset
   //----------------------------------------------------------------------------------
 
-  scheduleMessages(staNodes, devices, users, deviceComponent, auditModule,
-                   startDay, endDay);
+  scheduleMessages (staNodes, devices, users, deviceComponent, auditModule, startDay, endDay);
 
   //----------------------------------------------------------------------------------
   // Output configuration
   //----------------------------------------------------------------------------------
 
-  createFile(auditModule->scenarioSimFile, auditModule->simDate,
-             auditModule->fileSim.str());
-  createFile(auditModule->messagesSimFile, auditModule->simDate,
-             auditModule->fileMsgs.str());
-  createFile(auditModule->execSimFile, auditModule->simDate,
-             auditModule->fileExec.str());
+  createFile (auditModule->scenarioSimFile, auditModule->simDate, auditModule->fileSim.str ());
+  createFile (auditModule->messagesSimFile, auditModule->simDate, auditModule->fileMsgs.str ());
+  createFile (auditModule->execSimFile, auditModule->simDate, auditModule->fileExec.str ());
 
   // Callback Trace to Collect Messages in Device Enforcer Application
-  for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
-    if (i == 7) {
-      continue;
+  for (uint32_t i = 0; i < staNodes.GetN (); ++i)
+    {
+      if (i == 7)
+        {
+          continue;
+        }
+      Ptr<Node> node = staNodes.Get (i);
+      Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
+          DynamicCast<ZashDeviceEnforcer> (node->GetApplication (0));
+      ostringstream paramTest;
+      paramTest << "/NodeList/" << (ZashDeviceEnforcerApp->z_device->id)
+                << "/ApplicationList/*/$ns3::ZashDeviceEnforcer/Traces";
+      ZashDeviceEnforcerApp->m_traces.Connect (
+          MakeCallback (&AuditComponent::deviceEnforcerCallback, auditModule), paramTest.str ());
+      // Config::Connect(
+      //     paramTest.str(),
+      //     MakeCallback(&AuditComponent::deviceEnforcerCallback,
+      //     auditComponent));
     }
-    Ptr<Node> node = staNodes.Get(i);
-    Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
-        DynamicCast<ZashDeviceEnforcer>(node->GetApplication(0));
-    ostringstream paramTest;
-    paramTest << "/NodeList/" << (ZashDeviceEnforcerApp->z_device->id)
-              << "/ApplicationList/*/$ns3::ZashDeviceEnforcer/Traces";
-    ZashDeviceEnforcerApp->m_traces.Connect(
-        MakeCallback(&AuditComponent::deviceEnforcerCallback, auditModule),
-        paramTest.str());
-    // Config::Connect(
-    //     paramTest.str(),
-    //     MakeCallback(&AuditComponent::deviceEnforcerCallback,
-    //     auditComponent));
-  }
 
   /* Enable Traces */
-  if (pcapTracing) {
-    wifiPhy.SetPcapDataLinkType(WifiPhyHelper::DLT_IEEE802_11_RADIO);
-    wifiPhy.EnablePcap("AccessPoint", apDevice);
-    wifiPhy.EnablePcap("Station", staDevices);
-    csma.EnablePcap("Server", serverApDevice);
-  }
+  if (pcapTracing)
+    {
+      wifiPhy.SetPcapDataLinkType (WifiPhyHelper::DLT_IEEE802_11_RADIO);
+      wifiPhy.EnablePcap ("AccessPoint", apDevice);
+      wifiPhy.EnablePcap ("Station", staDevices);
+      csma.EnablePcap ("Server", serverApDevice);
+    }
 
   // configure tracing
   // AsciiTraceHelper ascii;
@@ -864,34 +812,35 @@ int main(int argc, char *argv[]) {
   // csma.EnableAsciiAll(ascii.CreateFileStream("zash.tr"));
 
   /* Stop Simulation */
-  Simulator::Stop(Seconds(simulationTime + 1));
+  Simulator::Stop (Seconds (simulationTime + 1));
 
   // 40mx28m
-  AnimationInterface anim("animation.xml");
-  anim.SetBackgroundImage(
-      "/home/grosa/Dev/ns-allinone-3.35/ns-3.35/data/home-design.png", 0, 0,
-      0.07, 0.07, 1.0);
-  for (uint32_t i = 0; i < staNodes.GetN(); ++i) {
-    Ptr<Node> node = staNodes.Get(i);
-    anim.UpdateNodeDescription(node, devices[i]->name); // Optional
-    anim.UpdateNodeColor(node, 255, 0, 0);              // Optional
-    anim.UpdateNodeSize(node->GetId(), 0.8, 0.8);
-  }
-  for (uint32_t i = 0; i < apNode.GetN(); ++i) {
-    Ptr<Node> node = apNode.Get(i);
-    anim.UpdateNodeDescription(node, "AP"); // Optional
-    anim.UpdateNodeColor(node, 0, 255, 0);  // Optional
-    anim.UpdateNodeSize(node->GetId(), 0.8, 0.8);
-  }
-  for (uint32_t i = 0; i < serverNode.GetN(); ++i) {
-    Ptr<Node> node = serverNode.Get(i);
-    anim.UpdateNodeDescription(node, "Local Server"); // Optional
-    anim.UpdateNodeColor(node, 0, 0, 255);            // Optional
-    anim.UpdateNodeSize(node->GetId(), 1.2, 1.2);
-  }
-  anim.EnablePacketMetadata();
-  anim.EnableIpv4RouteTracking("zash.txt", Seconds(0), Seconds(200),
-                               Seconds(5));
+  AnimationInterface anim ("animation.xml");
+  anim.SetBackgroundImage ("/home/grosa/Dev/ns-allinone-3.35/ns-3.35/data/home-design.png", 0, 0,
+                           0.07, 0.07, 1.0);
+  for (uint32_t i = 0; i < staNodes.GetN (); ++i)
+    {
+      Ptr<Node> node = staNodes.Get (i);
+      anim.UpdateNodeDescription (node, devices[i]->name); // Optional
+      anim.UpdateNodeColor (node, 255, 0, 0); // Optional
+      anim.UpdateNodeSize (node->GetId (), 0.8, 0.8);
+    }
+  for (uint32_t i = 0; i < apNode.GetN (); ++i)
+    {
+      Ptr<Node> node = apNode.Get (i);
+      anim.UpdateNodeDescription (node, "AP"); // Optional
+      anim.UpdateNodeColor (node, 0, 255, 0); // Optional
+      anim.UpdateNodeSize (node->GetId (), 0.8, 0.8);
+    }
+  for (uint32_t i = 0; i < serverNode.GetN (); ++i)
+    {
+      Ptr<Node> node = serverNode.Get (i);
+      anim.UpdateNodeDescription (node, "Local Server"); // Optional
+      anim.UpdateNodeColor (node, 0, 0, 255); // Optional
+      anim.UpdateNodeSize (node->GetId (), 1.2, 1.2);
+    }
+  anim.EnablePacketMetadata ();
+  anim.EnableIpv4RouteTracking ("zash.txt", Seconds (0), Seconds (200), Seconds (5));
 
   // Flow monitor
   // Ptr<FlowMonitor> flowMonitor;
@@ -909,15 +858,14 @@ int main(int argc, char *argv[]) {
   //----------------------------------------------------------------------------------
 
   auditModule->fileLog << "Run Simulation." << endl;
-  Simulator::Run();
-  Simulator::Destroy();
+  Simulator::Run ();
+  Simulator::Destroy ();
   auditModule->fileLog << "Done." << endl;
 
   // flowMonitor->SerializeToXmlFile("flow.xml", true, true);
 
-  auditModule->outputMetrics();
-  createFile(auditModule->logSimFile, auditModule->simDate,
-             auditModule->fileLog.str());
+  auditModule->outputMetrics ();
+  createFile (auditModule->logSimFile, auditModule->simDate, auditModule->fileLog.str ());
 
   return 0;
 }
