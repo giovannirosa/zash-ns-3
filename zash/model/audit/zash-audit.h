@@ -17,19 +17,23 @@ using namespace std;
 
 namespace ns3 {
 
-class AuditEvent {
+class AuditEvent
+{
 public:
   time_t time;
   Request *request;
-  AuditEvent(time_t t, Request *r);
+  AuditEvent (time_t t, Request *r);
 
-  friend ostream &operator<<(ostream &out, AuditEvent const &a) {
-    out << formatTime(a.time) << " - " << *a.request << endl;
+  friend ostream &
+  operator<< (ostream &out, AuditEvent const &a)
+  {
+    out << formatTime (a.time) << " - " << *a.request << endl;
     return out;
   }
 };
 
-class AuditComponent {
+class AuditComponent
+{
 public:
   vector<AuditEvent *> ontologyFail;
   vector<AuditEvent *> contextFail;
@@ -90,21 +94,21 @@ public:
   // Create a string stream to store zash output
   stringstream *zashOutput = &fileLog;
 
-  AuditComponent(string timeLog, string folderTraces);
+  AuditComponent (string timeLog, string folderTraces);
 
   /*
    * Print events
    * \param file name of the file
    * \param msg message to append
    */
-  void printEvents(vector<AuditEvent *> events, char *currDateStr, string type);
+  void printEvents (vector<AuditEvent *> events, char *currDateStr, string type);
 
   /*
    * Append file with given message
    * \param file name of the file
    * \param msg message to append
    */
-  void appendFile(string file, string msg);
+  void appendFile (string file, string msg);
 
   /*
    * Device Enforcer callback to store messages exchanged between nodes and
@@ -114,12 +118,16 @@ public:
    * \param destinyIP IP address from server
    * \param message message exchanged
    */
-  void deviceEnforcerCallback(string path, Address sourceIp, Address destinyIP,
-                              string message);
+  void deviceEnforcerCallback (string path, Address sourceIp, Address destinyIP, string message);
 
-  void outputMetrics();
+  void outputMetrics ();
 
-  void storeRequestMetrics(Request *req);
+  void storeRequestMetrics (Request *req, enums::Properties *props);
+
+  int calculateTrust (enums::Enum *accessWay, enums::Enum *localization, enums::Enum *time,
+                      enums::Enum *age, enums::Enum *group);
+
+  void calculatePossibilities (enums::Properties *props);
 };
 } // namespace ns3
 

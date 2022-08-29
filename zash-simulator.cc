@@ -82,6 +82,53 @@ using namespace std;
 
 NS_LOG_COMPONENT_DEFINE ("ZASH");
 
+/**
+ * \class StackHelper
+ * \brief Helper to set or get some IPv6 information about nodes.
+ */
+// class StackHelper {
+// public:
+//   /**
+//    * \brief Add an address to a IPv6 node.
+//    * \param n node
+//    * \param interface interface index
+//    * \param address IPv6 address to add
+//    */
+//   inline void AddAddress(Ptr<Node> &n, uint32_t interface,
+//                          Ipv6Address address) {
+//     Ptr<Ipv6> ipv6 = n->GetObject<Ipv6>();
+//     ipv6->AddAddress(interface, address);
+//   };
+
+//   /**
+//    * \brief Print the routing table.
+//    * \param n the node
+//    */
+//   inline void PrintRoutingTable(Ptr<Node> &n) {
+//     Ptr<Ipv6StaticRouting> routing = 0;
+//     Ipv6StaticRoutingHelper routingHelper;
+//     Ptr<Ipv6> ipv6 = n->GetObject<Ipv6>();
+//     uint32_t nbRoutes = 0;
+//     Ipv6RoutingTableEntry route;
+
+//     routing = routingHelper.GetStaticRouting(ipv6);
+
+//     cout << "Routing table of " << n << " : " << endl;
+//     cout << "Destination\t"
+//               << "Gateway\t"
+//               << "Interface\t"
+//               << "Prefix to use" << endl;
+
+//     nbRoutes = routing->GetNRoutes();
+//     for (uint32_t i = 0; i < nbRoutes; i++) {
+//       route = routing->GetRoute(i);
+//       cout << route.GetDest() << "\t" << route.GetGateway() << "\t"
+//                 << route.GetInterface() << "\t" << route.GetPrefixToUse()
+//                 << "\t" << endl;
+//     }
+//   }
+// }
+
 AuditComponent *
 createAudit ()
 {
@@ -139,80 +186,195 @@ createAudit ()
   return auditModule;
 }
 
-DeviceComponent *
-buildServerStructure (AuditComponent *auditModule)
+void
+printEnums (enums::Properties *props, AuditComponent *auditModule)
 {
-  vector<User *> users = {new User (1, enums::UserLevel.at ("ADMIN"), enums::Age.at ("ADULT")),
-                          new User (2, enums::UserLevel.at ("ADULT"), enums::Age.at ("ADULT")),
-                          new User (3, enums::UserLevel.at ("CHILD"), enums::Age.at ("TEEN")),
-                          new User (4, enums::UserLevel.at ("CHILD"), enums::Age.at ("KID")),
-                          new User (5, enums::UserLevel.at ("VISITOR"), enums::Age.at ("ADULT"))};
+  auditModule->fileSim << "Enums are:" << endl << endl;
+  auditModule->fileSim << "Action:" << endl;
+  for (auto const &a : props->Action)
+    {
+      auditModule->fileSim << *a.second << endl;
+    }
+
+  auditModule->fileSim << endl << "UserLevel:" << endl;
+  for (auto const &a : props->UserLevel)
+    {
+      auditModule->fileSim << *a.second << endl;
+    }
+
+  auditModule->fileSim << endl << "DeviceClass:" << endl;
+  for (auto const &a : props->DeviceClass)
+    {
+      auditModule->fileSim << *a.second << endl;
+    }
+
+  auditModule->fileSim << endl << "AccessWay:" << endl;
+  for (auto const &a : props->AccessWay)
+    {
+      auditModule->fileSim << *a.second << endl;
+    }
+
+  auditModule->fileSim << endl << "Localization:" << endl;
+  for (auto const &a : props->Localization)
+    {
+      auditModule->fileSim << *a.second << endl;
+    }
+
+  auditModule->fileSim << endl << "TimeClass:" << endl;
+  for (auto const &a : props->TimeClass)
+    {
+      auditModule->fileSim << *a.second << endl;
+    }
+
+  auditModule->fileSim << endl << "Age:" << endl;
+  for (auto const &a : props->Age)
+    {
+      auditModule->fileSim << *a.second << endl;
+    }
+
+  auditModule->fileSim << endl << "Group:" << endl;
+  for (auto const &a : props->Group)
+    {
+      auditModule->fileSim << *a.second << endl;
+    }
+}
+
+enums::Properties *
+buildEnums (AuditComponent *auditModule, string mode)
+{
+  string enumsConfig;
+  if (mode == "H")
+    {
+      enumsConfig = "data/enums_hard.csv";
+    }
+  else if (mode == "S")
+    {
+      enumsConfig = "data/enums_soft.csv";
+    }
+  auditModule->fileSim << "Enums config file is: " << enumsConfig << endl;
+  CsvReader csv (enumsConfig);
+  map<string, enums::Enum *> Action;
+  map<string, enums::Enum *> UserLevel;
+  map<string, enums::Enum *> DeviceClass;
+  map<string, enums::Enum *> AccessWay;
+  map<string, enums::Enum *> Localization;
+  map<string, enums::Enum *> TimeClass;
+  map<string, enums::Enum *> Age;
+  map<string, enums::Enum *> Group;
+  vector<map<string, enums::Enum *>> props = {Action,       UserLevel, DeviceClass, AccessWay,
+                                              Localization, TimeClass, Age,         Group};
+  int index = 0;
+  while (csv.FetchNextRow ())
+    {
+      // cout << "Processing row " << csv.RowNumber () << "..." << endl;
+      // Ignore blank lines and header
+      // cout << csv.ColumnCount () << endl;
+      if (csv.ColumnCount () == 0)
+        {
+          ++index;
+          continue;
+        }
+
+      bool ok = true;
+      string k;
+      int v;
+      int w;
+      ok |= csv.GetValue (0, k);
+      ok |= csv.GetValue (1, v);
+      ok |= csv.GetValue (2, w);
+      if (!ok)
+        {
+          // Handle error, then
+          NS_LOG_ERROR ("Error parsing csv file, row number: " + csv.RowNumber ());
+          continue;
+        }
+
+      // pair<string, enums::Enum *> p = new
+      // cout << "inserting " << enums::Enum (k, v, w) << " into " << index << endl;
+      props[index].insert ({k, new enums::Enum (k, v, w)});
+
+      // props[index].at (k)->value = v;
+      // props[index].at (k)->weight = w;
+    }
+  enums::Properties *propsObj = new enums::Properties (props[0], props[1], props[2], props[3],
+                                                       props[4], props[5], props[6], props[7]);
+  return propsObj;
+}
+
+DeviceComponent *
+buildServerStructure (AuditComponent *auditModule, enums::Properties *props)
+{
+  vector<User *> users = {new User (1, props->UserLevel.at ("ADMIN"), props->Age.at ("ADULT")),
+                          new User (2, props->UserLevel.at ("ADULT"), props->Age.at ("ADULT")),
+                          new User (3, props->UserLevel.at ("CHILD"), props->Age.at ("TEEN")),
+                          new User (4, props->UserLevel.at ("CHILD"), props->Age.at ("KID")),
+                          new User (5, props->UserLevel.at ("VISITOR"), props->Age.at ("ADULT"))};
 
   auditModule->fileSim << "Users of simulation are " << users.size () << ":" << endl;
   for (User *user : users)
     {
       auditModule->fileSim << *user << endl;
-      if (user->userLevel == enums::UserLevel.at ("ADMIN"))
+      if (user->userLevel == props->UserLevel.at ("ADMIN"))
         {
           ++auditModule->adminNumber;
         }
     }
 
   vector<Device *> devices = {
-      new Device (1, "Wardrobe", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+      new Device (1, "Wardrobe", props->DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
                   true), // wardrobe
-      new Device (2, "TV", enums::DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM, true), // tv
-      new Device (3, "Oven", enums::DeviceClass.at ("CRITICAL"), enums::KITCHEN,
+      new Device (2, "TV", props->DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM, true), // tv
+      new Device (3, "Oven", props->DeviceClass.at ("CRITICAL"), enums::KITCHEN,
                   true), // oven
-      new Device (4, "Office Light", enums::DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
+      new Device (4, "Office Light", props->DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
                   true), // officeLight
-      new Device (5, "Office Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::OFFICE,
+      new Device (5, "Office Door Lock", props->DeviceClass.at ("CRITICAL"), enums::OFFICE,
                   true), // officeDoorLock
-      new Device (6, "Office Door", enums::DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
+      new Device (6, "Office Door", props->DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
                   true), // officeDoor
-      new Device (7, "Office Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
+      new Device (7, "Office Carpet", props->DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
                   false), // officeCarp
-      new Device (8, "Office", enums::DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
+      new Device (8, "Office", props->DeviceClass.at ("NONCRITICAL"), enums::OFFICE,
                   false), // office
-      new Device (9, "Main Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::HOUSE,
+      new Device (9, "Main Door Lock", props->DeviceClass.at ("CRITICAL"), enums::HOUSE,
                   true), // mainDoorLock
-      new Device (10, "Main Door", enums::DeviceClass.at ("NONCRITICAL"), enums::HOUSE,
+      new Device (10, "Main Door", props->DeviceClass.at ("NONCRITICAL"), enums::HOUSE,
                   true), // mainDoor
-      new Device (11, "Living Light", enums::DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
+      new Device (11, "Living Light", props->DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
                   true), // livingLight
-      new Device (12, "Living Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
+      new Device (12, "Living Carpet", props->DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
                   false), // livingCarp
-      new Device (13, "Kitchen Light", enums::DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
+      new Device (13, "Kitchen Light", props->DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
                   true), // kitchenLight
-      new Device (14, "Kitchen Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::KITCHEN,
+      new Device (14, "Kitchen Door Lock", props->DeviceClass.at ("CRITICAL"), enums::KITCHEN,
                   true), // kitchenDoorLock
-      new Device (15, "Kitchen Door", enums::DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
+      new Device (15, "Kitchen Door", props->DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
                   true), // kitchenDoor
-      new Device (16, "Kitchen Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
+      new Device (16, "Kitchen Carpet", props->DeviceClass.at ("NONCRITICAL"), enums::KITCHEN,
                   false), // kitchenCarp
-      new Device (17, "Hallway Light", enums::DeviceClass.at ("NONCRITICAL"), enums::HOUSE,
+      new Device (17, "Hallway Light", props->DeviceClass.at ("NONCRITICAL"), enums::HOUSE,
                   true), // hallwayLight
-      new Device (18, "Fridge", enums::DeviceClass.at ("CRITICAL"), enums::KITCHEN, true), // fridge
-      new Device (19, "Couch", enums::DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
+      new Device (18, "Fridge", props->DeviceClass.at ("CRITICAL"), enums::KITCHEN, true), // fridge
+      new Device (19, "Couch", props->DeviceClass.at ("NONCRITICAL"), enums::LIVINGROOM,
                   false), // couch
-      new Device (20, "Bedroom Light", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+      new Device (20, "Bedroom Light", props->DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
                   true), // bedroomLight
-      new Device (21, "Bedroom Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::BEDROOM,
+      new Device (21, "Bedroom Door Lock", props->DeviceClass.at ("CRITICAL"), enums::BEDROOM,
                   true), // bedroomDoorLock
-      new Device (22, "Bedroom Door", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+      new Device (22, "Bedroom Door", props->DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
                   true), // bedroomDoor
-      new Device (23, "Bedroom Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+      new Device (23, "Bedroom Carpet", props->DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
                   false), // bedroomCarp
-      new Device (24, "Bed Table Lamp", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
+      new Device (24, "Bed Table Lamp", props->DeviceClass.at ("NONCRITICAL"), enums::BEDROOM,
                   true), // bedTableLamp
-      new Device (25, "Bed", enums::DeviceClass.at ("NONCRITICAL"), enums::BEDROOM, false), // bed
-      new Device (26, "Bathroom Light", enums::DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
+      new Device (25, "Bed", props->DeviceClass.at ("NONCRITICAL"), enums::BEDROOM, false), // bed
+      new Device (26, "Bathroom Light", props->DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
                   true), // bathroomLight
-      new Device (27, "Bathroom Door Lock", enums::DeviceClass.at ("CRITICAL"), enums::BATHROOM,
+      new Device (27, "Bathroom Door Lock", props->DeviceClass.at ("CRITICAL"), enums::BATHROOM,
                   true), // bathroomDoorLock
-      new Device (28, "Bathroom Door", enums::DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
+      new Device (28, "Bathroom Door", props->DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
                   true), // bathroomDoor
-      new Device (29, "Bathroom Carpet", enums::DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
+      new Device (29, "Bathroom Carpet", props->DeviceClass.at ("NONCRITICAL"), enums::BATHROOM,
                   false) // bathroomCarp
   };
 
@@ -220,7 +382,7 @@ buildServerStructure (AuditComponent *auditModule)
   for (Device *device : devices)
     {
       auditModule->fileSim << *device << endl;
-      if (device->deviceClass == enums::DeviceClass.at ("CRITICAL"))
+      if (device->deviceClass == props->DeviceClass.at ("CRITICAL"))
         {
           ++auditModule->criticalNumber;
         }
@@ -233,50 +395,50 @@ buildServerStructure (AuditComponent *auditModule)
   auditModule->privacyRisk = auditModule->adminNumber * auditModule->criticalNumber;
 
   vector<enums::Enum *> visitorCriticalCap = {};
-  Ontology *visitorCritical = new Ontology (enums::UserLevel.at ("VISITOR"),
-                                            enums::DeviceClass.at ("CRITICAL"), visitorCriticalCap);
+  Ontology *visitorCritical = new Ontology (props->UserLevel.at ("VISITOR"),
+                                            props->DeviceClass.at ("CRITICAL"), visitorCriticalCap);
 
-  vector<enums::Enum *> childCriticalCap = {enums::Action.at ("VIEW")};
+  vector<enums::Enum *> childCriticalCap = {props->Action.at ("VIEW")};
   childCriticalCap.insert (childCriticalCap.end (), visitorCriticalCap.begin (),
                            visitorCriticalCap.end ());
-  Ontology *childCritical = new Ontology (enums::UserLevel.at ("CHILD"),
-                                          enums::DeviceClass.at ("CRITICAL"), childCriticalCap);
+  Ontology *childCritical = new Ontology (props->UserLevel.at ("CHILD"),
+                                          props->DeviceClass.at ("CRITICAL"), childCriticalCap);
 
-  vector<enums::Enum *> adultCriticalCap = {enums::Action.at ("CONTROL")};
+  vector<enums::Enum *> adultCriticalCap = {props->Action.at ("CONTROL")};
   adultCriticalCap.insert (adultCriticalCap.end (), childCriticalCap.begin (),
                            childCriticalCap.end ());
-  Ontology *adultCritical = new Ontology (enums::UserLevel.at ("ADULT"),
-                                          enums::DeviceClass.at ("CRITICAL"), adultCriticalCap);
+  Ontology *adultCritical = new Ontology (props->UserLevel.at ("ADULT"),
+                                          props->DeviceClass.at ("CRITICAL"), adultCriticalCap);
 
-  vector<enums::Enum *> adminCriticalCap = {enums::Action.at ("MANAGE")};
+  vector<enums::Enum *> adminCriticalCap = {props->Action.at ("MANAGE")};
   adminCriticalCap.insert (adminCriticalCap.end (), adultCriticalCap.begin (),
                            adultCriticalCap.end ());
-  Ontology *adminCritical = new Ontology (enums::UserLevel.at ("ADMIN"),
-                                          enums::DeviceClass.at ("CRITICAL"), adminCriticalCap);
+  Ontology *adminCritical = new Ontology (props->UserLevel.at ("ADMIN"),
+                                          props->DeviceClass.at ("CRITICAL"), adminCriticalCap);
 
-  vector<enums::Enum *> visitorNonCriticalCap = {enums::Action.at ("VIEW"),
-                                                 enums::Action.at ("CONTROL")};
+  vector<enums::Enum *> visitorNonCriticalCap = {props->Action.at ("VIEW"),
+                                                 props->Action.at ("CONTROL")};
   Ontology *visitorNonCritical =
-      new Ontology (enums::UserLevel.at ("VISITOR"), enums::DeviceClass.at ("NONCRITICAL"),
+      new Ontology (props->UserLevel.at ("VISITOR"), props->DeviceClass.at ("NONCRITICAL"),
                     visitorNonCriticalCap);
 
   vector<enums::Enum *> childNonCriticalCap = {};
   childNonCriticalCap.insert (childNonCriticalCap.end (), visitorNonCriticalCap.begin (),
                               visitorNonCriticalCap.end ());
   Ontology *childNonCritical = new Ontology (
-      enums::UserLevel.at ("CHILD"), enums::DeviceClass.at ("NONCRITICAL"), childNonCriticalCap);
+      props->UserLevel.at ("CHILD"), props->DeviceClass.at ("NONCRITICAL"), childNonCriticalCap);
 
-  vector<enums::Enum *> adultNonCriticalCap = {enums::Action.at ("MANAGE")};
+  vector<enums::Enum *> adultNonCriticalCap = {props->Action.at ("MANAGE")};
   adultNonCriticalCap.insert (adultNonCriticalCap.end (), childNonCriticalCap.begin (),
                               childNonCriticalCap.end ());
   Ontology *adultNonCritical = new Ontology (
-      enums::UserLevel.at ("ADULT"), enums::DeviceClass.at ("NONCRITICAL"), adultNonCriticalCap);
+      props->UserLevel.at ("ADULT"), props->DeviceClass.at ("NONCRITICAL"), adultNonCriticalCap);
 
   vector<enums::Enum *> adminNonCriticalCap = {};
   adminNonCriticalCap.insert (adminNonCriticalCap.end (), adultNonCriticalCap.begin (),
                               adultNonCriticalCap.end ());
   Ontology *adminNonCritical = new Ontology (
-      enums::UserLevel.at ("ADMIN"), enums::DeviceClass.at ("NONCRITICAL"), adminNonCriticalCap);
+      props->UserLevel.at ("ADMIN"), props->DeviceClass.at ("NONCRITICAL"), adminNonCriticalCap);
 
   vector<Ontology *> ontologies = {visitorCritical,  childCritical,      adultCritical,
                                    adminCritical,    visitorNonCritical, childNonCritical,
@@ -288,9 +450,9 @@ buildServerStructure (AuditComponent *auditModule)
       auditModule->fileSim << *ontology << endl;
     }
 
-  auditModule->userLevelNumber = enums::UserLevel.size ();
-  auditModule->deviceClassNumber = enums::DeviceClass.size ();
-  auditModule->actionNumber = enums::Action.size ();
+  auditModule->userLevelNumber = props->UserLevel.size ();
+  auditModule->deviceClassNumber = props->DeviceClass.size ();
+  auditModule->actionNumber = props->Action.size ();
 
   auditModule->resourceIsolation =
       auditModule->userLevelNumber * auditModule->deviceClassNumber * auditModule->actionNumber;
@@ -299,8 +461,10 @@ buildServerStructure (AuditComponent *auditModule)
   int blockThreshold = 3;
   int blockInterval = 24;
   int buildInterval = 32;
-  ConfigurationComponent *configurationComponent = new ConfigurationComponent (
-      blockThreshold, blockInterval, buildInterval, devices, users, ontologies, auditModule);
+  int markovThreshold = 0.1;
+  ConfigurationComponent *configurationComponent =
+      new ConfigurationComponent (blockThreshold, blockInterval, buildInterval, markovThreshold,
+                                  devices, users, ontologies, auditModule, props);
   auditModule->fileSim << "Other configuration parameters of simulation are:" << endl;
   auditModule->fileSim << "Block Threshold: " << blockThreshold << endl;
   auditModule->fileSim << "Block Interval: " << blockInterval << endl;
@@ -378,7 +542,7 @@ appsConfiguration (Ipv6InterfaceContainer serverApInterface, DeviceComponent *de
 void
 scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User *> users,
                   DeviceComponent *deviceComponent, AuditComponent *auditModule, int startDay,
-                  int endDay)
+                  int endDay, enums::Properties *props)
 {
   int user = 0;
   string accessWay = "PERSONAL";
@@ -503,9 +667,9 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
                                         << endl;
                   auditModule->zashOutput = &auditModule->fileExec;
                   Context *context =
-                      new Context (enums::AccessWay.at (accessWay),
-                                   enums::Localization.at (localization), enums::Group.at (group));
-                  enums::Enum *actionEnum = enums::Action.at (action);
+                      new Context (props->AccessWay.at (accessWay),
+                                   props->Localization.at (localization), props->Group.at (group));
+                  enums::Enum *actionEnum = props->Action.at (action);
                   Request *req =
                       new Request (++idReq, devices[change], users[user], context, actionEnum);
                   deviceComponent->listenRequest (req, currentDate);
@@ -574,6 +738,7 @@ main (int argc, char *argv[])
   string dataRate = "100Mbps"; /* Application layer datarate. */
   string phyRate = "HtMcs7"; /* Physical layer bitrate. */
   bool pcapTracing = false; /* PCAP Tracing is enabled or not. */
+  string mode = "H"; /* Restriction mode for the system. */
   uint32_t startDay = 0; /* Start day of the simulation. */
   uint32_t endDay = 0; /* End day of the simulation. */
 
@@ -585,6 +750,7 @@ main (int argc, char *argv[])
   cmd.AddValue ("dataRate", "Application data ate", dataRate);
   cmd.AddValue ("phyRate", "Physical layer bitrate", phyRate);
   cmd.AddValue ("pcap", "Enable/disable PCAP Tracing", pcapTracing);
+  cmd.AddValue ("mode", "Restriction mode for the system", mode);
   cmd.AddValue ("start", "Start day of the simulation", startDay);
   cmd.AddValue ("end", "End day of the simulation", endDay);
   cmd.Parse (argc, argv);
@@ -592,12 +758,17 @@ main (int argc, char *argv[])
   if (startDay != 0 && startDay < 1)
     {
       cout << "ZASH - Error: start must be greater than 0" << endl;
-      return 1;
+      return EXIT_FAILURE;
     }
   if (startDay != 0 && endDay != 0 && startDay > endDay)
     {
       cout << "ZASH - Error: start must be greater than end" << endl;
-      return 1;
+      return EXIT_FAILURE;
+    }
+  if (mode != "H" && mode != "S")
+    {
+      cout << "ZASH - Error: mode must be H (Hard) or S (Soft)" << endl;
+      return EXIT_FAILURE;
     }
 
   // stop = (endDay - startDay) * 86400;
@@ -622,6 +793,14 @@ main (int argc, char *argv[])
   //----------------------------------------------------------------------------------
 
   AuditComponent *auditModule = createAudit ();
+
+  enums::Properties *props = buildEnums (auditModule, mode);
+
+  printEnums (props, auditModule);
+
+  // auditModule->calculatePossibilities (props);
+
+  // return EXIT_SUCCESS;
 
   //----------------------------------------------------------------------------------
   // Topology configuration
@@ -747,7 +926,7 @@ main (int argc, char *argv[])
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  DeviceComponent *deviceComponent = buildServerStructure (auditModule);
+  DeviceComponent *deviceComponent = buildServerStructure (auditModule, props);
 
   // NS_LOG_INFO(deviceComponent);
 
@@ -766,7 +945,8 @@ main (int argc, char *argv[])
   // Schedule messages from dataset
   //----------------------------------------------------------------------------------
 
-  scheduleMessages (staNodes, devices, users, deviceComponent, auditModule, startDay, endDay);
+  scheduleMessages (staNodes, devices, users, deviceComponent, auditModule, startDay, endDay,
+                    props);
 
   //----------------------------------------------------------------------------------
   // Output configuration
@@ -850,7 +1030,7 @@ main (int argc, char *argv[])
   // Trace routing tables
   // Ipv4GlobalRoutingHelper g;
   // Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>(
-  //     "dynamic-global-routing.routes", std::ios::out);
+  //     "dynamic-global-routing.routes", ios::out);
   // g.PrintRoutingTableAllAt(Seconds(12), routingStream);
 
   //----------------------------------------------------------------------------------

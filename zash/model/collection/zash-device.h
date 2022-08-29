@@ -18,42 +18,45 @@ using namespace std;
 
 namespace ns3 {
 
-class Proof {
+class Proof
+{
 public:
   int user;
   enums::Enum *accessWay;
   time_t date;
 
-  Proof(int u, enums::Enum *a, time_t d);
+  Proof (int u, enums::Enum *a, time_t d);
 
-  friend ostream &operator<<(ostream &out, Proof const &p) {
-    out << "Proof[" << p.user << "," << p.accessWay->key << ","
-        << formatTime(p.date) << "]";
+  friend ostream &
+  operator<< (ostream &out, Proof const &p)
+  {
+    out << "Proof[" << p.user << "," << p.accessWay->key << "," << formatTime (p.date) << "]";
     return out;
   }
 };
 
-struct compareProof {
+struct compareProof
+{
   Request *key;
-  compareProof(Request *r);
+  compareProof (Request *r);
 
-  bool operator()(Proof *p);
+  bool operator() (Proof *p);
 };
 
-class DeviceComponent {
+class DeviceComponent
+{
 public:
   AuthorizationComponent *authorizationComponent;
   DataComponent *dataComponent;
   AuditComponent *auditComponent;
   vector<Proof *> proofs;
-  DeviceComponent(AuthorizationComponent *a, DataComponent *d,
-                  AuditComponent *adt);
+  DeviceComponent (AuthorizationComponent *a, DataComponent *d, AuditComponent *adt);
 
-  bool explicitAuthentication(Request *req, time_t currentDate);
+  bool explicitAuthentication (Request *req, time_t currentDate);
 
-  void clearProofs(time_t currentDate);
+  void clearProofs (time_t currentDate);
 
-  bool listenRequest(Request *req, time_t currentDate);
+  bool listenRequest (Request *req, time_t currentDate);
 };
 } // namespace ns3
 

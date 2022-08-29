@@ -11,74 +11,81 @@ using namespace std;
 
 namespace ns3 {
 
-class State {
+class State
+{
 public:
   vector<int> state;
   int occurrences = 1;
   float percentage = 0.0;
-  State();
-  State(vector<int> s);
+  State ();
+  State (vector<int> s);
 };
 
-class TransitionCol {
+class TransitionCol
+{
 public:
   vector<int> state;
   vector<State *> nextStates;
   int totalOcc = 1;
-  TransitionCol();
-  TransitionCol(vector<int> s);
+  TransitionCol ();
+  TransitionCol (vector<int> s);
 };
 
 // function for printing the elements in a vector
-void showVector(vector<int> g);
+void showVector (vector<int> g);
 
-void showVectorOfVector(vector<vector<int>> vec);
+void showVectorOfVector (vector<vector<int>> vec);
 
-void showTransitionColList(vector<TransitionCol> tcol);
+void showTransitionColList (vector<TransitionCol> tcol);
 
-void showState(State st);
+void showState (State st);
 
-void showTransitionCol(TransitionCol *tcol);
+void showTransitionCol (TransitionCol *tcol);
 
-struct compareVec {
+struct compareVec
+{
   vector<int> key;
-  compareVec(vector<int> i);
+  compareVec (vector<int> i);
 
-  bool operator()(vector<int> i);
+  bool operator() (vector<int> i);
 };
 
-struct comparePair {
+struct comparePair
+{
   pair<vector<int>, vector<int>> key;
-  comparePair(pair<vector<int>, vector<int>> i);
+  comparePair (pair<vector<int>, vector<int>> i);
 
-  bool operator()(pair<vector<int>, vector<int>> i);
+  bool operator() (pair<vector<int>, vector<int>> i);
 };
 
-struct compareMatrix {
+struct compareMatrix
+{
   vector<int> key;
-  compareMatrix(vector<int> i);
+  compareMatrix (vector<int> i);
 
-  bool operator()(TransitionCol *i);
+  bool operator() (TransitionCol *i);
 };
 
-struct compareState {
+struct compareState
+{
   vector<int> key;
-  compareState(vector<int> i);
+  compareState (vector<int> i);
 
-  bool operator()(State *i);
+  bool operator() (State *i);
 };
 
-class MarkovChain {
+class MarkovChain
+{
 public:
   vector<vector<int>> stateSpace;
   vector<pair<vector<int>, vector<int>>> transitionSpace;
   vector<TransitionCol *> transitionMatrix;
 
-  void showMatrix(bool isLocal);
+  void showMatrix (bool isLocal);
 
-  void buildTransition(vector<int> currentState, vector<int> lastState);
+  void buildTransition (vector<int> currentState, vector<int> lastState);
 
-  float getProbability(vector<int> currentState, vector<int> lastState);
+  float getProbability (vector<int> currentState, vector<int> lastState);
 };
 } // namespace ns3
 

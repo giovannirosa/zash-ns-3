@@ -8,14 +8,15 @@ using namespace std;
 
 namespace ns3 {
 
-class DataComponent {
+class DataComponent
+{
 public:
   vector<int> lastState;
   vector<int> currentState;
 
-  void updateCurrentState(Request *req);
+  void updateCurrentState (Request *req);
 
-  void updateLastState();
+  void updateLastState ();
 };
 } // namespace ns3
 

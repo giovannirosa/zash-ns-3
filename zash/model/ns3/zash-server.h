@@ -55,31 +55,32 @@ class Packet;
  * enabled, it prints out the size of packets and their address.
  * A tracing source to Receive() is also available.
  */
-class ZashServer : public Application {
+class ZashServer : public Application
+{
 public:
   /**
    * \brief Get the type ID.
    * \return the object TypeId
    */
-  static TypeId GetTypeId(void);
-  ZashServer();
+  static TypeId GetTypeId (void);
+  ZashServer ();
 
-  virtual ~ZashServer();
+  virtual ~ZashServer ();
 
   /**
    * \return the total bytes received in this sink app
    */
-  uint64_t GetTotalRx() const;
+  uint64_t GetTotalRx () const;
 
   /**
    * \return pointer to listening socket
    */
-  Ptr<Socket> GetListeningSocket(void) const;
+  Ptr<Socket> GetListeningSocket (void) const;
 
   /**
    * \return list of pointers to accepted sockets
    */
-  std::list<Ptr<Socket>> GetAcceptedSockets(void) const;
+  std::list<Ptr<Socket>> GetAcceptedSockets (void) const;
 
   /**
    * TracedCallback signature for a reception with addresses and SeqTsSizeHeader
@@ -89,43 +90,42 @@ public:
    * \param to Local address
    * \param header The SeqTsSize header
    */
-  typedef void (*SeqTsSizeCallback)(Ptr<const Packet> p, const Address &from,
-                                    const Address &to,
-                                    const SeqTsSizeHeader &header);
+  typedef void (*SeqTsSizeCallback) (Ptr<const Packet> p, const Address &from, const Address &to,
+                                     const SeqTsSizeHeader &header);
 
-  virtual void DoDispose(void);
+  virtual void DoDispose (void);
 
   // inherited from Application base class.
-  virtual void StartApplication(void); // Called at time specified by Start
-  virtual void StopApplication(void);  // Called at time specified by Stop
+  virtual void StartApplication (void); // Called at time specified by Start
+  virtual void StopApplication (void); // Called at time specified by Stop
 
   /**
    * \brief Handle a packet received by the application
    * \param socket the receiving socket
    */
-  void HandleRead(Ptr<Socket> socket);
+  void HandleRead (Ptr<Socket> socket);
   /**
    * \brief Handle a packet received by the application
    * \param socket the receiving socket
    */
-  virtual void HandlePacket(string buffer, Ptr<Socket> socket);
-  bool HandleConnectRequest(Ptr<Socket> socket, const Address &from);
+  virtual void HandlePacket (string buffer, Ptr<Socket> socket);
+  bool HandleConnectRequest (Ptr<Socket> socket, const Address &from);
   /**
    * \brief Handle an incoming connection
    * \param socket the incoming connection socket
    * \param from the address the connection is from
    */
-  void HandleAccept(Ptr<Socket> socket, const Address &from);
+  void HandleAccept (Ptr<Socket> socket, const Address &from);
   /**
    * \brief Handle an connection close
    * \param socket the connected socket
    */
-  void HandlePeerClose(Ptr<Socket> socket);
+  void HandlePeerClose (Ptr<Socket> socket);
   /**
    * \brief Handle an connection error
    * \param socket the connected socket
    */
-  void HandlePeerError(Ptr<Socket> socket);
+  void HandlePeerError (Ptr<Socket> socket);
 
   /**
    * \brief Packet received: assemble byte stream to extract SeqTsSizeHeader
@@ -136,13 +136,13 @@ public:
    * The method assembles a received byte stream and extracts SeqTsSizeHeader
    * instances from the stream to export in a trace source.
    */
-  void PacketReceived(const Ptr<Packet> &p, const Address &from,
-                      const Address &localAddress);
+  void PacketReceived (const Ptr<Packet> &p, const Address &from, const Address &localAddress);
 
   /**
    * \brief Hashing for the Address class
    */
-  struct AddressHash {
+  struct AddressHash
+  {
     /**
      * \brief operator ()
      * \param x the address of which calculate the hash
@@ -153,46 +153,44 @@ public:
      * It calculates the hash taking the uint32_t hash value of the ipv4
      * address. It works only for InetSocketAddresses (Ipv4 version)
      */
-    size_t operator()(const Address &x) const {
-      NS_ABORT_IF(!InetSocketAddress::IsMatchingType(x));
-      InetSocketAddress a = InetSocketAddress::ConvertFrom(x);
-      return std::hash<uint32_t>()(a.GetIpv4().Get());
+    size_t
+    operator() (const Address &x) const
+    {
+      NS_ABORT_IF (!InetSocketAddress::IsMatchingType (x));
+      InetSocketAddress a = InetSocketAddress::ConvertFrom (x);
+      return std::hash<uint32_t> () (a.GetIpv4 ().Get ());
     }
   };
 
-  std::unordered_map<Address, Ptr<Packet>, AddressHash>
-      m_buffer; //!< Buffer for received packets
+  std::unordered_map<Address, Ptr<Packet>, AddressHash> m_buffer; //!< Buffer for received packets
 
   // In the case of TCP, each socket accept returns a new socket, so the
   // listening socket is stored separately from the accepted sockets
-  Ptr<Socket> m_socket;                //!< Listening socket
+  Ptr<Socket> m_socket; //!< Listening socket
   std::list<Ptr<Socket>> m_socketList; //!< the accepted sockets
 
-  Address m_local;      //!< Local address to bind to (address and port)
+  Address m_local; //!< Local address to bind to (address and port)
   uint16_t m_localPort; //!< Local port to bind to
-  uint64_t m_totalRx;   //!< Total bytes received
-  TypeId m_tid;         //!< Protocol TypeId
+  uint64_t m_totalRx; //!< Total bytes received
+  TypeId m_tid; //!< Protocol TypeId
 
-  bool m_enableSeqTsSizeHeader{
-      false}; //!< Enable or disable the export of SeqTsSize header
+  bool m_enableSeqTsSizeHeader{false}; //!< Enable or disable the export of SeqTsSize header
 
   /// Traced Callback: received packets, source address.
   TracedCallback<Ptr<const Packet>, const Address &> m_rxTrace;
   /// Callback for tracing the packet Rx events, includes source and destination
   /// addresses
-  TracedCallback<Ptr<const Packet>, const Address &, const Address &>
-      m_rxTraceWithAddresses;
+  TracedCallback<Ptr<const Packet>, const Address &, const Address &> m_rxTraceWithAddresses;
   /// Callbacks for tracing the packet Rx events, includes source, destination
   /// addresses, and headers
-  TracedCallback<Ptr<const Packet>, const Address &, const Address &,
-                 const SeqTsSizeHeader &>
+  TracedCallback<Ptr<const Packet>, const Address &, const Address &, const SeqTsSizeHeader &>
       m_rxTraceWithSeqTsSize;
 
   //----------------------------------------------------------------------------------
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  void SetDeviceComponent(DeviceComponent *dc);
+  void SetDeviceComponent (DeviceComponent *dc);
 
 private:
   DeviceComponent *deviceComponent;

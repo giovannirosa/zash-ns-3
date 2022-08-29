@@ -10,23 +10,25 @@ using namespace std;
 
 namespace ns3 {
 
-class ConfigurationComponent {
+class ConfigurationComponent
+{
 public:
   int blockThreshold;
   int blockInterval;
   int buildInterval;
+  double markovThreshold;
   vector<Device *> devices;
   vector<User *> users;
   vector<Ontology *> ontologies;
   AuditComponent *auditModule;
-  ConfigurationComponent();
-  ConfigurationComponent(int bt, int bi, int bdi, vector<Device *> d,
-                         vector<User *> u, vector<Ontology *> o,
-                         AuditComponent *a);
+  enums::Properties *props;
+  ConfigurationComponent ();
+  ConfigurationComponent (int bt, int bi, int bdi, double m, vector<Device *> d, vector<User *> u,
+                          vector<Ontology *> o, AuditComponent *a, enums::Properties *p);
 
-  bool addDevice(Device *d);
+  bool addDevice (Device *d);
 
-  bool remDevice(Device *d);
+  bool remDevice (Device *d);
 };
 } // namespace ns3
 

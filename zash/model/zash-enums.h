@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <iostream>
 using namespace std;
 
 namespace enums {
@@ -20,50 +21,40 @@ enum Room {
 
 enum Time { MORNING = 1, AFTERNOON = 2, NIGHT = 3 };
 
-class Enum {
+class Enum
+{
 public:
   string key;
   int value;
   int weight;
-  Enum();
-  Enum(string k, int v, int w);
+  Enum ();
+  Enum (string k, int v, int w);
+
+  friend ostream &
+  operator<< (ostream &out, Enum const &e)
+  {
+    out << "" << e.key << "[" << e.value << "," << e.weight << "]";
+    return out;
+  }
 };
 
-static const map<string, Enum *> Action = {
-    {"MANAGE", new Enum("MANAGE", 1, 40)},
-    {"CONTROL", new Enum("CONTROL", 2, 20)},
-    {"VIEW", new Enum("VIEW", 3, 0)}};
-
-static const map<string, Enum *> UserLevel = {
-    {"ADMIN", new Enum("ADMIN", 1, 70)},
-    {"ADULT", new Enum("ADULT", 2, 50)},
-    {"CHILD", new Enum("CHILD", 3, 30)},
-    {"VISITOR", new Enum("VISITOR", 4, 0)}};
-
-static const map<string, Enum *> DeviceClass = {
-    {"CRITICAL", new Enum("CRITICAL", 1, 30)},
-    {"NONCRITICAL", new Enum("NONCRITICAL", 2, 0)}};
-
-static const map<string, Enum *> AccessWay = {
-    {"REQUESTED", new Enum("REQUESTED", 1, 30)},
-    {"HOUSE", new Enum("HOUSE", 2, 20)},
-    {"PERSONAL", new Enum("PERSONAL", 3, 10)}};
-
-static const map<string, Enum *> Localization = {
-    {"INTERNAL", new Enum("INTERNAL", 1, 30)},
-    {"EXTERNAL", new Enum("EXTERNAL", 2, 10)}};
-
-static const map<string, Enum *> TimeClass = {
-    {"COMMON", new Enum("COMMON", 1, 20)},
-    {"UNCOMMON", new Enum("UNCOMMON", 2, 10)}};
-
-static const map<string, Enum *> Age = {{"ADULT", new Enum("ADULT", 1, 30)},
-                                        {"TEEN", new Enum("TEEN", 2, 20)},
-                                        {"KID", new Enum("KID", 3, 10)}};
-
-static const map<string, Enum *> Group = {
-    {"TOGETHER", new Enum("TOGETHER", 1, 10)},
-    {"ALONE", new Enum("ALONE", 2, 0)}};
+class Properties
+{
+public:
+  map<string, Enum *> Action;
+  map<string, Enum *> UserLevel;
+  map<string, Enum *> DeviceClass;
+  map<string, Enum *> AccessWay;
+  map<string, Enum *> Localization;
+  map<string, Enum *> TimeClass;
+  map<string, Enum *> Age;
+  map<string, Enum *> Group;
+  Properties ();
+  Properties (map<string, enums::Enum *> a, map<string, enums::Enum *> u,
+              map<string, enums::Enum *> d, map<string, enums::Enum *> aw,
+              map<string, enums::Enum *> l, map<string, enums::Enum *> t,
+              map<string, enums::Enum *> ag, map<string, enums::Enum *> g);
+};
 
 }; // namespace enums
 

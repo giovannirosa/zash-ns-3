@@ -22,7 +22,8 @@ using namespace std;
 
 namespace ns3 {
 
-class AuthorizationComponent {
+class AuthorizationComponent
+{
 public:
   ConfigurationComponent *configurationComponent;
   OntologyComponent *ontologyComponent;
@@ -30,16 +31,14 @@ public:
   ActivityComponent *activityComponent;
   NotificationComponent *notificationComponent;
   AuditComponent *auditComponent;
-  AuthorizationComponent();
-  AuthorizationComponent(ConfigurationComponent *c, OntologyComponent *o,
-                         ContextComponent *ctx, ActivityComponent *a,
-                         NotificationComponent *n, AuditComponent *adt);
+  AuthorizationComponent ();
+  AuthorizationComponent (ConfigurationComponent *c, OntologyComponent *o, ContextComponent *ctx,
+                          ActivityComponent *a, NotificationComponent *n, AuditComponent *adt);
 
-  bool
-  authorizeRequest(Request *req, time_t currentDate,
-                   function<bool(Request *, time_t)> explicitAuthentication);
+  bool authorizeRequest (Request *req, time_t currentDate,
+                         function<bool (Request *, time_t)> explicitAuthentication);
 
-  void checkUsers(time_t currentDate);
+  void checkUsers (time_t currentDate);
 };
 } // namespace ns3
 

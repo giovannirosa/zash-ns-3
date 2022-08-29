@@ -16,27 +16,30 @@ using namespace std;
 
 namespace ns3 {
 
-struct compareOnt {
+struct compareOnt
+{
   Request *key;
-  compareOnt(Request *r);
+  compareOnt (Request *r);
 
-  bool operator()(Ontology *o);
+  bool operator() (Ontology *o);
 };
 
-struct compareCap {
+struct compareCap
+{
   Request *key;
-  compareCap(Request *r);
+  compareCap (Request *r);
 
-  bool operator()(enums::Enum *o);
+  bool operator() (enums::Enum *o);
 };
 
-class OntologyComponent {
+class OntologyComponent
+{
   ConfigurationComponent *configurationComponent;
   AuditComponent *auditComponent;
 
 public:
-  OntologyComponent();
-  OntologyComponent(ConfigurationComponent *c, AuditComponent *a);
+  OntologyComponent ();
+  OntologyComponent (ConfigurationComponent *c, AuditComponent *a);
 
   // common ontologies like:
   //   - critical devices:
@@ -47,7 +50,7 @@ public:
   //   - non-critical devices:
   //       - visitor and kids can visualize and control
   //       - adults and admins can visualize, control and manage
-  bool verifyOntology(Request *req, time_t currenDate);
+  bool verifyOntology (Request *req, time_t currenDate);
 };
 } // namespace ns3
 

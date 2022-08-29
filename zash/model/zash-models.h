@@ -11,37 +11,44 @@ using namespace std;
 
 namespace ns3 {
 
-class Context {
+class Context
+{
 public:
   enums::Enum *accessWay;
   enums::Enum *localization;
   enums::Enum *group;
   enums::Enum *time;
-  Context();
-  Context(enums::Enum *aw, enums::Enum *loc, enums::Enum *g);
+  Context ();
+  Context (enums::Enum *aw, enums::Enum *loc, enums::Enum *g);
 
-  friend ostream &operator<<(ostream &out, Context const &c) {
-    out << "Context[" << c.accessWay->key << "," << c.localization->key << ","
-        << c.time->key << "," << c.group->key << "]";
+  friend ostream &
+  operator<< (ostream &out, Context const &c)
+  {
+    out << "Context[" << c.accessWay->key << "," << c.localization->key << "," << c.time->key << ","
+        << c.group->key << "]";
     return out;
   }
 };
 
-class Ontology {
+class Ontology
+{
 public:
   enums::Enum *userLevel;
   enums::Enum *deviceClass;
   vector<enums::Enum *> capabilities;
-  Ontology(enums::Enum *ul, enums::Enum *dc, vector<enums::Enum *> c);
+  Ontology (enums::Enum *ul, enums::Enum *dc, vector<enums::Enum *> c);
 
-  friend ostream &operator<<(ostream &out, Ontology const &o) {
+  friend ostream &
+  operator<< (ostream &out, Ontology const &o)
+  {
     out << "Ontology[" << o.userLevel->key << "," << o.deviceClass->key << ","
-        << vecToStr(o.capabilities) << "]";
+        << vecToStr (o.capabilities) << "]";
     return out;
   }
 };
 
-class User {
+class User
+{
 public:
   int id;
   enums::Enum *userLevel;
@@ -49,17 +56,19 @@ public:
   vector<time_t> rejected;
   time_t startInterval;
   bool blocked;
-  User();
-  User(int i, enums::Enum *ul, enums::Enum *a);
+  User ();
+  User (int i, enums::Enum *ul, enums::Enum *a);
 
-  friend ostream &operator<<(ostream &out, User const &u) {
-    out << "User[" << u.id << "," << u.userLevel->key << "," << u.age->key
-        << "]";
+  friend ostream &
+  operator<< (ostream &out, User const &u)
+  {
+    out << "User[" << u.id << "," << u.userLevel->key << "," << u.age->key << "]";
     return out;
   }
 };
 
-class Device {
+class Device
+{
 public:
   int id;
   string name;
@@ -68,30 +77,34 @@ public:
   bool active;
   int ap;
   int pos;
-  Device();
-  Device(int i, string n, enums::Enum *dc, int r, bool a);
-  Device(int i, string n, enums::Enum *dc, int r, bool a, int apv, int p);
+  Device ();
+  Device (int i, string n, enums::Enum *dc, int r, bool a);
+  Device (int i, string n, enums::Enum *dc, int r, bool a, int apv, int p);
 
-  friend ostream &operator<<(ostream &out, Device const &d) {
-    out << "Device[" << d.id << "," << d.name << "," << d.deviceClass->key
-        << "," << d.room << "]";
+  friend ostream &
+  operator<< (ostream &out, Device const &d)
+  {
+    out << "Device[" << d.id << "," << d.name << "," << d.deviceClass->key << "," << d.room << "]";
     return out;
   }
 };
 
-class Request {
+class Request
+{
 public:
   int id;
   Device *device;
   User *user;
   Context *context;
   enums::Enum *action;
-  Request();
-  Request(int i, Device *d, User *u, Context *c, enums::Enum *a);
+  Request ();
+  Request (int i, Device *d, User *u, Context *c, enums::Enum *a);
 
-  friend ostream &operator<<(ostream &out, Request const &r) {
-    out << "Request[" << r.id << "," << *r.device << "," << *r.user << ","
-        << *r.context << "," << r.action->key << "]";
+  friend ostream &
+  operator<< (ostream &out, Request const &r)
+  {
+    out << "Request[" << r.id << "," << *r.device << "," << *r.user << "," << *r.context << ","
+        << r.action->key << "]";
     return out;
   }
 };
