@@ -731,8 +731,8 @@ main (int argc, char *argv[])
   Config::SetDefault ("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents", BooleanValue (true));
   double start = 0.0;
   // double stop = 86400.0;
-  double stop = 4966270.0;
-  // double stop = 200.0;
+  // double stop = 4966270.0;
+  double stop = 200.0;
   uint32_t N = NUMBER_OF_DEVICES; // number of nodes in the star
   uint32_t payloadSize = 1448; /* Transport layer payload size in bytes. */
   string dataRate = "100Mbps"; /* Application layer datarate. */
@@ -794,11 +794,19 @@ main (int argc, char *argv[])
 
   AuditComponent *auditModule = createAudit ();
 
+  // std::chrono::time_point<std::chrono::system_clock> startT = std::chrono::system_clock::now();
+
+
   enums::Properties *props = buildEnums (auditModule, mode);
 
   printEnums (props, auditModule);
 
-  // auditModule->calculatePossibilities (props);
+  auditModule->calculatePossibilities (props, auditModule);
+
+  // std::chrono::time_point<std::chrono::system_clock> endT = std::chrono::system_clock::now();
+  // auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(endT - startT);
+  // auto ms = milliseconds.count();
+  // cout << ms;
 
   // return EXIT_SUCCESS;
 
@@ -995,32 +1003,32 @@ main (int argc, char *argv[])
   Simulator::Stop (Seconds (simulationTime + 1));
 
   // 40mx28m
-  AnimationInterface anim ("animation.xml");
-  anim.SetBackgroundImage ("/home/grosa/Dev/ns-allinone-3.35/ns-3.35/data/home-design.png", 0, 0,
-                           0.07, 0.07, 1.0);
-  for (uint32_t i = 0; i < staNodes.GetN (); ++i)
-    {
-      Ptr<Node> node = staNodes.Get (i);
-      anim.UpdateNodeDescription (node, devices[i]->name); // Optional
-      anim.UpdateNodeColor (node, 255, 0, 0); // Optional
-      anim.UpdateNodeSize (node->GetId (), 0.8, 0.8);
-    }
-  for (uint32_t i = 0; i < apNode.GetN (); ++i)
-    {
-      Ptr<Node> node = apNode.Get (i);
-      anim.UpdateNodeDescription (node, "AP"); // Optional
-      anim.UpdateNodeColor (node, 0, 255, 0); // Optional
-      anim.UpdateNodeSize (node->GetId (), 0.8, 0.8);
-    }
-  for (uint32_t i = 0; i < serverNode.GetN (); ++i)
-    {
-      Ptr<Node> node = serverNode.Get (i);
-      anim.UpdateNodeDescription (node, "Local Server"); // Optional
-      anim.UpdateNodeColor (node, 0, 0, 255); // Optional
-      anim.UpdateNodeSize (node->GetId (), 1.2, 1.2);
-    }
-  anim.EnablePacketMetadata ();
-  anim.EnableIpv4RouteTracking ("zash.txt", Seconds (0), Seconds (200), Seconds (5));
+  // AnimationInterface anim ("animation.xml");
+  // anim.SetBackgroundImage ("/home/grosa/Dev/ns-allinone-3.35/ns-3.35/data/home-design.png", 0, 0,
+  //                          0.07, 0.07, 1.0);
+  // for (uint32_t i = 0; i < staNodes.GetN (); ++i)
+  //   {
+  //     Ptr<Node> node = staNodes.Get (i);
+  //     anim.UpdateNodeDescription (node, devices[i]->name); // Optional
+  //     anim.UpdateNodeColor (node, 255, 0, 0); // Optional
+  //     anim.UpdateNodeSize (node->GetId (), 0.8, 0.8);
+  //   }
+  // for (uint32_t i = 0; i < apNode.GetN (); ++i)
+  //   {
+  //     Ptr<Node> node = apNode.Get (i);
+  //     anim.UpdateNodeDescription (node, "AP"); // Optional
+  //     anim.UpdateNodeColor (node, 0, 255, 0); // Optional
+  //     anim.UpdateNodeSize (node->GetId (), 0.8, 0.8);
+  //   }
+  // for (uint32_t i = 0; i < serverNode.GetN (); ++i)
+  //   {
+  //     Ptr<Node> node = serverNode.Get (i);
+  //     anim.UpdateNodeDescription (node, "Local Server"); // Optional
+  //     anim.UpdateNodeColor (node, 0, 0, 255); // Optional
+  //     anim.UpdateNodeSize (node->GetId (), 1.2, 1.2);
+  //   }
+  // anim.EnablePacketMetadata ();
+  // anim.EnableIpv4RouteTracking ("zash.txt", Seconds (0), Seconds (200), Seconds (5));
 
   // Flow monitor
   // Ptr<FlowMonitor> flowMonitor;

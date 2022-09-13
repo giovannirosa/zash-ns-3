@@ -127,7 +127,7 @@ public:
   int calculateTrust (enums::Enum *accessWay, enums::Enum *localization, enums::Enum *time,
                       enums::Enum *age, enums::Enum *group);
 
-  void calculatePossibilities (enums::Properties *props);
+  void calculatePossibilities (enums::Properties *props,  AuditComponent *auditModule);
 };
 } // namespace ns3
 

@@ -146,7 +146,7 @@ AuditComponent::calculateTrust (enums::Enum *accessWay, enums::Enum *localizatio
 }
 
 void
-AuditComponent::calculatePossibilities (enums::Properties *props)
+AuditComponent::calculatePossibilities (enums::Properties *props, AuditComponent *auditModule)
 {
   double passed = 0;
   double total = 0;
@@ -160,19 +160,19 @@ AuditComponent::calculatePossibilities (enums::Properties *props)
         {
           for (auto const &z : props->DeviceClass)
             {
-              cout << "----------------------------------------------------------" << endl;
-              cout << "Calculating expected for:" << endl;
-              cout << "[" << x.second->key << "," << y.second->key << "," << z.second->key << "]"
-                   << endl;
-              cout << "Calculating expected for:" << endl;
-              cout << "[" << x.second->weight << "," << y.second->weight << "," << z.second->weight
-                   << "]" << endl;
+              // cout << "----------------------------------------------------------" << endl;
+              // cout << "Calculating expected for:" << endl;
+              // cout << "[" << x.second->key << "," << y.second->key << "," << z.second->key << "]"
+              //      << endl;
+              // cout << "Calculating expected for:" << endl;
+              // cout << "[" << x.second->weight << "," << y.second->weight << "," << z.second->weight
+              //      << "]" << endl;
               int expectedDevice = z.second->weight + x.second->weight;
               int expectedUser = y.second->weight + x.second->weight;
-              cout << "expectedDevice = " << expectedDevice << endl;
-              cout << "expectedUser = " << expectedUser << endl;
+              // cout << "expectedDevice = " << expectedDevice << endl;
+              // cout << "expectedUser = " << expectedUser << endl;
               int expected = min (max (expectedDevice, expectedUser), 100);
-              cout << "expected = " << expected << endl;
+              // cout << "expected = " << expected << endl;
               if (expected > highestExpected)
                 {
                   highestExpected = expected;
@@ -193,16 +193,16 @@ AuditComponent::calculatePossibilities (enums::Properties *props)
                             {
                               for (auto const &e : props->Group)
                                 {
-                                  cout << "***************************************" << endl;
-                                  cout << "Calculating trust for:" << endl;
-                                  cout << "[" << a.second->key << "," << b.second->key << ","
-                                       << c.second->key << "," << d.second->key << ","
-                                       << e.second->key << "]" << endl;
+                                  // cout << "***************************************" << endl;
+                                  // cout << "Calculating trust for:" << endl;
+                                  // cout << "[" << a.second->key << "," << b.second->key << ","
+                                  //      << c.second->key << "," << d.second->key << ","
+                                  //      << e.second->key << "]" << endl;
                                   int calculated =
                                       min (calculateTrust (a.second, b.second, c.second, d.second,
                                                            e.second),
                                            100);
-                                  cout << "calculated = " << calculated << endl;
+                                  // cout << "calculated = " << calculated << endl;
                                   if (calculated > highestCalculated)
                                     {
                                       highestCalculated = calculated;
@@ -213,11 +213,11 @@ AuditComponent::calculatePossibilities (enums::Properties *props)
                                     }
                                   if (calculated < expected)
                                     {
-                                      cout << "NOT PASSED" << endl;
+                                      // cout << "NOT PASSED" << endl;
                                     }
                                   else
                                     {
-                                      cout << "PASSED" << endl;
+                                      // cout << "PASSED" << endl;
                                       ++passed;
                                       ++passedLocal;
                                     }
@@ -229,16 +229,16 @@ AuditComponent::calculatePossibilities (enums::Properties *props)
                     }
                 }
 
-              cout << "Percentage of passed local = " << passedLocal / totalLocal * 100 << endl;
+              // cout << "Percentage of passed local = " << passedLocal / totalLocal * 100 << endl;
             }
         }
     }
-  cout << endl << "----------------------------------------------------------" << endl << endl;
-  cout << "Percentage of passed = " << passed / total * 100 << endl;
-  cout << "highestExpected = " << highestExpected << endl;
-  cout << "lowestExpected = " << lowestExpected << endl;
-  cout << "highestCalculated = " << highestCalculated << endl;
-  cout << "lowestCalculated = " << lowestCalculated << endl;
+  auditModule->fileSim << endl << "----------------------------------------------------------" << endl << endl;
+  auditModule->fileSim << "Percentage of passed = " << passed / total * 100 << endl;
+  auditModule->fileSim << "highestExpected = " << highestExpected << endl;
+  auditModule->fileSim << "lowestExpected = " << lowestExpected << endl;
+  auditModule->fileSim << "highestCalculated = " << highestCalculated << endl;
+  auditModule->fileSim << "lowestCalculated = " << lowestCalculated << endl << endl;
 }
 
 } // namespace ns3
