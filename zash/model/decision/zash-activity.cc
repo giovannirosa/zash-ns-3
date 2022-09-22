@@ -18,9 +18,13 @@ ActivityComponent::verifyActivity (Request *req, time_t currentDate,
                                    function<bool (Request *, time_t)> explicitAuthentication)
 {
   *auditComponent->zashOutput << "Activity Component" << endl;
-  checkBuilding (currentDate);
   vector<int> lastState = dataComponent->lastState;
   vector<int> currentState = dataComponent->currentState;
+  if (lastState.size () != currentState.size ())
+    {
+      resetMarkov ();
+    }
+  checkBuilding (currentDate);
   if (!isMarkovBuilding)
     {
       *auditComponent->zashOutput << "Verify activities" << endl;
@@ -42,7 +46,8 @@ ActivityComponent::verifyActivity (Request *req, time_t currentDate,
     }
   else
     {
-      *auditComponent->zashOutput << "Markov Chain is still building" << endl;
+      *auditComponent->zashOutput << "Markov Chain is still building for " << req->device->name
+                                  << endl;
     }
   markovChain->buildTransition (currentState, lastState);
   return true;
@@ -59,9 +64,18 @@ ActivityComponent::checkBuilding (time_t currentDate)
   else if (isMarkovBuilding && difftime (currentDate, limitDate) > 0)
     {
       isMarkovBuilding = false;
-      *auditComponent->zashOutput << "Markov Chain stopped building transition matrix at "
+      *auditComponent->zashOutput << "Markov Chain completed building transition matrix at "
                                   << formatTime (currentDate) << endl;
     }
+}
+
+void
+ActivityComponent::resetMarkov ()
+{
+  delete markovChain;
+  markovChain = new MarkovChain ();
+  isMarkovBuilding = true;
+  limitDate = (time_t) (-1);
 }
 
 } // namespace ns3

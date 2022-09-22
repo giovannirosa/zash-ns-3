@@ -21,9 +21,9 @@ AuditComponent::AuditComponent (string timeLog, string ft)
 }
 
 inline void
-AuditComponent::printEvents (vector<AuditEvent *> events, char *currDateStr, string type)
+AuditComponent::printEvents (vector<AuditEvent *> events, string currDateStr, string type)
 {
-  ofstream outfile (type + "_" + string (currDateStr) + ".txt");
+  ofstream outfile (type + "_" + currDateStr + ".txt");
   for (AuditEvent *event : events)
     {
       outfile << *event << endl;
@@ -111,9 +111,42 @@ AuditComponent::outputMetrics ()
              << endl;
   fileSimRec << "Access Control Enforcement (ACE) = " << accessControlEnforcement << endl << endl;
 
+  fileSimRec << "REQUESTS NUMBER = " << reqNumber << endl;
+
+  fileSimRec << "REQUESTS GRANTED = " << reqGranted << endl;
+
+  fileSimRec << "REQUESTS DENIED = " << reqDenied << endl;
+
+  int ontologyFailSize = ontologyFail.size ();
+  fileSimRec << "ONTOLOGY FAILS = " << ontologyFailSize << " ("
+             << percentage (ontologyFailSize, reqNumber) << ")" << endl;
+
+  int contextFailSize = contextFail.size ();
+  fileSimRec << "CONTEXT FAILS = " << contextFailSize << " ("
+             << percentage (contextFailSize, reqNumber) << ")" << endl;
+
+  int activityFailSize = activityFail.size ();
+  fileSimRec << "ACTIVITY FAILS = " << activityFailSize << " ("
+             << percentage (activityFailSize, reqNumber) << ")" << endl;
+
+  int validProofsSize = validProofs.size ();
+  int invalidProofsSize = invalidProofs.size ();
+  fileSimRec << "VALID PROOFS = " << validProofsSize << " ("
+             << percentage (validProofsSize, validProofsSize + invalidProofsSize) << ")" << endl;
+  fileSimRec << "INVALID PROOFS = " << invalidProofsSize << " ("
+             << percentage (invalidProofsSize, validProofsSize + invalidProofsSize) << ")" << endl;
+
+  fileSimRec << "BLOCKS = " << blocks.size () << endl;
+
   // Close scenario simulation configuration file
   fileSimRec << "**** End of ZASH file ****" << endl;
   fileSimRec.close ();
+
+  printEvents (ontologyFail, simDate, folderTraces + "/ontology_fail");
+  printEvents (contextFail, simDate, folderTraces + "/context_fail");
+  printEvents (activityFail, simDate, folderTraces + "/activity_fail");
+  printEvents (validProofs, simDate, folderTraces + "/valid_proofs");
+  printEvents (invalidProofs, simDate, folderTraces + "/invalid_proofs");
 }
 
 void
@@ -233,7 +266,9 @@ AuditComponent::calculatePossibilities (enums::Properties *props, AuditComponent
             }
         }
     }
-  auditModule->fileSim << endl << "----------------------------------------------------------" << endl << endl;
+  auditModule->fileSim << endl
+                       << "----------------------------------------------------------" << endl
+                       << endl;
   auditModule->fileSim << "Percentage of passed = " << passed / total * 100 << endl;
   auditModule->fileSim << "highestExpected = " << highestExpected << endl;
   auditModule->fileSim << "lowestExpected = " << lowestExpected << endl;

@@ -6,6 +6,8 @@ set(source_files
     model/zash-models.cc
     helper/zash-utils.cc
     model/audit/zash-audit.cc
+    model/action/zash-attack.cc
+    model/action/zash-alteration.cc
     model/behavior/zash-configuration.cc
     model/behavior/zash-notification.cc
     model/collection/zash-data.cc
@@ -24,6 +26,8 @@ set(header_files
     model/zash-models.h
     helper/zash-utils.h
     model/audit/zash-audit.h
+    model/action/zash-attack.h
+    model/action/zash-alteration.h
     model/behavior/zash-configuration.h
     model/behavior/zash-notification.h
     model/collection/zash-data.h

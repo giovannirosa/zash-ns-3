@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <random>
 
 #include "ns3/applications-module.h"
 #include "ns3/bridge-helper.h"
@@ -72,6 +73,8 @@
 #include "ns3/zash-ontology.h"
 #include "ns3/zash-server.h"
 #include "ns3/zash-utils.h"
+#include "ns3/zash-attack.h"
+#include "ns3/zash-alteration.h"
 
 #define NUMBER_OF_DEVICES 29
 #define ACTIVITY_COL 29
@@ -263,6 +266,7 @@ buildEnums (AuditComponent *auditModule, string mode)
   map<string, enums::Enum *> Group;
   vector<map<string, enums::Enum *>> props = {Action,       UserLevel, DeviceClass, AccessWay,
                                               Localization, TimeClass, Age,         Group};
+  vector<vector<string>> propsKeys = {{}, {}, {}, {}, {}, {}, {}, {}};
   int index = 0;
   while (csv.FetchNextRow ())
     {
@@ -292,17 +296,26 @@ buildEnums (AuditComponent *auditModule, string mode)
       // pair<string, enums::Enum *> p = new
       // cout << "inserting " << enums::Enum (k, v, w) << " into " << index << endl;
       props[index].insert ({k, new enums::Enum (k, v, w)});
+      propsKeys[index].push_back (k);
 
       // props[index].at (k)->value = v;
       // props[index].at (k)->weight = w;
     }
   enums::Properties *propsObj = new enums::Properties (props[0], props[1], props[2], props[3],
                                                        props[4], props[5], props[6], props[7]);
+  propsObj->actions = propsKeys[0];
+  propsObj->userLevels = propsKeys[1];
+  propsObj->deviceClasses = propsKeys[2];
+  propsObj->accessWays = propsKeys[3];
+  propsObj->localizations = propsKeys[4];
+  propsObj->timeClasses = propsKeys[5];
+  propsObj->ages = propsKeys[6];
+  propsObj->groups = propsKeys[7];
   return propsObj;
 }
 
 DeviceComponent *
-buildServerStructure (AuditComponent *auditModule, enums::Properties *props)
+buildServerStructure (AuditComponent *auditModule, enums::Properties *props, string mode)
 {
   vector<User *> users = {new User (1, props->UserLevel.at ("ADMIN"), props->Age.at ("ADULT")),
                           new User (2, props->UserLevel.at ("ADULT"), props->Age.at ("ADULT")),
@@ -458,10 +471,10 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props)
       auditModule->userLevelNumber * auditModule->deviceClassNumber * auditModule->actionNumber;
 
   // Behavior Module
-  int blockThreshold = 3;
-  int blockInterval = 24;
-  int buildInterval = 32;
-  int markovThreshold = 0.1;
+  int blockThreshold = mode == "H" ? 3 : 6;
+  int blockInterval = mode == "H" ? 24 : 12;
+  int buildInterval = mode == "H" ? 30 : 7;
+  int markovThreshold = mode == "H" ? 0.2 : 0.1;
   ConfigurationComponent *configurationComponent =
       new ConfigurationComponent (blockThreshold, blockInterval, buildInterval, markovThreshold,
                                   devices, users, ontologies, auditModule, props);
@@ -539,19 +552,51 @@ appsConfiguration (Ipv6InterfaceContainer serverApInterface, DeviceComponent *de
     }
 }
 
+// string
+// pickOne (vector<string> propKeys, uniform_int_distribution<mt19937::result_type> dist)
+// {
+//   uniform_int_distribution<mt19937::result_type> dist (0, propKeys.size () -
+//                                                               1);
+//   return propKeys[dist (rng)];
+// }
+
 void
 scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User *> users,
                   DeviceComponent *deviceComponent, AuditComponent *auditModule, int startDay,
                   int endDay, enums::Properties *props)
 {
+
+  random_device rd;
+  mt19937::result_type seed =
+      rd () ^ ((mt19937::result_type) chrono::duration_cast<chrono::seconds> (
+                   chrono::system_clock::now ().time_since_epoch ())
+                   .count () +
+               (mt19937::result_type) chrono::duration_cast<chrono::microseconds> (
+                   chrono::high_resolution_clock::now ().time_since_epoch ())
+                   .count ());
+  mt19937 gen (seed);
+  uniform_int_distribution<mt19937::result_type> distAW (0, props->accessWays.size () - 1);
+  uniform_int_distribution<mt19937::result_type> distD (0, NUMBER_OF_DEVICES - 1);
+  auditModule->fileSim << "Random seed is: " << seed << endl;
+
+  AttackManager *attackManager =
+      new AttackManager (gen, 10, props, users, devices, vector<int>{1, 29}, vector<int>{2, 3});
+  attackManager->printAttacks (auditModule);
+
+  AlterationManager *alterationManager =
+      new AlterationManager (gen, 5, devices, vector<int>{1, 29}, vector<int>{2, 3});
+  alterationManager->printAlterations (auditModule);
+
+  return;
+
   int user = 0;
-  string accessWay = "PERSONAL";
+  string accessWay;
   string localization = "INTERNAL";
   string group = "ALONE";
   string action = "CONTROL";
   auditModule->fileSim << "Devices interaction have the following properties: " << endl;
   auditModule->fileSim << "User: " << user << endl;
-  auditModule->fileSim << "Access Way: " << accessWay << endl;
+  auditModule->fileSim << "Access Way: Random from " << vecToStr (props->accessWays) << endl;
   auditModule->fileSim << "Localization: " << localization << endl;
   auditModule->fileSim << "Group: " << group << endl;
   auditModule->fileSim << "Action: " << action << endl;
@@ -628,8 +673,49 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
       // NS_LOG_INFO(vecToStr(currentState));
       auditModule->fileMsgs << vecToStr (currentState) << endl;
 
+      double diff = difftime (currentDate, firstDate);
+
+      // Simulate a view action when no state has changed
       if (currentState == lastState)
         {
+          auditModule->fileMsgs << formatTime (currentDate) << " - " << actStr << endl;
+          accessWay = props->accessWays[distAW (gen)];
+          int change = distD (gen);
+
+          string request = "[" + to_string (++idReq) + "," + to_string (change) + "," +
+                           to_string (user) + "," + accessWay + "," + localization + "," + group +
+                           ",VIEW," + formatTime (currentDate) + "]";
+
+          if (dayCount < startDay)
+            {
+              auditModule->fileMsgs << "*Zash Server simulated with message = " << request << endl;
+              auditModule->fileExec << "*Zash Server simulated with message = " << request << endl;
+              auditModule->zashOutput = &auditModule->fileExec;
+              Context *context =
+                  new Context (props->AccessWay.at (accessWay),
+                               props->Localization.at (localization), props->Group.at (group));
+              enums::Enum *actionEnum = props->Action.at (action);
+              Request *req =
+                  new Request (++idReq, devices[change], users[user], context, actionEnum);
+              deviceComponent->listenRequest (req, currentDate);
+            }
+          else
+            {
+              // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
+              auditModule->fileMsgs << "Device enforcer scheduled with message = " << request
+                                    << endl;
+              auditModule->zashOutput = &auditModule->fileLog;
+              Ptr<Node> node = staNodes.Get (change);
+              Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
+                  DynamicCast<ZashDeviceEnforcer> (node->GetApplication (0));
+              Simulator::Schedule (Seconds (diff), &ZashDeviceEnforcer::StartSending,
+                                   ZashDeviceEnforcerApp, request);
+              msgCount++;
+              // NS_LOG_INFO(devices[change]->name << " will change at " << diff
+              //                                   << " seconds");
+              auditModule->fileMsgs << devices[change]->name << " will change at " << diff
+                                    << " seconds" << endl;
+            }
           continue;
         }
 
@@ -645,7 +731,6 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
                 }
             }
 
-          double diff = difftime (currentDate, firstDate);
           for (uint32_t change : changes)
             {
               if (change > staNodes.GetN () - 1 || change == 7)
@@ -654,6 +739,7 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
                 }
               // NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
               auditModule->fileMsgs << formatTime (currentDate) << " - " << actStr << endl;
+              accessWay = props->accessWays[distAW (gen)];
 
               string request = "[" + to_string (++idReq) + "," + to_string (change) + "," +
                                to_string (user) + "," + accessWay + "," + localization + "," +
@@ -731,8 +817,8 @@ main (int argc, char *argv[])
   Config::SetDefault ("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents", BooleanValue (true));
   double start = 0.0;
   // double stop = 86400.0;
-  // double stop = 4966270.0;
-  double stop = 200.0;
+  double stop = 4966270.0;
+  // double stop = 200.0;
   uint32_t N = NUMBER_OF_DEVICES; // number of nodes in the star
   uint32_t payloadSize = 1448; /* Transport layer payload size in bytes. */
   string dataRate = "100Mbps"; /* Application layer datarate. */
@@ -796,7 +882,6 @@ main (int argc, char *argv[])
 
   // std::chrono::time_point<std::chrono::system_clock> startT = std::chrono::system_clock::now();
 
-
   enums::Properties *props = buildEnums (auditModule, mode);
 
   printEnums (props, auditModule);
@@ -859,7 +944,7 @@ main (int argc, char *argv[])
 
   NodeContainer serverAp = NodeContainer (serverNode.Get (0), apNode.Get (0));
   CsmaHelper csma;
-  csma.SetChannelAttribute ("DataRate", StringValue ("100Mbps"));
+  csma.SetChannelAttribute ("DataRate", StringValue (dataRate));
   csma.SetChannelAttribute ("Delay", StringValue ("1ms"));
   NetDeviceContainer serverApDevice = csma.Install (serverAp);
 
@@ -934,7 +1019,7 @@ main (int argc, char *argv[])
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  DeviceComponent *deviceComponent = buildServerStructure (auditModule, props);
+  DeviceComponent *deviceComponent = buildServerStructure (auditModule, props, mode);
 
   // NS_LOG_INFO(deviceComponent);
 
@@ -963,6 +1048,8 @@ main (int argc, char *argv[])
   createFile (auditModule->scenarioSimFile, auditModule->simDate, auditModule->fileSim.str ());
   createFile (auditModule->messagesSimFile, auditModule->simDate, auditModule->fileMsgs.str ());
   createFile (auditModule->execSimFile, auditModule->simDate, auditModule->fileExec.str ());
+
+  return EXIT_SUCCESS;
 
   // Callback Trace to Collect Messages in Device Enforcer Application
   for (uint32_t i = 0; i < staNodes.GetN (); ++i)

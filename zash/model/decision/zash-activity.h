@@ -32,6 +32,7 @@ public:
 
   // check if markov build time expired
   void checkBuilding (time_t currentDate);
+  void resetMarkov ();
 };
 } // namespace ns3
 

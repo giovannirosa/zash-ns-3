@@ -42,13 +42,29 @@ class Properties
 {
 public:
   map<string, Enum *> Action;
+  vector<string> actions;
+
   map<string, Enum *> UserLevel;
+  vector<string> userLevels;
+
   map<string, Enum *> DeviceClass;
+  vector<string> deviceClasses;
+
   map<string, Enum *> AccessWay;
+  vector<string> accessWays;
+
   map<string, Enum *> Localization;
+  vector<string> localizations;
+
   map<string, Enum *> TimeClass;
+  vector<string> timeClasses;
+
   map<string, Enum *> Age;
+  vector<string> ages;
+
   map<string, Enum *> Group;
+  vector<string> groups;
+
   Properties ();
   Properties (map<string, enums::Enum *> a, map<string, enums::Enum *> u,
               map<string, enums::Enum *> d, map<string, enums::Enum *> aw,

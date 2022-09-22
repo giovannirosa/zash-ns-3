@@ -101,7 +101,7 @@ public:
    * \param file name of the file
    * \param msg message to append
    */
-  void printEvents (vector<AuditEvent *> events, char *currDateStr, string type);
+  void printEvents (vector<AuditEvent *> events, string currDateStr, string type);
 
   /*
    * Append file with given message

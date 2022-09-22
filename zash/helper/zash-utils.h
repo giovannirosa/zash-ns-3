@@ -91,6 +91,13 @@ string vecToStr(vector<enums::Enum *> v);
 string vecToStr(vector<int> v);
 
 /*
+ * Format from vector of string to text
+ * \param v vector of strings
+ * \returns formatted text
+ */
+string vecToStr(vector<string> v);
+
+/*
  * Format from string to vector of strings using comma as delimiter
  * \param buffer string
  * \returns vector of strings
