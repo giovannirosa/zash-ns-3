@@ -352,8 +352,9 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
           new Context (props->AccessWay.at (tokens[3]), props->Localization.at (tokens[4]),
                        props->Group.at (tokens[5]));
       enums::Enum *action = props->Action.at (tokens[6]);
+      bool isAttack = tokens[7] == "attack";
 
-      Request *req = new Request (reqId, device, user, context, action);
+      Request *req = new Request (reqId, device, user, context, action, isAttack);
       time_t currentDate = strToTime (tokens[7].c_str ());
       bool response = deviceComponent->listenRequest (req, currentDate);
 

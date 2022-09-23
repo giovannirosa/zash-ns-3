@@ -97,14 +97,15 @@ public:
   User *user;
   Context *context;
   enums::Enum *action;
+  bool isAttack;
   Request ();
-  Request (int i, Device *d, User *u, Context *c, enums::Enum *a);
+  Request (int i, Device *d, User *u, Context *c, enums::Enum *a, bool at);
 
   friend ostream &
   operator<< (ostream &out, Request const &r)
   {
     out << "Request[" << r.id << "," << *r.device << "," << *r.user << "," << *r.context << ","
-        << r.action->key << "]";
+        << r.action->key << "," << (r.isAttack ? "attack" : "normal") << "]";
     return out;
   }
 };

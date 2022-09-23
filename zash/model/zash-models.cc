@@ -57,13 +57,14 @@ Device::Device (int i, string n, enums::Enum *dc, int r, bool a, int apv, int p)
 Request::Request ()
 {
 }
-Request::Request (int i, Device *d, User *u, Context *c, enums::Enum *a)
+Request::Request (int i, Device *d, User *u, Context *c, enums::Enum *a, bool at)
 {
   id = i;
   device = d;
   user = u;
   context = c;
   action = a;
+  isAttack = at;
 }
 
 } // namespace ns3

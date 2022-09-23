@@ -33,8 +33,7 @@ DeviceComponent::explicitAuthentication (Request *req, time_t currentDate)
   if (it == proofs.end ())
     {
       *auditComponent->zashOutput << "Not found proof" << endl;
-      int proofInput = req->user->id;
-      if (proofInput != req->user->id)
+      if (req->isAttack)
         {
           auditComponent->invalidProofs.push_back (new AuditEvent (currentDate, req));
           *auditComponent->zashOutput << "Proof does not match!" << endl;
@@ -71,6 +70,11 @@ DeviceComponent::listenRequest (Request *req, time_t currentDate)
   clearProofs (currentDate);
   dataComponent->updateCurrentState (req);
   bool result = true;
+  // if (req->action->key == "MANAGE")
+  //   {
+  //     authorizationComponent->configurationComponent->remDevice
+  //   }
+  // else
   if (req->device->active)
     {
       *auditComponent->zashOutput << "Active device " << *req->device

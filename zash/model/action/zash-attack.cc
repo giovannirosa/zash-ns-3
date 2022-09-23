@@ -58,7 +58,7 @@ AttackManager::AttackManager (mt19937 gen, int n, enums::Properties *props, vect
 void
 AttackManager::printAttacks (AuditComponent *auditModule)
 {
-  auditModule->fileSim << "Generated attacks are:" << endl;
+  auditModule->fileSim << endl << "Generated attacks are:" << endl;
   for (Attack *attack : attacks)
     {
       auditModule->fileSim << *attack << endl;

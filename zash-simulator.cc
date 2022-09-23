@@ -323,7 +323,7 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props, str
                           new User (4, props->UserLevel.at ("CHILD"), props->Age.at ("KID")),
                           new User (5, props->UserLevel.at ("VISITOR"), props->Age.at ("ADULT"))};
 
-  auditModule->fileSim << "Users of simulation are " << users.size () << ":" << endl;
+  auditModule->fileSim << endl << "Users of simulation are " << users.size () << ":" << endl;
   for (User *user : users)
     {
       auditModule->fileSim << *user << endl;
@@ -391,7 +391,7 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props, str
                   false) // bathroomCarp
   };
 
-  auditModule->fileSim << "Devices of simulation are " << devices.size () << ":" << endl;
+  auditModule->fileSim << endl << "Devices of simulation are " << devices.size () << ":" << endl;
   for (Device *device : devices)
     {
       auditModule->fileSim << *device << endl;
@@ -457,7 +457,8 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props, str
                                    adminCritical,    visitorNonCritical, childNonCritical,
                                    adultNonCritical, adminNonCritical};
 
-  auditModule->fileSim << "Ontologies of simulation are " << ontologies.size () << ":" << endl;
+  auditModule->fileSim << endl
+                       << "Ontologies of simulation are " << ontologies.size () << ":" << endl;
   for (Ontology *ontology : ontologies)
     {
       auditModule->fileSim << *ontology << endl;
@@ -478,7 +479,7 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props, str
   ConfigurationComponent *configurationComponent =
       new ConfigurationComponent (blockThreshold, blockInterval, buildInterval, markovThreshold,
                                   devices, users, ontologies, auditModule, props);
-  auditModule->fileSim << "Other configuration parameters of simulation are:" << endl;
+  auditModule->fileSim << endl << "Other configuration parameters of simulation are:" << endl;
   auditModule->fileSim << "Block Threshold: " << blockThreshold << endl;
   auditModule->fileSim << "Block Interval: " << blockInterval << endl;
   auditModule->fileSim << "Build Interval: " << buildInterval << endl;
@@ -559,6 +560,50 @@ appsConfiguration (Ipv6InterfaceContainer serverApInterface, DeviceComponent *de
 //                                                               1);
 //   return propKeys[dist (rng)];
 // }
+
+void
+scheduleMessage (int *idReq, time_t currentDate, string actStr, int device, int user,
+                 string accessWay, string localization, string group, string action, int dayCount,
+                 int startDay, AuditComponent *auditModule, enums::Properties *props,
+                 NodeContainer staNodes, int *msgCount, double diff, vector<User *> users,
+                 vector<Device *> devices, DeviceComponent *deviceComponent, bool isAttack)
+{
+  auditModule->fileMsgs << formatTime (currentDate) << " - " << actStr << endl;
+
+  string request = "[" + to_string (++(*idReq)) + "," + to_string (device) + "," +
+                   to_string (user) + "," + accessWay + "," + localization + "," + group + "," +
+                   action + "," + formatTime (currentDate) + "," +
+                   (isAttack ? "attack" : "normal") + "]";
+
+  if (dayCount < startDay)
+    {
+      auditModule->fileMsgs << "*Zash Server simulated with message = " << request << endl;
+      auditModule->fileExec << "*Zash Server simulated with message = " << request << endl;
+      auditModule->zashOutput = &auditModule->fileExec;
+      Context *context =
+          new Context (props->AccessWay.at (accessWay), props->Localization.at (localization),
+                       props->Group.at (group));
+      enums::Enum *actionEnum = props->Action.at (action);
+      Request *req = new Request (++(*idReq), devices[device], users[user], context, actionEnum, isAttack);
+      deviceComponent->listenRequest (req, currentDate);
+    }
+  else
+    {
+      // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
+      auditModule->fileMsgs << "Device enforcer scheduled with message = " << request << endl;
+      auditModule->zashOutput = &auditModule->fileLog;
+      Ptr<Node> node = staNodes.Get (device);
+      Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
+          DynamicCast<ZashDeviceEnforcer> (node->GetApplication (0));
+      Simulator::Schedule (Seconds (diff), &ZashDeviceEnforcer::StartSending, ZashDeviceEnforcerApp,
+                           request);
+      ++(*msgCount);
+      // NS_LOG_INFO(devices[device]->name << " will change at " << diff
+      //                                   << " seconds");
+      auditModule->fileMsgs << devices[device]->name << " will change at " << diff << " seconds"
+                            << endl;
+    }
+}
 
 void
 scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User *> users,
@@ -675,47 +720,49 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
 
       double diff = difftime (currentDate, firstDate);
 
+      for (Attack *attack : attackManager->attacks)
+        {
+          time_t timeOfAttack = strToTime (attack->timeOfAttack.c_str ());
+          if (difftime (timeOfAttack, lastDate) >= 0 && difftime (timeOfAttack, currentDate) <= 0)
+            {
+              auditModule->fileMsgs << "Launching " << *attack << endl;
+
+              scheduleMessage (&idReq, timeOfAttack, actStr, attack->device,
+                               attack->impersonatedUser, attack->accessWay, attack->location,
+                               "ALONE", attack->action, dayCount, startDay, auditModule, props,
+                               staNodes, &msgCount, difftime (timeOfAttack, firstDate), users,
+                               devices, deviceComponent, true);
+            }
+        }
+
+      for (Alteration *alteration : alterationManager->alterations)
+        {
+          time_t timeOfAlteration = strToTime (alteration->timeOfAlteration.c_str ());
+          if (difftime (timeOfAlteration, lastDate) >= 0 &&
+              difftime (timeOfAlteration, currentDate) <= 0)
+            {
+              auditModule->fileMsgs << "Launching " << *alteration << endl;
+
+              accessWay = props->accessWays[distAW (gen)];
+
+              scheduleMessage (&idReq, timeOfAlteration, actStr, alteration->device, user,
+                               accessWay, localization, group, "MANAGE", dayCount, startDay,
+                               auditModule, props, staNodes, &msgCount,
+                               difftime (timeOfAlteration, firstDate), users, devices,
+                               deviceComponent, false);
+            }
+        }
+
       // Simulate a view action when no state has changed
       if (currentState == lastState)
         {
-          auditModule->fileMsgs << formatTime (currentDate) << " - " << actStr << endl;
           accessWay = props->accessWays[distAW (gen)];
           int change = distD (gen);
 
-          string request = "[" + to_string (++idReq) + "," + to_string (change) + "," +
-                           to_string (user) + "," + accessWay + "," + localization + "," + group +
-                           ",VIEW," + formatTime (currentDate) + "]";
+          scheduleMessage (&idReq, currentDate, actStr, change, user, accessWay, localization,
+                           group, "VIEW", dayCount, startDay, auditModule, props, staNodes,
+                           &msgCount, diff, users, devices, deviceComponent, false);
 
-          if (dayCount < startDay)
-            {
-              auditModule->fileMsgs << "*Zash Server simulated with message = " << request << endl;
-              auditModule->fileExec << "*Zash Server simulated with message = " << request << endl;
-              auditModule->zashOutput = &auditModule->fileExec;
-              Context *context =
-                  new Context (props->AccessWay.at (accessWay),
-                               props->Localization.at (localization), props->Group.at (group));
-              enums::Enum *actionEnum = props->Action.at (action);
-              Request *req =
-                  new Request (++idReq, devices[change], users[user], context, actionEnum);
-              deviceComponent->listenRequest (req, currentDate);
-            }
-          else
-            {
-              // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
-              auditModule->fileMsgs << "Device enforcer scheduled with message = " << request
-                                    << endl;
-              auditModule->zashOutput = &auditModule->fileLog;
-              Ptr<Node> node = staNodes.Get (change);
-              Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
-                  DynamicCast<ZashDeviceEnforcer> (node->GetApplication (0));
-              Simulator::Schedule (Seconds (diff), &ZashDeviceEnforcer::StartSending,
-                                   ZashDeviceEnforcerApp, request);
-              msgCount++;
-              // NS_LOG_INFO(devices[change]->name << " will change at " << diff
-              //                                   << " seconds");
-              auditModule->fileMsgs << devices[change]->name << " will change at " << diff
-                                    << " seconds" << endl;
-            }
           continue;
         }
 
@@ -737,47 +784,13 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
                 {
                   continue;
                 }
-              // NS_LOG_INFO(formatTime(currentDate) + " - " + actStr);
-              auditModule->fileMsgs << formatTime (currentDate) << " - " << actStr << endl;
+
               accessWay = props->accessWays[distAW (gen)];
+              scheduleMessage (&idReq, currentDate, actStr, change, user, accessWay, localization,
+                               group, action, dayCount, startDay, auditModule, props, staNodes,
+                               &msgCount, diff, users, devices, deviceComponent, false);
 
-              string request = "[" + to_string (++idReq) + "," + to_string (change) + "," +
-                               to_string (user) + "," + accessWay + "," + localization + "," +
-                               group + "," + action + "," + formatTime (currentDate) + "]";
-
-              if (dayCount < startDay)
-                {
-                  auditModule->fileMsgs << "*Zash Server simulated with message = " << request
-                                        << endl;
-                  auditModule->fileExec << "*Zash Server simulated with message = " << request
-                                        << endl;
-                  auditModule->zashOutput = &auditModule->fileExec;
-                  Context *context =
-                      new Context (props->AccessWay.at (accessWay),
-                                   props->Localization.at (localization), props->Group.at (group));
-                  enums::Enum *actionEnum = props->Action.at (action);
-                  Request *req =
-                      new Request (++idReq, devices[change], users[user], context, actionEnum);
-                  deviceComponent->listenRequest (req, currentDate);
-                }
-              else
-                {
-                  // NS_LOG_INFO("Device enforcer scheduled with message = " + request);
-                  auditModule->fileMsgs << "Device enforcer scheduled with message = " << request
-                                        << endl;
-                  auditModule->zashOutput = &auditModule->fileLog;
-                  Ptr<Node> node = staNodes.Get (change);
-                  Ptr<ZashDeviceEnforcer> ZashDeviceEnforcerApp =
-                      DynamicCast<ZashDeviceEnforcer> (node->GetApplication (0));
-                  Simulator::Schedule (Seconds (diff), &ZashDeviceEnforcer::StartSending,
-                                       ZashDeviceEnforcerApp, request);
-                  msgCount++;
-                  // NS_LOG_INFO(devices[change]->name << " will change at " << diff
-                  //                                   << " seconds");
-                  auditModule->fileMsgs << devices[change]->name << " will change at " << diff
-                                        << " seconds" << endl;
-                  diff += 0.2;
-                }
+              diff += 0.2;
             }
         }
       else
