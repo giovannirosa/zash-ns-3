@@ -35,8 +35,9 @@ public:
   AuthorizationComponent (ConfigurationComponent *c, OntologyComponent *o, ContextComponent *ctx,
                           ActivityComponent *a, NotificationComponent *n, AuditComponent *adt);
 
-  bool authorizeRequest (Request *req, time_t currentDate,
-                         function<bool (Request *, time_t)> explicitAuthentication);
+  void processUnauthorized (Request *req);
+
+  bool authorizeRequest (Request *req, function<bool (Request *)> explicitAuthentication);
 
   void checkUsers (time_t currentDate);
 };

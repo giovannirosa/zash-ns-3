@@ -341,33 +341,89 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
       buffer = buffer.substr (0, buffer.size () - 1);
       vector<string> tokens = strTokenize (buffer);
 
+      Request *req;
       int reqId = stoi (tokens[0]);
-      Device *device = deviceComponent->authorizationComponent->configurationComponent
-                           ->devices[stoi (tokens[1])];
-      User *user =
-          deviceComponent->authorizationComponent->configurationComponent->users[stoi (tokens[2])];
-      enums::Properties *props =
-          deviceComponent->authorizationComponent->configurationComponent->props;
-      Context *context =
-          new Context (props->AccessWay.at (tokens[3]), props->Localization.at (tokens[4]),
-                       props->Group.at (tokens[5]));
-      enums::Enum *action = props->Action.at (tokens[6]);
-      bool isAttack = tokens[7] == "attack";
 
-      Request *req = new Request (reqId, device, user, context, action, isAttack);
-      time_t currentDate = strToTime (tokens[7].c_str ());
-      bool response = deviceComponent->listenRequest (req, currentDate);
-
-      deviceComponent->auditComponent->storeRequestMetrics (req, props);
-
-      if (device->active)
+      if (tokens[1] == "Proof")
         {
+          req = requestQueue[reqId];
+          if (tokens[2] == "valid")
+            {
+              deviceComponent->processProof (req, true);
+              bool response = deviceComponent->listenRequest (req);
+              // if (req->device->active)
+              //   {
+              string respStr = response ? "[Accepted]" : "[Refused]";
+
+              Ptr<Packet> packet = Create<Packet> (
+                  reinterpret_cast<const uint8_t *> (respStr.c_str ()), respStr.size ());
+
+              socket->Send (packet);
+              // }
+            }
+          else
+            {
+              deviceComponent->processProof (req, false);
+              deviceComponent->authorizationComponent->processUnauthorized (req);
+
+              if (req->attackId)
+                {
+                  deviceComponent->processAttack (req, false);
+                }
+
+              // if (req->device->active)
+              //   {
+              string respStr = "[Refused]";
+
+              Ptr<Packet> packet = Create<Packet> (
+                  reinterpret_cast<const uint8_t *> (respStr.c_str ()), respStr.size ());
+
+              socket->Send (packet);
+              // }
+            }
+
+          requestQueue.erase (reqId);
+        }
+      else
+        {
+          Device *device = deviceComponent->authorizationComponent->configurationComponent
+                               ->devices[stoi (tokens[1])];
+          User *user = deviceComponent->authorizationComponent->configurationComponent
+                           ->users[stoi (tokens[2])];
+          enums::Properties *props =
+              deviceComponent->authorizationComponent->configurationComponent->props;
+          Context *context =
+              new Context (props->AccessWay.at (tokens[3]), props->Localization.at (tokens[4]),
+                           props->Group.at (tokens[5]), props->AccessWay.at (props->accessWays[0]));
+          enums::Enum *action = props->Action.at (tokens[6]);
+          int attackId = stoi (tokens[8]);
+          time_t currentDate = strToTime (tokens[7].c_str ());
+
+          Request *req = new Request (reqId, device, user, context, action, attackId, currentDate);
+          bool response = deviceComponent->listenRequest (req);
+
+          deviceComponent->auditComponent->storeRequestMetrics (req, props);
+
+          if (!response && !req->user->blocked)
+            {
+              requestQueue.insert ({reqId, req});
+              string respStr = "[" + to_string (reqId) + ",Proof]";
+              Ptr<Packet> packet = Create<Packet> (
+                  reinterpret_cast<const uint8_t *> (respStr.c_str ()), respStr.size ());
+
+              socket->Send (packet);
+              return;
+            }
+
+          // if (device->active)
+          //   {
           string respStr = response ? "[Accepted]" : "[Refused]";
 
           Ptr<Packet> packet = Create<Packet> (reinterpret_cast<const uint8_t *> (respStr.c_str ()),
                                                respStr.size ());
 
           socket->Send (packet);
+          // }
         }
     }
 }

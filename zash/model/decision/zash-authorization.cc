@@ -17,40 +17,64 @@ AuthorizationComponent::AuthorizationComponent (ConfigurationComponent *c, Ontol
   auditComponent = adt;
 }
 
+void
+AuthorizationComponent::processUnauthorized (Request *req)
+{
+  req->user->rejected.push_back (req->currentDate);
+  *auditComponent->zashOutput << "User have now " << req->user->rejected.size ()
+                                               << " rejected requests!" << endl;
+  if (req->user->rejected.size () >
+      (size_t) configurationComponent->blockThreshold)
+    {
+      auditComponent->blocks.push_back (new AuditEvent (req));
+      req->user->blocked = true;
+      *auditComponent->zashOutput << "User " << req->user->id << " is blocked!"
+                                                   << endl;
+      notificationComponent->alertUsers (req->user);
+    }
+  ++auditComponent->reqDenied;
+  *auditComponent->zashOutput << "Request is NOT authorized!" << endl;
+}
+
 bool
-AuthorizationComponent::authorizeRequest (Request *req, time_t currentDate,
-                                          function<bool (Request *, time_t)> explicitAuthentication)
+AuthorizationComponent::authorizeRequest (Request *req,
+                                          function<bool (Request *)> explicitAuthentication)
 {
   *auditComponent->zashOutput << "Authorization Component" << endl;
   *auditComponent->zashOutput << "Processing Request: " << req->id << endl;
-  checkUsers (currentDate);
+  checkUsers (req->currentDate);
   if (req->user->blocked)
     {
       ++auditComponent->reqDenied;
       *auditComponent->zashOutput << "USER IS BLOCKED - Request is NOT authorized!" << endl;
       return false;
     }
-  if (!ontologyComponent->verifyOntology (req, currentDate) ||
-      !contextComponent->verifyContext (req, currentDate, explicitAuthentication) ||
-      !activityComponent->verifyActivity (req, currentDate, explicitAuthentication))
+  bool denied = false;
+  switch (req->validated)
     {
-      req->user->rejected.push_back (currentDate);
-      *auditComponent->zashOutput << "User have now " << req->user->rejected.size ()
-                                  << " rejected requests!" << endl;
-      if (req->user->rejected.size () > (size_t) configurationComponent->blockThreshold)
-        {
-          auditComponent->blocks.push_back (new AuditEvent (currentDate, req));
-          req->user->blocked = true;
-          *auditComponent->zashOutput << "User " << req->user->id << " is blocked!" << endl;
-          notificationComponent->alertUsers (req->user);
-        }
-      ++auditComponent->reqDenied;
-      *auditComponent->zashOutput << "Request is NOT authorized!" << endl;
-      return false;
+    case 0:
+      denied = !ontologyComponent->verifyOntology (req) ||
+               !contextComponent->verifyContext (req, explicitAuthentication) ||
+               !activityComponent->verifyActivity (req, explicitAuthentication);
+      break;
+    case 1:
+      denied = !contextComponent->verifyContext (req, explicitAuthentication) ||
+               !activityComponent->verifyActivity (req, explicitAuthentication);
+      break;
+    case 2:
+      denied = !activityComponent->verifyActivity (req, explicitAuthentication);
+      break;
+    default:
+      break;
     }
-  ++auditComponent->reqGranted;
-  *auditComponent->zashOutput << "Request is authorized!" << endl;
-  return true;
+
+  if (!denied && req->validated == 3)
+    {
+      ++auditComponent->reqGranted;
+      *auditComponent->zashOutput << "Request is authorized!" << endl;
+      return true;
+    }
+  return false;
 }
 
 void

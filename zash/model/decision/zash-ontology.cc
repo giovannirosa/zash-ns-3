@@ -42,8 +42,9 @@ OntologyComponent::OntologyComponent (ConfigurationComponent *c, AuditComponent 
 //       - visitor and kids can visualize and control
 //       - adults and admins can visualize, control and manage
 bool
-OntologyComponent::verifyOntology (Request *req, time_t currenDate)
+OntologyComponent::verifyOntology (Request *req)
 {
+  ++req->validated;
   *auditComponent->zashOutput << "Ontology Component" << endl;
   *auditComponent->zashOutput << "Verify User Level " << req->user->userLevel->key
                               << " with the action " << req->action->key << " on the device class "
@@ -69,7 +70,7 @@ OntologyComponent::verifyOntology (Request *req, time_t currenDate)
                               << req->device->deviceClass->key << endl;
   if (!compatible)
     {
-      auditComponent->ontologyFail.push_back (new AuditEvent (currenDate, req));
+      auditComponent->ontologyFail.push_back (new AuditEvent (req));
     }
   return compatible;
 }

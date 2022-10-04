@@ -11,6 +11,7 @@
 #include "ns3/zash-authorization.h"
 #include "ns3/zash-data.h"
 #include "ns3/zash-models.h"
+#include "ns3/zash-attack.h"
 
 #define PROOF_EXPIRATION 10 // minutes
 
@@ -43,6 +44,14 @@ struct compareProof
   bool operator() (Proof *p);
 };
 
+struct compareAttack
+{
+  int key;
+  compareAttack (int i);
+
+  bool operator() (Attack *a);
+};
+
 class DeviceComponent
 {
 public:
@@ -52,11 +61,15 @@ public:
   vector<Proof *> proofs;
   DeviceComponent (AuthorizationComponent *a, DataComponent *d, AuditComponent *adt);
 
-  bool explicitAuthentication (Request *req, time_t currentDate);
+  void processProof (Request *req, bool proof);
+
+  bool explicitAuthentication (Request *req);
 
   void clearProofs (time_t currentDate);
 
-  bool listenRequest (Request *req, time_t currentDate);
+  void processAttack (Request *req, bool result);
+
+  bool listenRequest (Request *req);
 };
 } // namespace ns3
 

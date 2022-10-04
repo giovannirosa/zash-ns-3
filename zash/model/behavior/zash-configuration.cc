@@ -26,25 +26,33 @@ ConfigurationComponent::ConfigurationComponent (int bt, int bi, int bdi, double 
 bool
 ConfigurationComponent::addDevice (Device *d)
 {
-  if (find (devices.begin (), devices.end (), d) != devices.end ())
-    {
-      NS_LOG_INFO ("Cannot add " << d->name << " because it already exists!");
-      return false;
+  // if (find (devices.begin (), devices.end (), d) != devices.end ())
+  //   {
+  //     NS_LOG_INFO ("Cannot add " << d->name << " because it already exists!");
+  //     return false;
+  //   }
+
+  // auto it = find_if (devices.begin (), devices.end (),
+  //                    [&d] (Device *di) -> bool { return d->id == di->id; });
+  // if (it != devices.end ())
+  //   {
+  //     NS_LOG_INFO ("Cannot add " << d->name << " because it has an existing ID!");
+  //     return false;
+  //   }
+
+  // devices.push_back (d);
+
+  d->removed = false;
+  int count = 0;
+  for (Device *device : devices) {
+    if (!device->removed) {
+      ++count;
     }
+  }
 
-  auto it = find_if (devices.begin (), devices.end (),
-                     [&d] (Device *di) -> bool { return d->id == di->id; });
-  if (it != devices.end ())
+  if (count > auditModule->maxDeviceNumber)
     {
-      NS_LOG_INFO ("Cannot add " << d->name << " because it has an existing ID!");
-      return false;
-    }
-
-  devices.push_back (d);
-
-  if (devices.size () > auditModule->maxDeviceNumber)
-    {
-      auditModule->maxDeviceNumber = devices.size ();
+      auditModule->maxDeviceNumber = count;
       auditModule->deviceExtensibility =
           auditModule->maxDeviceNumber - auditModule->minDeviceNumber;
     }
@@ -55,11 +63,19 @@ ConfigurationComponent::addDevice (Device *d)
 bool
 ConfigurationComponent::remDevice (Device *d)
 {
-  devices.erase (
-      remove_if (devices.begin (), devices.end (), [&d] (Device *di) { return di && (di == d); }));
-  if (devices.size () < auditModule->minDeviceNumber)
+  // devices.erase (
+  //     remove_if (devices.begin (), devices.end (), [&d] (Device *di) { return di && (di == d); }));
+  d->removed = true;
+  int count = 0;
+  for (Device *device : devices) {
+    if (!device->removed) {
+      ++count;
+    }
+  }
+
+  if (count < auditModule->minDeviceNumber)
     {
-      auditModule->minDeviceNumber = devices.size ();
+      auditModule->minDeviceNumber = count;
       auditModule->deviceExtensibility =
           auditModule->maxDeviceNumber - auditModule->minDeviceNumber;
     }

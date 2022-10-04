@@ -455,18 +455,40 @@ ZashDeviceEnforcer::HandleRead (Ptr<Socket> socket)
                                  << Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port "
                                  << Inet6SocketAddress::ConvertFrom (from).GetPort () << endl;
         }
+    }
 
-      z_respTime = Simulator::Now ().ToDouble (Time::MS);
+  if (newBuffer.find ("Proof") != string::npos)
+    {
+      newBuffer = newBuffer.substr (1);
+      newBuffer = newBuffer.substr (0, newBuffer.size () - 1);
+      vector<string> tokensBuf = strTokenize (newBuffer);
 
-      double acrt = z_respTime - z_reqTime;
+      z_message = z_message.substr (1);
+      z_message = z_message.substr (0, z_message.size () - 1);
+      vector<string> tokensMsg = strTokenize (z_message);
 
-      z_auditModule->accessControlRT = (z_auditModule->accessControlRT + acrt) / 2.0;
-      z_auditModule->spatialTemporalLocality =
-          z_auditModule->accessControlDistance * z_auditModule->accessControlRT;
+      int attackId = stoi (tokensMsg[8]);
+
+      string respStr;
+      if (attackId)
+        {
+          respStr = "[" + tokensBuf[0] + ",Proof,invalid]";
+        }
+      else
+        {
+          respStr = "[" + tokensBuf[0] + ",Proof,valid]";
+        }
+
+      Ptr<Packet> packet =
+          Create<Packet> (reinterpret_cast<const uint8_t *> (respStr.c_str ()), respStr.size ());
+
+      socket->Send (packet);
+      return;
     }
 
   if (newBuffer == "[Accepted]")
     {
+      z_auditModule->countTime (z_reqTime);
       if (InetSocketAddress::IsMatchingType (m_peer))
         {
           z_auditModule->fileLog << z_device->name << "("
@@ -482,6 +504,7 @@ ZashDeviceEnforcer::HandleRead (Ptr<Socket> socket)
     }
   else if (newBuffer == "[Refused]")
     {
+      z_auditModule->countTime (z_reqTime);
       if (InetSocketAddress::IsMatchingType (m_peer))
         {
           z_auditModule->fileLog << z_device->name << "("

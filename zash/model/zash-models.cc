@@ -5,11 +5,12 @@ namespace ns3 {
 Context::Context ()
 {
 }
-Context::Context (enums::Enum *aw, enums::Enum *loc, enums::Enum *g)
+Context::Context (enums::Enum *aw, enums::Enum *loc, enums::Enum *g, enums::Enum *t)
 {
   accessWay = aw;
   localization = loc;
   group = g;
+  time = t;
 }
 
 Ontology::Ontology (enums::Enum *ul, enums::Enum *dc, vector<enums::Enum *> c)
@@ -57,14 +58,15 @@ Device::Device (int i, string n, enums::Enum *dc, int r, bool a, int apv, int p)
 Request::Request ()
 {
 }
-Request::Request (int i, Device *d, User *u, Context *c, enums::Enum *a, bool at)
+Request::Request (int i, Device *d, User *u, Context *c, enums::Enum *a, int at, time_t cd)
 {
   id = i;
   device = d;
   user = u;
   context = c;
   action = a;
-  isAttack = at;
+  attackId = at;
+  currentDate = cd;
 }
 
 } // namespace ns3

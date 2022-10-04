@@ -22,6 +22,7 @@ public:
   vector<Ontology *> ontologies;
   AuditComponent *auditModule;
   enums::Properties *props;
+  bool isBuilding;
   ConfigurationComponent ();
   ConfigurationComponent (int bt, int bi, int bdi, double m, vector<Device *> d, vector<User *> u,
                           vector<Ontology *> o, AuditComponent *a, enums::Properties *p);

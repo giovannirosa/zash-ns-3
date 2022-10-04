@@ -27,12 +27,11 @@ public:
   ActivityComponent ();
   ActivityComponent (DataComponent *d, ConfigurationComponent *c, AuditComponent *a);
 
-  bool verifyActivity (Request *req, time_t currentDate,
-                       function<bool (Request *, time_t)> explicitAuthentication);
+  bool verifyActivity (Request *req, function<bool (Request *)> explicitAuthentication);
 
   // check if markov build time expired
   void checkBuilding (time_t currentDate);
-  void resetMarkov ();
+  void resetMarkov (time_t currentDate);
 };
 } // namespace ns3
 

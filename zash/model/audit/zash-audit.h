@@ -4,6 +4,7 @@
 #include <ctime>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "ns3/address-utils.h"
 #include "ns3/address.h"
@@ -12,6 +13,8 @@
 #include "ns3/simulator.h"
 #include "ns3/zash-models.h"
 #include "ns3/zash-utils.h"
+#include "ns3/zash-attack.h"
+#include "ns3/zash-alteration.h"
 
 using namespace std;
 
@@ -20,14 +23,13 @@ namespace ns3 {
 class AuditEvent
 {
 public:
-  time_t time;
   Request *request;
-  AuditEvent (time_t t, Request *r);
+  AuditEvent (Request *r);
 
   friend ostream &
   operator<< (ostream &out, AuditEvent const &a)
   {
-    out << formatTime (a.time) << " - " << *a.request << endl;
+    out << formatTime (a.request->currentDate) << " - " << *a.request << endl;
     return out;
   }
 };
@@ -39,7 +41,6 @@ public:
   vector<AuditEvent *> contextFail;
   vector<AuditEvent *> activityFail;
   vector<AuditEvent *> blocks;
-  vector<AuditEvent *> attacks;
   vector<AuditEvent *> validProofs;
   vector<AuditEvent *> invalidProofs;
 
@@ -59,9 +60,9 @@ public:
   int actionNumber = 0;
   int resourceIsolation;
 
-  uint32_t minDeviceNumber = 0;
-  uint32_t maxDeviceNumber = 0;
-  uint32_t deviceExtensibility;
+  int minDeviceNumber = 0;
+  int maxDeviceNumber = 0;
+  int deviceExtensibility;
 
   int requestedAccessWayNumber = 0;
   int homeAccessWayNumber = 0;
@@ -73,6 +74,11 @@ public:
   int accessControlDistance = 2;
   double spatialTemporalLocality;
 
+  int deniedImpersonations = 0;
+  int totalImpersonations = 0;
+  int deniedAttBuilding = 0;
+  int successAttBuilding = 0;
+
   string simDate;
 
   string folderTraces;
@@ -82,6 +88,8 @@ public:
   string metricsSimFile;
   string execSimFile;
   string logSimFile;
+  string successAttacksFile;
+  string deniedAttacksFile;
 
   // Create a string stream to store simulation scenario data
   stringstream fileSim;
@@ -91,8 +99,17 @@ public:
   stringstream fileExec;
   // Create a string stream to store main simulation log
   stringstream fileLog;
+  // Create a string stream to store successful attacks
+  stringstream fileSucAtt;
+  // Create a string stream to store denied attacks
+  stringstream fileDenAtt;
+  // Create a string stream to store each device's messages
+  map<string, stringstream *> fileDevs;
   // Create a string stream to store zash output
   stringstream *zashOutput = &fileLog;
+
+  AttackManager *attackManager;
+  AlterationManager *alterationManager;
 
   AuditComponent (string timeLog, string folderTraces);
 
@@ -122,12 +139,14 @@ public:
 
   void outputMetrics ();
 
+  void countTime (double z_reqTime);
+
   void storeRequestMetrics (Request *req, enums::Properties *props);
 
   int calculateTrust (enums::Enum *accessWay, enums::Enum *localization, enums::Enum *time,
                       enums::Enum *age, enums::Enum *group);
 
-  void calculatePossibilities (enums::Properties *props,  AuditComponent *auditModule);
+  void calculatePossibilities (enums::Properties *props, AuditComponent *auditModule);
 };
 } // namespace ns3
 

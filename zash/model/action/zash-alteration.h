@@ -9,7 +9,6 @@
 #include <random>
 
 #include "ns3/zash-enums.h"
-#include "ns3/zash-audit.h"
 #include "ns3/zash-models.h"
 
 using namespace std;
@@ -21,15 +20,14 @@ class Alteration
 public:
   int id;
   string timeOfAlteration;
-  bool add;
+  bool scheduled = false;
   int device;
-  Alteration (int i, string t, bool a, int d);
+  Alteration (int i, string t, int d);
 
   friend ostream &
   operator<< (ostream &out, Alteration const &a)
   {
-    out << "Alteration[" << a.id << "," << a.timeOfAlteration << "," << a.add << "," << a.device
-        << "]";
+    out << "Alteration[" << a.id << "," << a.timeOfAlteration << "," << a.device << "]";
     return out;
   }
 };
@@ -41,7 +39,7 @@ public:
   AlterationManager (mt19937 gen, int n, vector<Device *> devices, vector<int> dayRange,
                      vector<int> monthRange);
 
-  void printAlterations (AuditComponent *auditModule);
+  void printAlterations (stringstream &stream);
 };
 } // namespace ns3
 

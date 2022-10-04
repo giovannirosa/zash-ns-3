@@ -17,7 +17,7 @@ NotificationComponent::alertUsers (User *blockedUser)
   for (User *user : configurationComponent->users)
     {
       *auditComponent->zashOutput << "User " << user->id << " received message: 'User "
-                                  << blockedUser->id << " is blocked!'";
+                                  << blockedUser->id << " is blocked!'" << endl;
     }
 }
 

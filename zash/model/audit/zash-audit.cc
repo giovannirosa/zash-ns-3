@@ -4,9 +4,8 @@ namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("AuditComponent");
 
-AuditEvent::AuditEvent (time_t t, Request *r)
+AuditEvent::AuditEvent (Request *r)
 {
-  time = t;
   request = r;
 }
 
@@ -26,6 +25,18 @@ AuditComponent::printEvents (vector<AuditEvent *> events, string currDateStr, st
   ofstream outfile (type + "_" + currDateStr + ".txt");
   for (AuditEvent *event : events)
     {
+      // cout << event->request->id << endl;
+      // cout << *event->request->device << endl;
+      // cout << *event->request->user << endl;
+      // cout << event->request->context->accessWay->key << endl;
+      // cout << event->request->context->localization->key << endl;
+      // cout << event->request->context->time->key << endl;
+      // cout << event->request->context->group->key << endl;
+      // cout << *event->request->context << endl;
+      // cout << event->request->action->key << endl;
+      // cout << event->request->isAttack << endl;
+      // cout << *event->request << endl;
+      // cout << *event << endl;
       outfile << *event << endl;
     }
   outfile.close ();
@@ -35,7 +46,7 @@ void
 AuditComponent::appendFile (string file, string msg)
 {
   ofstream stream;
-  stream.open (file, ios::out | ios::app);
+  stream.open (file);
   stream << msg;
   stream.close ();
 }
@@ -67,8 +78,38 @@ AuditComponent::deviceEnforcerCallback (string path, Address sourceIp, Address d
   ostringstream convert;
   convert << folderTraces.c_str () << "messages/messages_" << sourceIpStr.str () << ".txt";
 
+  // cout << fileDevs.size () << " " << " "
+  //      << fileDevs.count (convert.str ()) << endl;
+
+  // cout << (fileDevs.size () > 0 ? "cu" : "aaaa") << endl;
+  // map<string, stringstream *>::iterator it = fileDevs.find (convert.str ());
+  // for (auto const &f : fileDevs)
+  //   {
+  //     cout << f.first << " | " << f.second << endl;
+  //   }
+  if (fileDevs.count (convert.str ()))
+    {
+      //element found;
+      // stream = it->second;
+      //   }
+
+      // if (fileDevs.size () > 0 && fileDevs.count (convert.str ()))
+      //   {
+      // cout << "appending " << convert.str () << endl;
+
+      *fileDevs[convert.str ()] << msg.str ();
+    }
+  else
+    {
+      // cout << "inserting " << convert.str () << endl;
+      stringstream *devMsg = new stringstream ();
+      *devMsg << msg.str ();
+      fileDevs.insert ({convert.str (), devMsg});
+      // cout << "inserted " << convert.str () << endl;
+    }
+
   // Save received messages individually by IP address
-  appendFile (convert.str (), msg.str ());
+  // appendFile (convert.str (), msg.str ());
 }
 
 void
@@ -111,6 +152,18 @@ AuditComponent::outputMetrics ()
              << endl;
   fileSimRec << "Access Control Enforcement (ACE) = " << accessControlEnforcement << endl << endl;
 
+  fileSimRec << "Total Impersonations (TI) = " << totalImpersonations << endl;
+  fileSimRec << "Successful Impersonations (SI) = " << (totalImpersonations - deniedImpersonations)
+             << endl;
+  fileSimRec << "Denied Impersonations (DI) = " << deniedImpersonations << endl;
+  fileSimRec << "Denied Impersonations Building (DIB) = "
+             << percentage (deniedAttBuilding, deniedImpersonations) << endl;
+  fileSimRec << "Successful Impersonations Building (SIB) = "
+             << percentage (successAttBuilding, totalImpersonations - deniedImpersonations) << endl;
+  fileSimRec << "Attacks Avoided Rate (AAR) = "
+             << percentage (deniedImpersonations, totalImpersonations) << endl
+             << endl;
+
   fileSimRec << "REQUESTS NUMBER = " << reqNumber << endl;
 
   fileSimRec << "REQUESTS GRANTED = " << reqGranted << endl;
@@ -142,11 +195,23 @@ AuditComponent::outputMetrics ()
   fileSimRec << "**** End of ZASH file ****" << endl;
   fileSimRec.close ();
 
-  printEvents (ontologyFail, simDate, folderTraces + "/ontology_fail");
-  printEvents (contextFail, simDate, folderTraces + "/context_fail");
-  printEvents (activityFail, simDate, folderTraces + "/activity_fail");
-  printEvents (validProofs, simDate, folderTraces + "/valid_proofs");
-  printEvents (invalidProofs, simDate, folderTraces + "/invalid_proofs");
+  printEvents (ontologyFail, simDate, folderTraces + "/zash_ontology_fail");
+  printEvents (contextFail, simDate, folderTraces + "/zash_context_fail");
+  printEvents (activityFail, simDate, folderTraces + "/zash_activity_fail");
+  printEvents (validProofs, simDate, folderTraces + "/zash_valid_proofs");
+  printEvents (invalidProofs, simDate, folderTraces + "/zash_invalid_proofs");
+  printEvents (blocks, simDate, folderTraces + "/zash_blocks");
+
+  for (auto const &f : fileDevs)
+    {
+      // cout << f.first << " | " << f.second << endl;
+      createFile (f.first, simDate, (*f.second).str ());
+    }
+
+  createFile (successAttacksFile, simDate, fileSucAtt.str ());
+  createFile (deniedAttacksFile, simDate, fileDenAtt.str ());
+
+  createFile (logSimFile, simDate, fileLog.str ());
 }
 
 void
@@ -168,7 +233,10 @@ AuditComponent::storeRequestMetrics (Request *req, enums::Properties *props)
       ++reqWithIntermediaryNumber;
     }
 
-  accessControlEnforcement = reqWithNoIntermediaryNumber / reqWithIntermediaryNumber;
+  if (reqWithIntermediaryNumber > 0)
+    {
+      accessControlEnforcement = reqWithNoIntermediaryNumber / (double) reqWithIntermediaryNumber;
+    }
 }
 
 int
@@ -274,6 +342,17 @@ AuditComponent::calculatePossibilities (enums::Properties *props, AuditComponent
   auditModule->fileSim << "lowestExpected = " << lowestExpected << endl;
   auditModule->fileSim << "highestCalculated = " << highestCalculated << endl;
   auditModule->fileSim << "lowestCalculated = " << lowestCalculated << endl << endl;
+}
+
+void
+AuditComponent::countTime (double z_reqTime)
+{
+  double z_respTime = Simulator::Now ().ToDouble (Time::MS);
+
+  double acrt = z_respTime - z_reqTime;
+
+  accessControlRT = (accessControlRT + acrt) / 2.0;
+  spatialTemporalLocality = accessControlDistance * accessControlRT;
 }
 
 } // namespace ns3

@@ -2,11 +2,10 @@
 
 namespace ns3 {
 
-Alteration::Alteration (int i, string t, bool a, int d)
+Alteration::Alteration (int i, string t, int d)
 {
   id = i;
   timeOfAlteration = t;
-  add = a;
   device = d;
 }
 
@@ -22,31 +21,34 @@ AlterationManager::AlterationManager (mt19937 gen, int n, vector<Device *> devic
   uniform_int_distribution<mt19937::result_type> distSecond (0, 59);
   for (int i = 0; i < n; ++i)
     {
-      bool add = distA (gen) == 1;
       int deviceIndex = distD (gen);
+      while (deviceIndex == 7)
+        {
+          deviceIndex = distD (gen);
+        }
       string day = to_string (distDay (gen));
       string month = to_string (distMonth (gen));
       string hour = to_string (distHour (gen));
       string minute = to_string (distMinute (gen));
       string second = to_string (distSecond (gen));
-      string dateTime = "2022-" + string (2 - month.size (), '0').append (month) + "-" +
+      string dateTime = "2016-" + string (2 - month.size (), '0').append (month) + "-" +
                         string (2 - day.size (), '0').append (day) + " " +
                         string (2 - hour.size (), '0').append (hour) + ":" +
                         string (2 - minute.size (), '0').append (minute) + ":" +
                         string (2 - second.size (), '0').append (second);
-      Alteration *alteration = new Alteration (i + 1, dateTime, add, deviceIndex);
+      Alteration *alteration = new Alteration (i + 1, dateTime, deviceIndex);
       alterations.push_back (alteration);
     }
 }
 
 void
-AlterationManager::printAlterations (AuditComponent *auditModule)
+AlterationManager::printAlterations (stringstream &stream)
 {
-  auditModule->fileSim << "Generated alterations are:" << endl;
+  stream << "Generated alterations are:" << endl;
   for (Alteration *alteration : alterations)
     {
-      auditModule->fileSim << *alteration << endl;
+      stream << *alteration << endl;
     }
-  auditModule->fileSim << endl;
+  stream << endl;
 }
 } // namespace ns3

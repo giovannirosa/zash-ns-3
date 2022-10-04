@@ -34,7 +34,8 @@ AttackManager::AttackManager (mt19937 gen, int n, enums::Properties *props, vect
       int actionIndex = distA (gen);
       int userIndex = distU (gen);
       int deviceIndex = distD (gen);
-      while (!devices[deviceIndex]->active && props->actions[actionIndex] == "CONTROL")
+      while ((!devices[deviceIndex]->active && props->actions[actionIndex] == "CONTROL") ||
+             deviceIndex == 7)
         {
           deviceIndex = distD (gen);
         }
@@ -43,26 +44,26 @@ AttackManager::AttackManager (mt19937 gen, int n, enums::Properties *props, vect
       string hour = to_string (distHour (gen));
       string minute = to_string (distMinute (gen));
       string second = to_string (distSecond (gen));
-      string dateTime = "2022-" + string (2 - month.size (), '0').append (month) + "-" +
+      string dateTime = "2016-" + string (2 - month.size (), '0').append (month) + "-" +
                         string (2 - day.size (), '0').append (day) + " " +
                         string (2 - hour.size (), '0').append (hour) + ":" +
                         string (2 - minute.size (), '0').append (minute) + ":" +
                         string (2 - second.size (), '0').append (second);
       Attack *attack = new Attack (i + 1, dateTime, props->localizations[locationIndex],
                                    props->accessWays[accessWayIndex], props->actions[actionIndex],
-                                   users[userIndex]->id, deviceIndex);
+                                   userIndex, deviceIndex);
       attacks.push_back (attack);
     }
 }
 
 void
-AttackManager::printAttacks (AuditComponent *auditModule)
+AttackManager::printAttacks (stringstream &stream)
 {
-  auditModule->fileSim << endl << "Generated attacks are:" << endl;
+  stream << endl << "Generated attacks are:" << endl;
   for (Attack *attack : attacks)
     {
-      auditModule->fileSim << *attack << endl;
+      stream << *attack << endl;
     }
-  auditModule->fileSim << endl;
+  stream << endl;
 }
 } // namespace ns3

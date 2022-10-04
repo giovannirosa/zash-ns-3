@@ -58,19 +58,20 @@ ContextComponent::ContextComponent (ConfigurationComponent *c, AuditComponent *a
 // for [DeviceClass x Action] and [UserLevel x Action]
 // from [AccessWay, Localization, Time, Age, Group]
 bool
-ContextComponent::verifyContext (Request *req, time_t currentDate,
-                                 function<bool (Request *, time_t)> explicitAuthentication)
+ContextComponent::verifyContext (Request *req,
+                                 function<bool (Request *)> explicitAuthentication)
 {
+  ++req->validated;
   *auditComponent->zashOutput << "Context Component" << endl;
-  calculateTime (req, currentDate);
-  checkBuilding (currentDate);
+  calculateTime (req, req->currentDate);
+  checkBuilding (req->currentDate);
   if (isTimeBuilding)
     {
       *auditComponent->zashOutput << "Time probability is still building" << endl;
-      req->context->time = configurationComponent->props->TimeClass.at ("COMMON");
+      req->context->time = configurationComponent->props->TimeClass.at ("UNCOMMON");
     }
   *auditComponent->zashOutput << "Verify context " << *req->context << " with " << *req->user
-                              << " at " << formatTime (currentDate) << endl;
+                              << " at " << formatTime (req->currentDate) << endl;
   int expectedDevice = req->device->deviceClass->weight + req->action->weight;
   int expectedUser = req->user->userLevel->weight + req->action->weight;
   int expected = min (max (expectedDevice, expectedUser), 100);
@@ -79,10 +80,10 @@ ContextComponent::verifyContext (Request *req, time_t currentDate,
                               << endl;
   if (calculated < expected)
     {
-      auditComponent->contextFail.push_back (new AuditEvent (currentDate, req));
+      auditComponent->contextFail.push_back (new AuditEvent (req));
       *auditComponent->zashOutput << "Trust level is BELOW expected! Requires proof of identity!"
                                   << endl;
-      if (!explicitAuthentication (req, currentDate))
+      if (!explicitAuthentication (req))
         {
           return false;
         }
@@ -98,10 +99,12 @@ ContextComponent::checkBuilding (time_t currentDate)
   if (difftime (limitDate, (time_t) (-1)) == 0)
     {
       limitDate = currentDate + configurationComponent->buildInterval * 24 * 60 * 60; // add days
+      configurationComponent->isBuilding = true;
     }
   else if (isTimeBuilding && difftime (currentDate, limitDate) > 0)
     {
       isTimeBuilding = false;
+      configurationComponent->isBuilding = false;
       *auditComponent->zashOutput << "Time context stopped building probabilities at "
                                   << formatTime (currentDate) << endl;
     }

@@ -194,6 +194,7 @@ public:
 
 private:
   DeviceComponent *deviceComponent;
+  map<int, Request *> requestQueue;
 };
 
 } // namespace ns3

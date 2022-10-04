@@ -9,7 +9,6 @@
 #include <random>
 
 #include "ns3/zash-enums.h"
-#include "ns3/zash-audit.h"
 #include "ns3/zash-models.h"
 
 using namespace std;
@@ -27,6 +26,8 @@ public:
   string action;
   int impersonatedUser;
   int device;
+  bool scheduled = false;
+  bool building;
   Attack (int i, string t, string l, string aw, string a, int iu, int d);
 
   friend ostream &
@@ -45,7 +46,7 @@ public:
   AttackManager (mt19937 gen, int n, enums::Properties *props, vector<User *> users,
                  vector<Device *> devices, vector<int> dayRange, vector<int> monthRange);
 
-  void printAttacks (AuditComponent *auditModule);
+  void printAttacks (stringstream &stream);
 };
 } // namespace ns3
 

@@ -50,7 +50,7 @@ public:
   //   - non-critical devices:
   //       - visitor and kids can visualize and control
   //       - adults and admins can visualize, control and manage
-  bool verifyOntology (Request *req, time_t currenDate);
+  bool verifyOntology (Request *req);
 };
 } // namespace ns3
 

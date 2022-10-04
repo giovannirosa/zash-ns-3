@@ -70,8 +70,7 @@ public:
   // static trust calculation based on expected
   // for [DeviceClass x Action] and [UserLevel x Action]
   // from [AccessWay, Localization, Time, Age, Group]
-  bool verifyContext (Request *req, time_t currentDate,
-                      function<bool (Request *, time_t)> explicitAuthentication);
+  bool verifyContext (Request *req, function<bool (Request *)> explicitAuthentication);
 
   // check if markov build time expired
   void checkBuilding (time_t currentDate);

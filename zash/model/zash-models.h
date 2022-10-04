@@ -19,7 +19,7 @@ public:
   enums::Enum *group;
   enums::Enum *time;
   Context ();
-  Context (enums::Enum *aw, enums::Enum *loc, enums::Enum *g);
+  Context (enums::Enum *aw, enums::Enum *loc, enums::Enum *g, enums::Enum *t);
 
   friend ostream &
   operator<< (ostream &out, Context const &c)
@@ -75,6 +75,7 @@ public:
   enums::Enum *deviceClass;
   int room;
   bool active;
+  bool removed = false;
   int ap;
   int pos;
   Device ();
@@ -84,7 +85,8 @@ public:
   friend ostream &
   operator<< (ostream &out, Device const &d)
   {
-    out << "Device[" << d.id << "," << d.name << "," << d.deviceClass->key << "," << d.room << "]";
+    out << "Device[" << d.id << "," << d.name << "," << d.deviceClass->key << "," << d.room << ","
+        << d.removed << "]";
     return out;
   }
 };
@@ -97,15 +99,18 @@ public:
   User *user;
   Context *context;
   enums::Enum *action;
-  bool isAttack;
+  int attackId;
+  time_t currentDate;
+  int validated = 0;
   Request ();
-  Request (int i, Device *d, User *u, Context *c, enums::Enum *a, bool at);
+  Request (int i, Device *d, User *u, Context *c, enums::Enum *a, int at, time_t cd);
 
   friend ostream &
   operator<< (ostream &out, Request const &r)
   {
-    out << "Request[" << r.id << "," << *r.device << "," << *r.user << "," << *r.context << ","
-        << r.action->key << "," << (r.isAttack ? "attack" : "normal") << "]";
+    out << "Request[" << r.id << "," << formatTime (r.currentDate) << "," << *r.device << ","
+        << *r.user << "," << *r.context << "," << r.action->key << ","
+        << (r.attackId ? "attack" : "normal") << "]";
     return out;
   }
 };

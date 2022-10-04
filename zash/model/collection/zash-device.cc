@@ -19,6 +19,16 @@ compareProof::operator() (Proof *p)
   return (p->user == key->user->id);
 }
 
+compareAttack::compareAttack (int a) : key (a)
+{
+}
+
+bool
+compareAttack::operator() (Attack *a)
+{
+  return (a->id == key);
+}
+
 DeviceComponent::DeviceComponent (AuthorizationComponent *a, DataComponent *d, AuditComponent *adt)
 {
   authorizationComponent = a;
@@ -26,23 +36,29 @@ DeviceComponent::DeviceComponent (AuthorizationComponent *a, DataComponent *d, A
   auditComponent = adt;
 }
 
+void
+DeviceComponent::processProof (Request *req, bool proof)
+{
+  if (!proof)
+    {
+      auditComponent->invalidProofs.push_back (new AuditEvent (req));
+      *auditComponent->zashOutput << "Proof does not match!" << endl;
+    }
+  else
+    {
+      auditComponent->validProofs.push_back (new AuditEvent (req));
+      proofs.push_back (new Proof (req->user->id, req->context->accessWay, req->currentDate));
+    }
+}
+
 bool
-DeviceComponent::explicitAuthentication (Request *req, time_t currentDate)
+DeviceComponent::explicitAuthentication (Request *req)
 {
   auto it = find_if (proofs.begin (), proofs.end (), compareProof (req));
   if (it == proofs.end ())
     {
-      *auditComponent->zashOutput << "Not found proof" << endl;
-      if (req->isAttack)
-        {
-          auditComponent->invalidProofs.push_back (new AuditEvent (currentDate, req));
-          *auditComponent->zashOutput << "Proof does not match!" << endl;
-        }
-      else
-        {
-          auditComponent->validProofs.push_back (new AuditEvent (currentDate, req));
-          proofs.push_back (new Proof (req->user->id, req->context->accessWay, currentDate));
-        }
+      *auditComponent->zashOutput << "Not found proof, collecting..." << endl;
+      return false;
     }
   *auditComponent->zashOutput << "Proof matches!" << endl;
   return true;
@@ -61,30 +77,89 @@ DeviceComponent::clearProofs (time_t currentDate)
   proofs.erase (new_end, proofs.end ());
 }
 
-bool
-DeviceComponent::listenRequest (Request *req, time_t currentDate)
+void
+DeviceComponent::processAttack (Request *req, bool result)
 {
-
-  // this->GetNode
-
-  clearProofs (currentDate);
-  dataComponent->updateCurrentState (req);
-  bool result = true;
-  // if (req->action->key == "MANAGE")
-  //   {
-  //     authorizationComponent->configurationComponent->remDevice
-  //   }
-  // else
-  if (req->device->active)
+  auto it = find_if (auditComponent->attackManager->attacks.begin (),
+                     auditComponent->attackManager->attacks.end (), compareAttack (req->attackId));
+  if (it != auditComponent->attackManager->attacks.end ())
     {
+      (*it)->success = result;
+      if (!result)
+        {
+          ++auditComponent->deniedImpersonations;
+          auditComponent->fileDenAtt << formatTime (req->currentDate) << " - " << *(*it) << endl;
+          if (authorizationComponent->configurationComponent->isBuilding)
+            {
+              ++auditComponent->deniedAttBuilding;
+            }
+        }
+      else
+        {
+          auditComponent->fileSucAtt << formatTime (req->currentDate) << " - " << *(*it) << endl;
+          if (authorizationComponent->configurationComponent->isBuilding)
+            {
+              ++auditComponent->successAttBuilding;
+            }
+        }
+    }
+}
+
+bool
+DeviceComponent::listenRequest (Request *req)
+{
+  clearProofs (req->currentDate);
+  if (req->action->key == "CONTROL")
+    {
+      dataComponent->updateCurrentState (req);
+    }
+  bool result = true;
+  if (req->action->key == "MANAGE")
+    {
+      if (req->validated == 0)
+        {
+          ++auditComponent->reqNumber;
+        }
+      *auditComponent->zashOutput << "Device " << *req->device << " request manage" << endl;
+      auto fp = bind (&DeviceComponent::explicitAuthentication, this, placeholders::_1);
+      result = authorizationComponent->authorizeRequest (req, fp);
+      if (result && req->validated == 3)
+        {
+          if (req->device->removed)
+            {
+              *auditComponent->zashOutput << "Adding Device " << *req->device << " back" << endl;
+              authorizationComponent->configurationComponent->addDevice (req->device);
+            }
+          else
+            {
+              *auditComponent->zashOutput << "Removing Device " << *req->device << endl;
+              authorizationComponent->configurationComponent->remDevice (req->device);
+            }
+        }
+    }
+  else if (req->action->key == "VIEW")
+    {
+      if (req->validated == 0)
+        {
+          ++auditComponent->reqNumber;
+        }
+      *auditComponent->zashOutput << "Device " << *req->device << " request view "
+                                  << req->device->name << " state" << endl;
+      auto fp = bind (&DeviceComponent::explicitAuthentication, this, placeholders::_1);
+      result = authorizationComponent->authorizeRequest (req, fp);
+    }
+  else if (req->device->active)
+    {
+      if (req->validated == 0)
+        {
+          ++auditComponent->reqNumber;
+        }
       *auditComponent->zashOutput << "Active device " << *req->device
                                   << " request changing state from "
                                   << dataComponent->lastState[req->device->id - 1] << " to "
                                   << dataComponent->currentState[req->device->id - 1] << endl;
-      ++auditComponent->reqNumber;
-      auto fp =
-          bind (&DeviceComponent::explicitAuthentication, this, placeholders::_1, placeholders::_2);
-      result = authorizationComponent->authorizeRequest (req, currentDate, fp);
+      auto fp = bind (&DeviceComponent::explicitAuthentication, this, placeholders::_1);
+      result = authorizationComponent->authorizeRequest (req, fp);
     }
   else
     {
@@ -93,6 +168,12 @@ DeviceComponent::listenRequest (Request *req, time_t currentDate)
                                   << dataComponent->currentState[req->device->id - 1] << endl;
     }
   dataComponent->updateLastState ();
+
+  if (req->attackId && req->validated == 3)
+    {
+      processAttack (req, true);
+    }
+
   return result;
 }
 

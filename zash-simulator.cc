@@ -183,6 +183,14 @@ createAudit ()
   convert5 << tracesFolder.c_str () << "zash_log_" << auditModule->simDate << ".txt";
   auditModule->logSimFile = convert5.str ();
 
+  ostringstream convert6;
+  convert6 << tracesFolder.c_str () << "zash_attacks_success_" << auditModule->simDate << ".txt";
+  auditModule->successAttacksFile = convert6.str ();
+
+  ostringstream convert7;
+  convert7 << tracesFolder.c_str () << "zash_attacks_denied_" << auditModule->simDate << ".txt";
+  auditModule->deniedAttacksFile = convert7.str ();
+
   // Save start seed in file
   // fileSim << "Start seed: " << seed << endl << endl;
 
@@ -475,7 +483,7 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props, str
   int blockThreshold = mode == "H" ? 3 : 6;
   int blockInterval = mode == "H" ? 24 : 12;
   int buildInterval = mode == "H" ? 30 : 7;
-  int markovThreshold = mode == "H" ? 0.2 : 0.1;
+  double markovThreshold = mode == "H" ? 0.2 : 0.1;
   ConfigurationComponent *configurationComponent =
       new ConfigurationComponent (blockThreshold, blockInterval, buildInterval, markovThreshold,
                                   devices, users, ontologies, auditModule, props);
@@ -483,6 +491,7 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props, str
   auditModule->fileSim << "Block Threshold: " << blockThreshold << endl;
   auditModule->fileSim << "Block Interval: " << blockInterval << endl;
   auditModule->fileSim << "Build Interval: " << buildInterval << endl;
+  auditModule->fileSim << "Markov Threshold: " << markovThreshold << endl;
   NotificationComponent *notificationComponent =
       new NotificationComponent (configurationComponent, auditModule);
 
@@ -561,19 +570,26 @@ appsConfiguration (Ipv6InterfaceContainer serverApInterface, DeviceComponent *de
 //   return propKeys[dist (rng)];
 // }
 
-void
+bool
 scheduleMessage (int *idReq, time_t currentDate, string actStr, int device, int user,
                  string accessWay, string localization, string group, string action, int dayCount,
                  int startDay, AuditComponent *auditModule, enums::Properties *props,
                  NodeContainer staNodes, int *msgCount, double diff, vector<User *> users,
-                 vector<Device *> devices, DeviceComponent *deviceComponent, bool isAttack)
+                 vector<Device *> devices, DeviceComponent *deviceComponent, int attackId)
 {
+
   auditModule->fileMsgs << formatTime (currentDate) << " - " << actStr << endl;
 
   string request = "[" + to_string (++(*idReq)) + "," + to_string (device) + "," +
                    to_string (user) + "," + accessWay + "," + localization + "," + group + "," +
-                   action + "," + formatTime (currentDate) + "," +
-                   (isAttack ? "attack" : "normal") + "]";
+                   action + "," + formatTime (currentDate) + "," + to_string (attackId) + "]";
+
+  if (devices[device]->removed && action != "MANAGE")
+    {
+      auditModule->fileMsgs << devices[device]->name << " is removed so the request " << request
+                            << " is ignored" << endl;
+      return false;
+    }
 
   if (dayCount < startDay)
     {
@@ -582,10 +598,11 @@ scheduleMessage (int *idReq, time_t currentDate, string actStr, int device, int 
       auditModule->zashOutput = &auditModule->fileExec;
       Context *context =
           new Context (props->AccessWay.at (accessWay), props->Localization.at (localization),
-                       props->Group.at (group));
+                       props->Group.at (group), props->AccessWay.at (props->accessWays[0]));
       enums::Enum *actionEnum = props->Action.at (action);
-      Request *req = new Request (++(*idReq), devices[device], users[user], context, actionEnum, isAttack);
-      deviceComponent->listenRequest (req, currentDate);
+      Request *req = new Request (++(*idReq), devices[device], users[user], context, actionEnum,
+                                  attackId, currentDate);
+      deviceComponent->listenRequest (req);
     }
   else
     {
@@ -603,6 +620,7 @@ scheduleMessage (int *idReq, time_t currentDate, string actStr, int device, int 
       auditModule->fileMsgs << devices[device]->name << " will change at " << diff << " seconds"
                             << endl;
     }
+  return true;
 }
 
 void
@@ -622,28 +640,29 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
   mt19937 gen (seed);
   uniform_int_distribution<mt19937::result_type> distAW (0, props->accessWays.size () - 1);
   uniform_int_distribution<mt19937::result_type> distD (0, NUMBER_OF_DEVICES - 1);
+  uniform_int_distribution<mt19937::result_type> distG (0, props->groups.size () - 1);
+  uniform_int_distribution<mt19937::result_type> distV (0, 100);
   auditModule->fileSim << "Random seed is: " << seed << endl;
 
   AttackManager *attackManager =
       new AttackManager (gen, 10, props, users, devices, vector<int>{1, 29}, vector<int>{2, 3});
-  attackManager->printAttacks (auditModule);
+  auditModule->attackManager = attackManager;
+  auditModule->totalImpersonations = attackManager->attacks.size();
 
   AlterationManager *alterationManager =
       new AlterationManager (gen, 5, devices, vector<int>{1, 29}, vector<int>{2, 3});
-  alterationManager->printAlterations (auditModule);
-
-  return;
+  auditModule->alterationManager = alterationManager;
 
   int user = 0;
   string accessWay;
   string localization = "INTERNAL";
-  string group = "ALONE";
+  string group;
   string action = "CONTROL";
-  auditModule->fileSim << "Devices interaction have the following properties: " << endl;
+  auditModule->fileSim << endl << "Devices interaction have the following properties: " << endl;
   auditModule->fileSim << "User: " << user << endl;
   auditModule->fileSim << "Access Way: Random from " << vecToStr (props->accessWays) << endl;
   auditModule->fileSim << "Localization: " << localization << endl;
-  auditModule->fileSim << "Group: " << group << endl;
+  auditModule->fileSim << "Group: Random from " << vecToStr (props->groups) << endl;
   auditModule->fileSim << "Action: " << action << endl;
 
   int idReq = 0;
@@ -661,12 +680,17 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
   while (csv.FetchNextRow ())
     {
       auditModule->fileMsgs << "Processing row " << csv.RowNumber () << "..." << endl;
+      // cout << "Processing row " << csv.RowNumber () << "..." << endl;
       // Ignore blank lines and header
       if (csv.RowNumber () == 1 || csv.IsBlankRow ())
         {
           continue;
         }
 
+      // if (csv.RowNumber () > 2)
+      //   {
+      //     break;
+      //   }
       // Expecting vector
       vector<int> currentState (NUMBER_OF_DEVICES);
       bool ok = true;
@@ -722,46 +746,67 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
 
       for (Attack *attack : attackManager->attacks)
         {
+          // attack->timeOfAttack = formatTime (currentDate);
           time_t timeOfAttack = strToTime (attack->timeOfAttack.c_str ());
-          if (difftime (timeOfAttack, lastDate) >= 0 && difftime (timeOfAttack, currentDate) <= 0)
+          // cout << formatTime(currentDate) << " | " << attack->timeOfAttack << " | " << formatTime (lastDate) << endl;
+
+          // cout << difftime (timeOfAttack, lastDate) << " " << difftime (timeOfAttack, currentDate)
+          //      << endl;
+          if (!attack->scheduled && difftime (timeOfAttack, lastDate) >= 0 &&
+              difftime (timeOfAttack, currentDate) <= 0)
             {
               auditModule->fileMsgs << "Launching " << *attack << endl;
+              // cout << "Launching " << *attack << endl;
 
-              scheduleMessage (&idReq, timeOfAttack, actStr, attack->device,
-                               attack->impersonatedUser, attack->accessWay, attack->location,
-                               "ALONE", attack->action, dayCount, startDay, auditModule, props,
-                               staNodes, &msgCount, difftime (timeOfAttack, firstDate), users,
-                               devices, deviceComponent, true);
+              while (!scheduleMessage (
+                  &idReq, timeOfAttack, actStr, attack->device, attack->impersonatedUser,
+                  attack->accessWay, attack->location, "ALONE", attack->action, dayCount, startDay,
+                  auditModule, props, staNodes, &msgCount, difftime (timeOfAttack, firstDate),
+                  users, devices, deviceComponent, attack->id))
+                {
+                  attack->device = distD (gen);
+                }
+              attack->scheduled = true;
             }
         }
 
       for (Alteration *alteration : alterationManager->alterations)
         {
           time_t timeOfAlteration = strToTime (alteration->timeOfAlteration.c_str ());
-          if (difftime (timeOfAlteration, lastDate) >= 0 &&
+          if (!alteration->scheduled && difftime (timeOfAlteration, lastDate) >= 0 &&
               difftime (timeOfAlteration, currentDate) <= 0)
             {
               auditModule->fileMsgs << "Launching " << *alteration << endl;
+              // cout << "Launching " << *alteration << endl;
 
               accessWay = props->accessWays[distAW (gen)];
+              group = props->groups[distG (gen)];
 
               scheduleMessage (&idReq, timeOfAlteration, actStr, alteration->device, user,
                                accessWay, localization, group, "MANAGE", dayCount, startDay,
                                auditModule, props, staNodes, &msgCount,
                                difftime (timeOfAlteration, firstDate), users, devices,
-                               deviceComponent, false);
+                               deviceComponent, 0);
+              devices[alteration->device]->removed = !devices[alteration->device]->removed;
+              alteration->scheduled = true;
             }
         }
 
-      // Simulate a view action when no state has changed
-      if (currentState == lastState)
+      // Simulate a view action when no state has changed for 10%
+      if (currentState == lastState && distV (gen) <= 10)
         {
           accessWay = props->accessWays[distAW (gen)];
+          group = props->groups[distG (gen)];
+
           int change = distD (gen);
+          while (change == 7)
+            {
+              change = distD (gen);
+            }
 
           scheduleMessage (&idReq, currentDate, actStr, change, user, accessWay, localization,
                            group, "VIEW", dayCount, startDay, auditModule, props, staNodes,
-                           &msgCount, diff, users, devices, deviceComponent, false);
+                           &msgCount, diff, users, devices, deviceComponent, 0);
 
           continue;
         }
@@ -786,9 +831,11 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
                 }
 
               accessWay = props->accessWays[distAW (gen)];
+              group = props->groups[distG (gen)];
+
               scheduleMessage (&idReq, currentDate, actStr, change, user, accessWay, localization,
                                group, action, dayCount, startDay, auditModule, props, staNodes,
-                               &msgCount, diff, users, devices, deviceComponent, false);
+                               &msgCount, diff, users, devices, deviceComponent, 0);
 
               diff += 0.2;
             }
@@ -805,6 +852,14 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
   auditModule->fileMsgs << "Count of days = " << dayCount << endl;
   auditModule->fileMsgs << "Count of simulated days = " << simDayCount << endl;
   auditModule->fileMsgs << "Count of executed days = " << (dayCount - simDayCount) << endl;
+
+  attackManager->printAttacks (auditModule->fileSim);
+  alterationManager->printAlterations (auditModule->fileSim);
+
+  for (Device *device : devices)
+    {
+      device->removed = false;
+    }
 };
 
 int
@@ -1062,7 +1117,7 @@ main (int argc, char *argv[])
   createFile (auditModule->messagesSimFile, auditModule->simDate, auditModule->fileMsgs.str ());
   createFile (auditModule->execSimFile, auditModule->simDate, auditModule->fileExec.str ());
 
-  return EXIT_SUCCESS;
+  // return EXIT_SUCCESS;
 
   // Callback Trace to Collect Messages in Device Enforcer Application
   for (uint32_t i = 0; i < staNodes.GetN (); ++i)
@@ -1146,14 +1201,21 @@ main (int argc, char *argv[])
   //----------------------------------------------------------------------------------
 
   auditModule->fileLog << "Run Simulation." << endl;
-  Simulator::Run ();
-  Simulator::Destroy ();
+  try
+    {
+      Simulator::Run ();
+      Simulator::Destroy ();
+    }
+  catch (exception &e)
+    {
+      cerr << "Exception caught : " << e.what () << endl;
+    }
+
   auditModule->fileLog << "Done." << endl;
 
   // flowMonitor->SerializeToXmlFile("flow.xml", true, true);
 
   auditModule->outputMetrics ();
-  createFile (auditModule->logSimFile, auditModule->simDate, auditModule->fileLog.str ());
 
   return 0;
 }
