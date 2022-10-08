@@ -54,6 +54,8 @@ public:
   int privacyRisk;
 
   double accessControlRT = 0.0;
+  double accessControlRTProof = 0.0;
+  double accessControlRTNoProof = 0.0;
 
   int userLevelNumber = 0;
   int deviceClassNumber = 0;
@@ -78,6 +80,29 @@ public:
   int totalImpersonations = 0;
   int deniedAttBuilding = 0;
   int successAttBuilding = 0;
+  int successAttProof = 0;
+
+  map<string, int> attSucUl;
+  map<string, int> attSucAct;
+  map<string, int> attSucDc;
+  map<string, int> attSucTime;
+  map<string, int> attSucLoc;
+  map<string, int> attSucAge;
+  map<string, int> attSucGrp;
+  map<string, int> attSucAw;
+  map<int, int> attSucDev;
+  map<int, int> attSucUser;
+
+  map<string, int> attDenUl;
+  map<string, int> attDenAct;
+  map<string, int> attDenDc;
+  map<string, int> attDenTime;
+  map<string, int> attDenLoc;
+  map<string, int> attDenAge;
+  map<string, int> attDenGrp;
+  map<string, int> attDenAw;
+  map<int, int> attDenDev;
+  map<int, int> attDenUser;
 
   string simDate;
 
@@ -139,7 +164,7 @@ public:
 
   void outputMetrics ();
 
-  void countTime (double z_reqTime);
+  void countTime (double z_reqTime, bool z_proof);
 
   void storeRequestMetrics (Request *req, enums::Properties *props);
 

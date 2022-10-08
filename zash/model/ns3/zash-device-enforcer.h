@@ -214,6 +214,8 @@ public:
 
   double z_respTime;
 
+  bool z_proof;
+
   AuditComponent *z_auditModule;
 };
 

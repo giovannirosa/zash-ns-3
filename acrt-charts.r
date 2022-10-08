@@ -4,34 +4,34 @@ library(data.table)
 library(hrbrthemes)
 library(viridis)
 
-hrbrthemes::import_roboto_condensed()
-
 
 files <- list.files(path="/home/grosa/Dev/ns-allinone-3.36.1/ns-3.36.1/zash_traces", pattern="zash_simulation_metrics_*", full.names=TRUE, recursive=TRUE)
 
-grep("a", readLines(files[0]), value = TRUE)
-
-print(files)
+#print(files)
 
 acrtList = c()
 acrtpList = c()
 acrtnpList = c()
 
 for (i in 1:length(files)) {
-  print(files[i])
+  #print(files[i])
+  scenarioFile = paste(substr(files[i], 0, nchar(files[i])-44), "zash_simulation_scenario", substr(files[i], nchar(files[i])-20, nchar(files[i])), sep="")
   
   acrt = grep("(ACRT)", readLines(files[i]), value = TRUE)
   
-  vals = as.numeric(unlist(regmatches(acrt,
-                               gregexpr("[[:digit:]]+\\.*[[:digit:]]*",acrt))
-  )      )
+  configFile = grep("Enums config file is", readLines(scenarioFile), value = TRUE)
   
-  acrtList <- append(acrtList, vals[1])
-  acrtpList <- append(acrtpList, vals[2])
-  acrtnpList <- append(acrtnpList, vals[3])
+  isHard = grepl("hard", configFile, fixed = TRUE)
   
-  
-  
+  if (isHard) {
+    vals = as.numeric(unlist(regmatches(acrt,
+                                        gregexpr("[[:digit:]]+\\.*[[:digit:]]*",acrt))
+    )      )
+    
+    acrtList <- append(acrtList, vals[1])
+    acrtpList <- append(acrtpList, vals[2])
+    acrtnpList <- append(acrtnpList, vals[3])
+  }
 }
 
 acrtData <- data.frame(acrtList, acrtpList, acrtnpList)
@@ -39,14 +39,17 @@ acrtData <- data.frame(acrtList, acrtpList, acrtnpList)
 t_acrtData <- transpose(acrtData)
 
 d <- data.frame(x = unlist(acrtData), 
-                grp = rep(letters[1:length(acrtData)],times = sapply(acrtData,length)))
+                grp = rep(letters[1:length(acrtData)],times = sapply(acrtData,length)), stringsAsFactors = FALSE)
 
-boxplot(acrtList,acrtpList,acrtnpList)
+
+d[d == 'a'] <- 'ACRT'
+d[d == 'b'] <- 'ACRTP'
+d[d == 'c'] <- 'ACRTNP'
 
 
 ggplot(d, aes(x=grp, y=x, fill=grp)) + 
-  geom_boxplot(alpha=0.1) +
-  scale_fill_viridis(discrete=TRUE, option="A") +
+  geom_boxplot(alpha=0.5) +
+  scale_fill_viridis(discrete=TRUE, option="D") +
   geom_jitter(color="black", size=0.4, alpha=0.9) +
   theme_ipsum_rc() +
   labs(x="",

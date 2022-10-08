@@ -205,48 +205,64 @@ printEnums (enums::Properties *props, AuditComponent *auditModule)
   for (auto const &a : props->Action)
     {
       auditModule->fileSim << *a.second << endl;
+      auditModule->attSucAct[a.first] = 0;
+      auditModule->attDenAct[a.first] = 0;
     }
 
   auditModule->fileSim << endl << "UserLevel:" << endl;
   for (auto const &a : props->UserLevel)
     {
       auditModule->fileSim << *a.second << endl;
+      auditModule->attSucUl[a.first] = 0;
+      auditModule->attDenUl[a.first] = 0;
     }
 
   auditModule->fileSim << endl << "DeviceClass:" << endl;
   for (auto const &a : props->DeviceClass)
     {
       auditModule->fileSim << *a.second << endl;
+      auditModule->attSucDc[a.first] = 0;
+      auditModule->attDenDc[a.first] = 0;
     }
 
   auditModule->fileSim << endl << "AccessWay:" << endl;
   for (auto const &a : props->AccessWay)
     {
       auditModule->fileSim << *a.second << endl;
+      auditModule->attSucAw[a.first] = 0;
+      auditModule->attDenAw[a.first] = 0;
     }
 
   auditModule->fileSim << endl << "Localization:" << endl;
   for (auto const &a : props->Localization)
     {
       auditModule->fileSim << *a.second << endl;
+      auditModule->attSucLoc[a.first] = 0;
+      auditModule->attDenLoc[a.first] = 0;
     }
 
   auditModule->fileSim << endl << "TimeClass:" << endl;
   for (auto const &a : props->TimeClass)
     {
       auditModule->fileSim << *a.second << endl;
+      auditModule->attSucTime[a.first] = 0;
+      auditModule->attDenTime[a.first] = 0;
     }
 
   auditModule->fileSim << endl << "Age:" << endl;
   for (auto const &a : props->Age)
     {
       auditModule->fileSim << *a.second << endl;
+      auditModule->attSucAge[a.first] = 0;
+      auditModule->attDenAge[a.first] = 0;
     }
 
   auditModule->fileSim << endl << "Group:" << endl;
   for (auto const &a : props->Group)
     {
       auditModule->fileSim << *a.second << endl;
+      auditModule->attSucGrp[a.first] = 0;
+      auditModule->attDenGrp[a.first] = 0;
     }
 }
 
@@ -339,6 +355,8 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props, str
         {
           ++auditModule->adminNumber;
         }
+      auditModule->attSucUser[user->id] = 0;
+      auditModule->attDenUser[user->id] = 0;
     }
 
   vector<Device *> devices = {
@@ -407,6 +425,8 @@ buildServerStructure (AuditComponent *auditModule, enums::Properties *props, str
         {
           ++auditModule->criticalNumber;
         }
+      auditModule->attSucDev[device->id] = 0;
+      auditModule->attDenDev[device->id] = 0;
     }
 
   auditModule->minDeviceNumber = devices.size ();
@@ -647,7 +667,7 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
   AttackManager *attackManager =
       new AttackManager (gen, 10, props, users, devices, vector<int>{1, 29}, vector<int>{2, 3});
   auditModule->attackManager = attackManager;
-  auditModule->totalImpersonations = attackManager->attacks.size();
+  auditModule->totalImpersonations = attackManager->attacks.size ();
 
   AlterationManager *alterationManager =
       new AlterationManager (gen, 5, devices, vector<int>{1, 29}, vector<int>{2, 3});

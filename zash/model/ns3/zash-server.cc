@@ -195,7 +195,7 @@ ZashServer::HandleRead (Ptr<Socket> socket)
       if (InetSocketAddress::IsMatchingType (from))
         {
           deviceComponent->auditComponent->fileLog
-              << "At time " << Simulator::Now ().As (Time::S) << " packet sink received "
+              << "At time " << Simulator::Now ().As (Time::S) << " server received "
               << packet->GetSize () << " bytes from "
               << InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port "
               << InetSocketAddress::ConvertFrom (from).GetPort () << " total Rx " << m_totalRx
@@ -204,7 +204,7 @@ ZashServer::HandleRead (Ptr<Socket> socket)
       else if (Inet6SocketAddress::IsMatchingType (from))
         {
           deviceComponent->auditComponent->fileLog
-              << "At time " << Simulator::Now ().As (Time::S) << " packet sink received "
+              << "At time " << Simulator::Now ().As (Time::S) << " server received "
               << packet->GetSize () << " bytes from "
               << Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port "
               << Inet6SocketAddress::ConvertFrom (from).GetPort () << " total Rx " << m_totalRx
@@ -351,15 +351,13 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
             {
               deviceComponent->processProof (req, true);
               bool response = deviceComponent->listenRequest (req);
-              // if (req->device->active)
-              //   {
+
               string respStr = response ? "[Accepted]" : "[Refused]";
 
               Ptr<Packet> packet = Create<Packet> (
                   reinterpret_cast<const uint8_t *> (respStr.c_str ()), respStr.size ());
 
               socket->Send (packet);
-              // }
             }
           else
             {
@@ -371,15 +369,12 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
                   deviceComponent->processAttack (req, false);
                 }
 
-              // if (req->device->active)
-              //   {
               string respStr = "[Refused]";
 
               Ptr<Packet> packet = Create<Packet> (
                   reinterpret_cast<const uint8_t *> (respStr.c_str ()), respStr.size ());
 
               socket->Send (packet);
-              // }
             }
 
           requestQueue.erase (reqId);
@@ -415,15 +410,12 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
               return;
             }
 
-          // if (device->active)
-          //   {
           string respStr = response ? "[Accepted]" : "[Refused]";
 
           Ptr<Packet> packet = Create<Packet> (reinterpret_cast<const uint8_t *> (respStr.c_str ()),
                                                respStr.size ());
 
           socket->Send (packet);
-          // }
         }
     }
 }

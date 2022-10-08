@@ -459,6 +459,7 @@ ZashDeviceEnforcer::HandleRead (Ptr<Socket> socket)
 
   if (newBuffer.find ("Proof") != string::npos)
     {
+      z_proof = true;
       newBuffer = newBuffer.substr (1);
       newBuffer = newBuffer.substr (0, newBuffer.size () - 1);
       vector<string> tokensBuf = strTokenize (newBuffer);
@@ -488,7 +489,7 @@ ZashDeviceEnforcer::HandleRead (Ptr<Socket> socket)
 
   if (newBuffer == "[Accepted]")
     {
-      z_auditModule->countTime (z_reqTime);
+      z_auditModule->countTime (z_reqTime, z_proof);
       if (InetSocketAddress::IsMatchingType (m_peer))
         {
           z_auditModule->fileLog << z_device->name << "("
@@ -504,7 +505,7 @@ ZashDeviceEnforcer::HandleRead (Ptr<Socket> socket)
     }
   else if (newBuffer == "[Refused]")
     {
-      z_auditModule->countTime (z_reqTime);
+      z_auditModule->countTime (z_reqTime, z_proof);
       if (InetSocketAddress::IsMatchingType (m_peer))
         {
           z_auditModule->fileLog << z_device->name << "("
@@ -518,6 +519,7 @@ ZashDeviceEnforcer::HandleRead (Ptr<Socket> socket)
                                  << ") has NOT changed!" << endl;
         }
     }
+  z_proof = false;
 }
 
 void

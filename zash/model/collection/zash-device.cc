@@ -61,6 +61,7 @@ DeviceComponent::explicitAuthentication (Request *req)
       return false;
     }
   *auditComponent->zashOutput << "Proof matches!" << endl;
+  proofUsed.push_back (req->id);
   return true;
 }
 
@@ -68,13 +69,40 @@ void
 DeviceComponent::clearProofs (time_t currentDate)
 {
   auto new_end = remove_if (proofs.begin (), proofs.end (), [currentDate, this] (Proof *p) {
-    *auditComponent->zashOutput << *p << " | " << difftime (currentDate, p->date) << " | "
-                                << PROOF_EXPIRATION * 60 << " | "
-                                << (difftime (currentDate, p->date) >= PROOF_EXPIRATION * 60)
-                                << endl;
     return difftime (currentDate, p->date) >= PROOF_EXPIRATION * 60;
   });
   proofs.erase (new_end, proofs.end ());
+}
+
+void
+DeviceComponent::attackProfile (Request *req, bool result)
+{
+  if (result)
+    {
+      auditComponent->attSucUl[req->user->userLevel->key]++;
+      auditComponent->attSucAct[req->action->key]++;
+      auditComponent->attSucDc[req->device->deviceClass->key]++;
+      auditComponent->attSucTime[req->context->time->key]++;
+      auditComponent->attSucLoc[req->context->localization->key]++;
+      auditComponent->attSucAge[req->user->age->key]++;
+      auditComponent->attSucGrp[req->context->group->key]++;
+      auditComponent->attSucAw[req->context->accessWay->key]++;
+      auditComponent->attSucDev[req->device->id]++;
+      auditComponent->attSucUser[req->user->id]++;
+    }
+  else
+    {
+      auditComponent->attDenUl[req->user->userLevel->key]++;
+      auditComponent->attDenAct[req->action->key]++;
+      auditComponent->attDenDc[req->device->deviceClass->key]++;
+      auditComponent->attDenTime[req->context->time->key]++;
+      auditComponent->attDenLoc[req->context->localization->key]++;
+      auditComponent->attDenAge[req->user->age->key]++;
+      auditComponent->attDenGrp[req->context->group->key]++;
+      auditComponent->attDenAw[req->context->accessWay->key]++;
+      auditComponent->attDenDev[req->device->id]++;
+      auditComponent->attDenUser[req->user->id]++;
+    }
 }
 
 void
@@ -85,6 +113,7 @@ DeviceComponent::processAttack (Request *req, bool result)
   if (it != auditComponent->attackManager->attacks.end ())
     {
       (*it)->success = result;
+      attackProfile (req, result);
       if (!result)
         {
           ++auditComponent->deniedImpersonations;
@@ -100,6 +129,12 @@ DeviceComponent::processAttack (Request *req, bool result)
           if (authorizationComponent->configurationComponent->isBuilding)
             {
               ++auditComponent->successAttBuilding;
+            }
+          if (find (proofUsed.begin (), proofUsed.end (), req->id) != proofUsed.end ())
+            {
+              ++auditComponent->successAttProof;
+              auto new_end = remove (proofUsed.begin (), proofUsed.end (), req->id);
+              proofUsed.erase (new_end, proofUsed.end ());
             }
         }
     }

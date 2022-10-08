@@ -59,7 +59,7 @@ AttackManager::AttackManager (mt19937 gen, int n, enums::Properties *props, vect
 void
 AttackManager::printAttacks (stringstream &stream)
 {
-  stream << endl << "Generated attacks are:" << endl;
+  stream << endl << "Generated attacks are " << attacks.size () << endl;
   for (Attack *attack : attacks)
     {
       stream << *attack << endl;

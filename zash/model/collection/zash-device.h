@@ -59,6 +59,7 @@ public:
   DataComponent *dataComponent;
   AuditComponent *auditComponent;
   vector<Proof *> proofs;
+  vector<int> proofUsed;
   DeviceComponent (AuthorizationComponent *a, DataComponent *d, AuditComponent *adt);
 
   void processProof (Request *req, bool proof);
@@ -66,6 +67,8 @@ public:
   bool explicitAuthentication (Request *req);
 
   void clearProofs (time_t currentDate);
+
+  void attackProfile(Request *req, bool result);
 
   void processAttack (Request *req, bool result);
 

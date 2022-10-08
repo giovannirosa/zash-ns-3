@@ -44,7 +44,7 @@ AlterationManager::AlterationManager (mt19937 gen, int n, vector<Device *> devic
 void
 AlterationManager::printAlterations (stringstream &stream)
 {
-  stream << "Generated alterations are:" << endl;
+  stream << "Generated alterations are " << alterations.size () << endl;
   for (Alteration *alteration : alterations)
     {
       stream << *alteration << endl;
