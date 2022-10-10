@@ -79,29 +79,29 @@ DeviceComponent::attackProfile (Request *req, bool result)
 {
   if (result)
     {
-      auditComponent->attSucUl[req->user->userLevel->key]++;
-      auditComponent->attSucAct[req->action->key]++;
-      auditComponent->attSucDc[req->device->deviceClass->key]++;
-      auditComponent->attSucTime[req->context->time->key]++;
-      auditComponent->attSucLoc[req->context->localization->key]++;
-      auditComponent->attSucAge[req->user->age->key]++;
-      auditComponent->attSucGrp[req->context->group->key]++;
-      auditComponent->attSucAw[req->context->accessWay->key]++;
-      auditComponent->attSucDev[req->device->id]++;
-      auditComponent->attSucUser[req->user->id]++;
+      ++auditComponent->attSucUl[req->user->userLevel->key];
+      ++auditComponent->attSucAct[req->action->key];
+      ++auditComponent->attSucDc[req->device->deviceClass->key];
+      ++auditComponent->attSucTime[req->context->time->key];
+      ++auditComponent->attSucLoc[req->context->localization->key];
+      ++auditComponent->attSucAge[req->user->age->key];
+      ++auditComponent->attSucGrp[req->context->group->key];
+      ++auditComponent->attSucAw[req->context->accessWay->key];
+      ++auditComponent->attSucDev[req->device->id];
+      ++auditComponent->attSucUser[req->user->id];
     }
   else
     {
-      auditComponent->attDenUl[req->user->userLevel->key]++;
-      auditComponent->attDenAct[req->action->key]++;
-      auditComponent->attDenDc[req->device->deviceClass->key]++;
-      auditComponent->attDenTime[req->context->time->key]++;
-      auditComponent->attDenLoc[req->context->localization->key]++;
-      auditComponent->attDenAge[req->user->age->key]++;
-      auditComponent->attDenGrp[req->context->group->key]++;
-      auditComponent->attDenAw[req->context->accessWay->key]++;
-      auditComponent->attDenDev[req->device->id]++;
-      auditComponent->attDenUser[req->user->id]++;
+      ++auditComponent->attDenUl[req->user->userLevel->key];
+      ++auditComponent->attDenAct[req->action->key];
+      ++auditComponent->attDenDc[req->device->deviceClass->key];
+      ++auditComponent->attDenTime[req->context->time->key];
+      ++auditComponent->attDenLoc[req->context->localization->key];
+      ++auditComponent->attDenAge[req->user->age->key];
+      ++auditComponent->attDenGrp[req->context->group->key];
+      ++auditComponent->attDenAw[req->context->accessWay->key];
+      ++auditComponent->attDenDev[req->device->id];
+      ++auditComponent->attDenUser[req->user->id];
     }
 }
 
@@ -121,6 +121,10 @@ DeviceComponent::processAttack (Request *req, bool result)
           if (authorizationComponent->configurationComponent->isBuilding)
             {
               ++auditComponent->deniedAttBuilding;
+            }
+          if (req->user->blocked)
+            {
+              ++auditComponent->deniedAttBlock;
             }
         }
       else
@@ -203,11 +207,6 @@ DeviceComponent::listenRequest (Request *req)
                                   << dataComponent->currentState[req->device->id - 1] << endl;
     }
   dataComponent->updateLastState ();
-
-  if (req->attackId && req->validated == 3)
-    {
-      processAttack (req, true);
-    }
 
   return result;
 }

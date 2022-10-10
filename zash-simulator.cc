@@ -646,9 +646,9 @@ scheduleMessage (int *idReq, time_t currentDate, string actStr, int device, int 
 void
 scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User *> users,
                   DeviceComponent *deviceComponent, AuditComponent *auditModule, int startDay,
-                  int endDay, enums::Properties *props)
+                  int endDay, enums::Properties *props, int attacks, int alterations)
 {
-
+  cout << "aqui" << endl;
   random_device rd;
   mt19937::result_type seed =
       rd () ^ ((mt19937::result_type) chrono::duration_cast<chrono::seconds> (
@@ -664,14 +664,18 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
   uniform_int_distribution<mt19937::result_type> distV (0, 100);
   auditModule->fileSim << "Random seed is: " << seed << endl;
 
-  AttackManager *attackManager =
-      new AttackManager (gen, 10, props, users, devices, vector<int>{1, 29}, vector<int>{2, 3});
+  AttackManager *attackManager = new AttackManager (gen, attacks, props, users, devices,
+                                                    vector<int>{1, 29}, vector<int>{2, 3});
   auditModule->attackManager = attackManager;
   auditModule->totalImpersonations = attackManager->attacks.size ();
 
+  cout << "aqui2" << endl;
+
   AlterationManager *alterationManager =
-      new AlterationManager (gen, 5, devices, vector<int>{1, 29}, vector<int>{2, 3});
+      new AlterationManager (gen, alterations, devices, vector<int>{1, 29}, vector<int>{2, 3});
   auditModule->alterationManager = alterationManager;
+
+  cout << "aqui3" << endl;
 
   int user = 0;
   string accessWay;
@@ -778,11 +782,14 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
               auditModule->fileMsgs << "Launching " << *attack << endl;
               // cout << "Launching " << *attack << endl;
 
-              while (!scheduleMessage (
-                  &idReq, timeOfAttack, actStr, attack->device, attack->impersonatedUser,
-                  attack->accessWay, attack->location, "ALONE", attack->action, dayCount, startDay,
-                  auditModule, props, staNodes, &msgCount, difftime (timeOfAttack, firstDate),
-                  users, devices, deviceComponent, attack->id))
+              while ((!devices[attack->device]->active && attack->action == "CONTROL") ||
+                     attack->device == 7 ||
+                     !scheduleMessage (&idReq, timeOfAttack, actStr, attack->device,
+                                       attack->impersonatedUser, attack->accessWay,
+                                       attack->location, "ALONE", attack->action, dayCount,
+                                       startDay, auditModule, props, staNodes, &msgCount,
+                                       difftime (timeOfAttack, firstDate), users, devices,
+                                       deviceComponent, attack->id))
                 {
                   attack->device = distD (gen);
                 }
@@ -868,6 +875,8 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
       lastDate = currentDate;
     }
 
+  cout << "aqui4" << endl;
+
   auditModule->fileMsgs << "Count of messages = " << msgCount << endl;
   auditModule->fileMsgs << "Count of days = " << dayCount << endl;
   auditModule->fileMsgs << "Count of simulated days = " << simDayCount << endl;
@@ -880,6 +889,8 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
     {
       device->removed = false;
     }
+
+  cout << "aqui5" << endl;
 };
 
 int
@@ -910,23 +921,29 @@ main (int argc, char *argv[])
   uint32_t N = NUMBER_OF_DEVICES; // number of nodes in the star
   uint32_t payloadSize = 1448; /* Transport layer payload size in bytes. */
   string dataRate = "100Mbps"; /* Application layer datarate. */
+  string latency = "1ms"; /* Application layer latency. */
   string phyRate = "HtMcs7"; /* Physical layer bitrate. */
   bool pcapTracing = false; /* PCAP Tracing is enabled or not. */
   string mode = "H"; /* Restriction mode for the system. */
   uint32_t startDay = 0; /* Start day of the simulation. */
   uint32_t endDay = 0; /* End day of the simulation. */
+  uint32_t attacks = 10; /* Number of attacks. */
+  uint32_t alterations = 5; /* Number of alterations. */
 
   // Allow the user to override any of the defaults and the above
   // Config::SetDefault()s at run-time, via command-line arguments
   CommandLine cmd (__FILE__);
   cmd.AddValue ("nNodes", "Number of nodes to place in the star", N);
   cmd.AddValue ("payloadSize", "Payload size in bytes", payloadSize);
-  cmd.AddValue ("dataRate", "Application data ate", dataRate);
+  cmd.AddValue ("dataRate", "Application datarate", dataRate);
+  cmd.AddValue ("latency", "Application latency", latency);
   cmd.AddValue ("phyRate", "Physical layer bitrate", phyRate);
   cmd.AddValue ("pcap", "Enable/disable PCAP Tracing", pcapTracing);
   cmd.AddValue ("mode", "Restriction mode for the system", mode);
   cmd.AddValue ("start", "Start day of the simulation", startDay);
   cmd.AddValue ("end", "End day of the simulation", endDay);
+  cmd.AddValue ("attacks", "Number of attacks", attacks);
+  cmd.AddValue ("alterations", "Number of alterations", alterations);
   cmd.Parse (argc, argv);
 
   if (startDay != 0 && startDay < 1)
@@ -967,6 +984,9 @@ main (int argc, char *argv[])
   //----------------------------------------------------------------------------------
 
   AuditComponent *auditModule = createAudit ();
+
+  auditModule->fileSim << "Datarate: " << dataRate << endl;
+  auditModule->fileSim << "Latency: " << latency << endl;
 
   // std::chrono::time_point<std::chrono::system_clock> startT = std::chrono::system_clock::now();
 
@@ -1033,7 +1053,7 @@ main (int argc, char *argv[])
   NodeContainer serverAp = NodeContainer (serverNode.Get (0), apNode.Get (0));
   CsmaHelper csma;
   csma.SetChannelAttribute ("DataRate", StringValue (dataRate));
-  csma.SetChannelAttribute ("Delay", StringValue ("1ms"));
+  csma.SetChannelAttribute ("Delay", StringValue (latency));
   NetDeviceContainer serverApDevice = csma.Install (serverAp);
 
   /* Configure AP */
@@ -1126,16 +1146,19 @@ main (int argc, char *argv[])
   // Schedule messages from dataset
   //----------------------------------------------------------------------------------
 
-  scheduleMessages (staNodes, devices, users, deviceComponent, auditModule, startDay, endDay,
-                    props);
+  scheduleMessages (staNodes, devices, users, deviceComponent, auditModule, startDay, endDay, props,
+                    attacks, alterations);
 
   //----------------------------------------------------------------------------------
   // Output configuration
   //----------------------------------------------------------------------------------
 
   createFile (auditModule->scenarioSimFile, auditModule->simDate, auditModule->fileSim.str ());
+  cout << "aqui6" << endl;
   createFile (auditModule->messagesSimFile, auditModule->simDate, auditModule->fileMsgs.str ());
+  cout << "aqui7" << endl;
   createFile (auditModule->execSimFile, auditModule->simDate, auditModule->fileExec.str ());
+  cout << "aqui8" << endl;
 
   // return EXIT_SUCCESS;
 
@@ -1159,6 +1182,8 @@ main (int argc, char *argv[])
       //     MakeCallback(&AuditComponent::deviceEnforcerCallback,
       //     auditComponent));
     }
+
+  cout << "aqui9" << endl;
 
   /* Enable Traces */
   if (pcapTracing)

@@ -410,7 +410,13 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
               return;
             }
 
-          string respStr = response ? "[Accepted]" : "[Refused]";
+          if (req->attackId)
+            {
+              deviceComponent->processAttack (req, false);
+            }
+
+          string respStr =
+              response ? "[Accepted]" : (req->user->blocked ? "[Blocked]" : "[Refused]");
 
           Ptr<Packet> packet = Create<Packet> (reinterpret_cast<const uint8_t *> (respStr.c_str ()),
                                                respStr.size ());

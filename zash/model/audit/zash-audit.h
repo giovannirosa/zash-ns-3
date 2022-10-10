@@ -56,6 +56,7 @@ public:
   double accessControlRT = 0.0;
   double accessControlRTProof = 0.0;
   double accessControlRTNoProof = 0.0;
+  double accessControlRTBlock = 0.0;
 
   int userLevelNumber = 0;
   int deviceClassNumber = 0;
@@ -81,6 +82,7 @@ public:
   int deniedAttBuilding = 0;
   int successAttBuilding = 0;
   int successAttProof = 0;
+  int deniedAttBlock = 0;
 
   map<string, int> attSucUl;
   map<string, int> attSucAct;
@@ -164,7 +166,7 @@ public:
 
   void outputMetrics ();
 
-  void countTime (double z_reqTime, bool z_proof);
+  void countTime (double z_reqTime, bool z_proof, bool isBlocked);
 
   void storeRequestMetrics (Request *req, enums::Properties *props);
 

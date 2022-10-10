@@ -128,7 +128,9 @@ AuditComponent::outputMetrics ()
   fileSimRec << "Access Control Response Time Proof (ACRTP) = " << accessControlRTProof << " ms"
              << endl;
   fileSimRec << "Access Control Response Time No Proof (ACRTNP) = " << accessControlRTNoProof
-             << " ms" << endl
+             << " ms" << endl;
+  fileSimRec << "Access Control Response Time Blocked (ACRTB) = " << accessControlRTBlock << " ms"
+             << endl
              << endl;
 
   fileSimRec << "Access Control Distance (ACD) = " << accessControlDistance << " hops" << endl
@@ -162,6 +164,8 @@ AuditComponent::outputMetrics ()
   fileSimRec << "Denied Impersonations (DI) = " << deniedImpersonations << endl;
   fileSimRec << "Denied Impersonations Building (DIB) = "
              << percentage (deniedAttBuilding, deniedImpersonations) << endl;
+  fileSimRec << "Denied Impersonations Blocked (DIX) = "
+             << percentage (deniedAttBlock, deniedImpersonations) << endl;
   fileSimRec << "Successful Impersonations Building (SIB) = "
              << percentage (successAttBuilding, totalImpersonations - deniedImpersonations) << endl;
   fileSimRec << "Successful Impersonations Proof (SIP) = "
@@ -173,105 +177,115 @@ AuditComponent::outputMetrics ()
   fileSimRec << "Denied Impersonations Profile:" << endl;
   for (auto const &x : attDenUl)
     {
-      fileSimRec << "User Level: " << x.first << " = "
-                 << percentage (x.second, deniedImpersonations) << endl;
+      fileSimRec << "User Level: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenAct)
     {
-      fileSimRec << "Action: " << x.first << " = " << percentage (x.second, deniedImpersonations)
-                 << endl;
+      fileSimRec << "Action: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenDc)
     {
-      fileSimRec << "Device Class: " << x.first << " = "
-                 << percentage (x.second, deniedImpersonations) << endl;
+      fileSimRec << "Device Class: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenTime)
     {
-      fileSimRec << "Time: " << x.first << " = " << percentage (x.second, deniedImpersonations)
-                 << endl;
+      fileSimRec << "Time: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenLoc)
     {
-      fileSimRec << "Localization: " << x.first << " = "
-                 << percentage (x.second, deniedImpersonations) << endl;
+      fileSimRec << "Localization: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenAge)
     {
-      fileSimRec << "Age: " << x.first << " = " << percentage (x.second, deniedImpersonations)
-                 << endl;
+      fileSimRec << "Age: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenGrp)
     {
-      fileSimRec << "Group: " << x.first << " = " << percentage (x.second, deniedImpersonations)
-                 << endl;
+      fileSimRec << "Group: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenAw)
     {
-      fileSimRec << "Access Way: " << x.first << " = "
-                 << percentage (x.second, deniedImpersonations) << endl;
+      fileSimRec << "Access Way: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenDev)
     {
-      fileSimRec << "Device: " << x.first << " = " << percentage (x.second, deniedImpersonations)
-                 << endl;
+      fileSimRec << "Device: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
   for (auto const &x : attDenUser)
     {
-      fileSimRec << "User: " << x.first << " = " << percentage (x.second, deniedImpersonations)
-                 << endl;
+      fileSimRec << "User: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, deniedImpersonations) << ")" << endl;
     }
 
   fileSimRec << endl << "Successful Impersonations Profile:" << endl;
   for (auto const &x : attSucUl)
     {
-      fileSimRec << "User Level: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "User Level: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucAct)
     {
-      fileSimRec << "Action: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "Action: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucDc)
     {
-      fileSimRec << "Device Class: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "Device Class: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucTime)
     {
-      fileSimRec << "Time: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "Time: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucLoc)
     {
-      fileSimRec << "Localization: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "Localization: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucAge)
     {
-      fileSimRec << "Age: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "Age: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucGrp)
     {
-      fileSimRec << "Group: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "Group: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucAw)
     {
-      fileSimRec << "Access Way: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "Access Way: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucDev)
     {
-      fileSimRec << "Device: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "Device: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
   for (auto const &x : attSucUser)
     {
-      fileSimRec << "User: " << x.first << " = "
-                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << endl;
+      fileSimRec << "User: " << x.first << " = " << x.second << "("
+                 << percentage (x.second, (totalImpersonations - deniedImpersonations)) << ")"
+                 << endl;
     }
 
   fileSimRec << endl << "REQUESTS NUMBER = " << reqNumber << endl;
@@ -455,14 +469,18 @@ AuditComponent::calculatePossibilities (enums::Properties *props, AuditComponent
 }
 
 void
-AuditComponent::countTime (double z_reqTime, bool z_proof)
+AuditComponent::countTime (double z_reqTime, bool z_proof, bool isBlocked)
 {
   double z_respTime = Simulator::Now ().ToDouble (Time::MS);
 
   double acrt = z_respTime - z_reqTime;
 
   accessControlRT = (accessControlRT + acrt) / 2.0;
-  if (z_proof)
+  if (isBlocked)
+    {
+      accessControlRTBlock = (accessControlRTBlock + acrt) / 2.0;
+    }
+  else if (z_proof)
     {
       accessControlRTProof = (accessControlRTProof + acrt) / 2.0;
     }

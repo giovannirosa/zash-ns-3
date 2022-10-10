@@ -489,7 +489,7 @@ ZashDeviceEnforcer::HandleRead (Ptr<Socket> socket)
 
   if (newBuffer == "[Accepted]")
     {
-      z_auditModule->countTime (z_reqTime, z_proof);
+      z_auditModule->countTime (z_reqTime, z_proof, false);
       if (InetSocketAddress::IsMatchingType (m_peer))
         {
           z_auditModule->fileLog << z_device->name << "("
@@ -503,9 +503,9 @@ ZashDeviceEnforcer::HandleRead (Ptr<Socket> socket)
                                  << ") has changed!" << endl;
         }
     }
-  else if (newBuffer == "[Refused]")
+  else if (newBuffer == "[Refused]" || newBuffer == "[Blocked]")
     {
-      z_auditModule->countTime (z_reqTime, z_proof);
+      z_auditModule->countTime (z_reqTime, z_proof, newBuffer == "[Blocked]");
       if (InetSocketAddress::IsMatchingType (m_peer))
         {
           z_auditModule->fileLog << z_device->name << "("
