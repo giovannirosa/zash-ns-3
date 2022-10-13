@@ -37,7 +37,7 @@ for (i in 1:length(files)) {
                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",genAlter))
   )      )
   
-  if (attacks == 25 & alterations == 5 & length(datarate) == 0) {
+  if (attacks == 50 & alterations == 5 & length(datarate) == 0) {
     vals = as.numeric(unlist(regmatches(acrt,
                                         gregexpr("[[:digit:]]+\\.*[[:digit:]]*",acrt))
     )      )
@@ -83,7 +83,8 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
   theme_ipsum_rc() +
   labs(x="",
        y="Milliseconds",
-       title = "ACRT - 25 Attacks") +
+       title = "Access Control Response Time (ACRT) - 50 Attacks",
+       fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 
         text = element_text(size = 14),
@@ -93,3 +94,7 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
         axis.ticks.x = element_line(color="black", size = 0.1),
         axis.ticks.y = element_line(color="black", size = 0.1)) +
   scale_y_continuous(limits = c(0, 8.5))
+
+
+# b <- boxplot(acrtpListS)
+# b$stats
