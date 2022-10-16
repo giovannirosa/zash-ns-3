@@ -63,6 +63,7 @@ ContextComponent::verifyContext (Request *req,
 {
   ++req->validated;
   *auditComponent->zashOutput << "Context Component" << endl;
+  // cout << "Context Component" << endl;
   calculateTime (req, req->currentDate);
   checkBuilding (req->currentDate);
   if (isTimeBuilding)

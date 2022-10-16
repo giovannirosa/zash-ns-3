@@ -197,75 +197,6 @@ createAudit ()
   return auditModule;
 }
 
-void
-printEnums (enums::Properties *props, AuditComponent *auditModule)
-{
-  auditModule->fileSim << "Enums are:" << endl << endl;
-  auditModule->fileSim << "Action:" << endl;
-  for (auto const &a : props->Action)
-    {
-      auditModule->fileSim << *a.second << endl;
-      auditModule->attSucAct[a.first] = 0;
-      auditModule->attDenAct[a.first] = 0;
-    }
-
-  auditModule->fileSim << endl << "UserLevel:" << endl;
-  for (auto const &a : props->UserLevel)
-    {
-      auditModule->fileSim << *a.second << endl;
-      auditModule->attSucUl[a.first] = 0;
-      auditModule->attDenUl[a.first] = 0;
-    }
-
-  auditModule->fileSim << endl << "DeviceClass:" << endl;
-  for (auto const &a : props->DeviceClass)
-    {
-      auditModule->fileSim << *a.second << endl;
-      auditModule->attSucDc[a.first] = 0;
-      auditModule->attDenDc[a.first] = 0;
-    }
-
-  auditModule->fileSim << endl << "AccessWay:" << endl;
-  for (auto const &a : props->AccessWay)
-    {
-      auditModule->fileSim << *a.second << endl;
-      auditModule->attSucAw[a.first] = 0;
-      auditModule->attDenAw[a.first] = 0;
-    }
-
-  auditModule->fileSim << endl << "Localization:" << endl;
-  for (auto const &a : props->Localization)
-    {
-      auditModule->fileSim << *a.second << endl;
-      auditModule->attSucLoc[a.first] = 0;
-      auditModule->attDenLoc[a.first] = 0;
-    }
-
-  auditModule->fileSim << endl << "TimeClass:" << endl;
-  for (auto const &a : props->TimeClass)
-    {
-      auditModule->fileSim << *a.second << endl;
-      auditModule->attSucTime[a.first] = 0;
-      auditModule->attDenTime[a.first] = 0;
-    }
-
-  auditModule->fileSim << endl << "Age:" << endl;
-  for (auto const &a : props->Age)
-    {
-      auditModule->fileSim << *a.second << endl;
-      auditModule->attSucAge[a.first] = 0;
-      auditModule->attDenAge[a.first] = 0;
-    }
-
-  auditModule->fileSim << endl << "Group:" << endl;
-  for (auto const &a : props->Group)
-    {
-      auditModule->fileSim << *a.second << endl;
-      auditModule->attSucGrp[a.first] = 0;
-      auditModule->attDenGrp[a.first] = 0;
-    }
-}
-
 enums::Properties *
 buildEnums (AuditComponent *auditModule, string mode)
 {
@@ -648,7 +579,7 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
                   DeviceComponent *deviceComponent, AuditComponent *auditModule, int startDay,
                   int endDay, enums::Properties *props, int attacks, int alterations)
 {
-  cout << "aqui" << endl;
+  // cout << "aqui" << endl;
   random_device rd;
   mt19937::result_type seed =
       rd () ^ ((mt19937::result_type) chrono::duration_cast<chrono::seconds> (
@@ -664,18 +595,20 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
   uniform_int_distribution<mt19937::result_type> distV (0, 100);
   auditModule->fileSim << "Random seed is: " << seed << endl;
 
-  AttackManager *attackManager = new AttackManager (gen, attacks, props, users, devices,
-                                                    vector<int>{1, 29}, vector<int>{2, 3});
+  vector<string> datesList = {};
+
+  AttackManager *attackManager = new AttackManager (
+      gen, attacks, props, users, devices, vector<int>{2, 28}, vector<int>{2, 3}, datesList);
   auditModule->attackManager = attackManager;
   auditModule->totalImpersonations = attackManager->attacks.size ();
 
-  cout << "aqui2" << endl;
+  // cout << "aqui2" << endl;
 
-  AlterationManager *alterationManager =
-      new AlterationManager (gen, alterations, devices, vector<int>{1, 29}, vector<int>{2, 3});
+  AlterationManager *alterationManager = new AlterationManager (
+      gen, alterations, devices, vector<int>{2, 28}, vector<int>{2, 3}, datesList);
   auditModule->alterationManager = alterationManager;
 
-  cout << "aqui3" << endl;
+  // cout << "aqui3" << endl;
 
   int user = 0;
   string accessWay;
@@ -768,11 +701,34 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
 
       double diff = difftime (currentDate, firstDate);
 
+      for (Alteration *alteration : alterationManager->alterations)
+        {
+          time_t timeOfAlteration = strToTime (alteration->timeOfAlteration.c_str ());
+          if (!alteration->scheduled && difftime (timeOfAlteration, lastDate) >= 0 &&
+              difftime (timeOfAlteration, currentDate) <= 0)
+            {
+              auditModule->fileMsgs << "Launching " << *alteration << endl;
+              // cout << "Launching " << *alteration << endl;
+
+              accessWay = props->accessWays[distAW (gen)];
+              group = props->groups[distG (gen)];
+
+              scheduleMessage (&idReq, timeOfAlteration, actStr, alteration->device, user,
+                               accessWay, localization, group, "MANAGE", dayCount, startDay,
+                               auditModule, props, staNodes, &msgCount,
+                               difftime (timeOfAlteration, firstDate), users, devices,
+                               deviceComponent, 0);
+              devices[alteration->device]->removed = !devices[alteration->device]->removed;
+              alteration->scheduled = true;
+            }
+        }
+
       for (Attack *attack : attackManager->attacks)
         {
           // attack->timeOfAttack = formatTime (currentDate);
           time_t timeOfAttack = strToTime (attack->timeOfAttack.c_str ());
-          // cout << formatTime(currentDate) << " | " << attack->timeOfAttack << " | " << formatTime (lastDate) << endl;
+          // cout << formatTime (currentDate) << " | " << attack->timeOfAttack << " | "
+          //      << formatTime (lastDate) << " | " << formatTime (firstDate) << endl;
 
           // cout << difftime (timeOfAttack, lastDate) << " " << difftime (timeOfAttack, currentDate)
           //      << endl;
@@ -794,28 +750,6 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
                   attack->device = distD (gen);
                 }
               attack->scheduled = true;
-            }
-        }
-
-      for (Alteration *alteration : alterationManager->alterations)
-        {
-          time_t timeOfAlteration = strToTime (alteration->timeOfAlteration.c_str ());
-          if (!alteration->scheduled && difftime (timeOfAlteration, lastDate) >= 0 &&
-              difftime (timeOfAlteration, currentDate) <= 0)
-            {
-              auditModule->fileMsgs << "Launching " << *alteration << endl;
-              // cout << "Launching " << *alteration << endl;
-
-              accessWay = props->accessWays[distAW (gen)];
-              group = props->groups[distG (gen)];
-
-              scheduleMessage (&idReq, timeOfAlteration, actStr, alteration->device, user,
-                               accessWay, localization, group, "MANAGE", dayCount, startDay,
-                               auditModule, props, staNodes, &msgCount,
-                               difftime (timeOfAlteration, firstDate), users, devices,
-                               deviceComponent, 0);
-              devices[alteration->device]->removed = !devices[alteration->device]->removed;
-              alteration->scheduled = true;
             }
         }
 
@@ -875,7 +809,7 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
       lastDate = currentDate;
     }
 
-  cout << "aqui4" << endl;
+  // cout << "aqui4" << endl;
 
   auditModule->fileMsgs << "Count of messages = " << msgCount << endl;
   auditModule->fileMsgs << "Count of days = " << dayCount << endl;
@@ -890,7 +824,7 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
       device->removed = false;
     }
 
-  cout << "aqui5" << endl;
+  // cout << "aqui5" << endl;
 };
 
 int
@@ -992,9 +926,9 @@ main (int argc, char *argv[])
 
   enums::Properties *props = buildEnums (auditModule, mode);
 
-  printEnums (props, auditModule);
-
-  auditModule->calculatePossibilities (props, auditModule);
+  auditModule->printEnums (props);
+  auditModule->printDenProf ();
+  auditModule->calculatePossibilities (props);
 
   // std::chrono::time_point<std::chrono::system_clock> endT = std::chrono::system_clock::now();
   // auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(endT - startT);
@@ -1154,11 +1088,11 @@ main (int argc, char *argv[])
   //----------------------------------------------------------------------------------
 
   createFile (auditModule->scenarioSimFile, auditModule->simDate, auditModule->fileSim.str ());
-  cout << "aqui6" << endl;
+  // cout << "aqui6" << endl;
   createFile (auditModule->messagesSimFile, auditModule->simDate, auditModule->fileMsgs.str ());
-  cout << "aqui7" << endl;
+  // cout << "aqui7" << endl;
   createFile (auditModule->execSimFile, auditModule->simDate, auditModule->fileExec.str ());
-  cout << "aqui8" << endl;
+  // cout << "aqui8" << endl;
 
   // return EXIT_SUCCESS;
 
@@ -1183,7 +1117,7 @@ main (int argc, char *argv[])
       //     auditComponent));
     }
 
-  cout << "aqui9" << endl;
+  // cout << "aqui9" << endl;
 
   /* Enable Traces */
   if (pcapTracing)

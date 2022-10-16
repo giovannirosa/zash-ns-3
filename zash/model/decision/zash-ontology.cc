@@ -45,6 +45,7 @@ bool
 OntologyComponent::verifyOntology (Request *req)
 {
   ++req->validated;
+  // cout << "Ontology Component" << endl;
   *auditComponent->zashOutput << "Ontology Component" << endl;
   *auditComponent->zashOutput << "Verify User Level " << req->user->userLevel->key
                               << " with the action " << req->action->key << " on the device class "

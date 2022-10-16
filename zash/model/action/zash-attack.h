@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <map>
 #include <random>
+#include <algorithm>
 
 #include "ns3/zash-enums.h"
 #include "ns3/zash-models.h"
@@ -44,7 +45,8 @@ class AttackManager
 public:
   vector<Attack *> attacks;
   AttackManager (mt19937 gen, int n, enums::Properties *props, vector<User *> users,
-                 vector<Device *> devices, vector<int> dayRange, vector<int> monthRange);
+                 vector<Device *> devices, vector<int> dayRange, vector<int> monthRange,
+                 vector<string> datesList);
 
   void printAttacks (stringstream &stream);
 };

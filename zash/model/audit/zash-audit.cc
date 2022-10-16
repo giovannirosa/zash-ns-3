@@ -43,6 +43,75 @@ AuditComponent::printEvents (vector<AuditEvent *> events, string currDateStr, st
 }
 
 void
+AuditComponent::printEnums (enums::Properties *props)
+{
+  fileSim << "Enums are:" << endl << endl;
+  fileSim << "Action:" << endl;
+  for (auto const &a : props->Action)
+    {
+      fileSim << *a.second << endl;
+      attSucAct[a.first] = 0;
+      attDenAct[a.first] = 0;
+    }
+
+  fileSim << endl << "UserLevel:" << endl;
+  for (auto const &a : props->UserLevel)
+    {
+      fileSim << *a.second << endl;
+      attSucUl[a.first] = 0;
+      attDenUl[a.first] = 0;
+    }
+
+  fileSim << endl << "DeviceClass:" << endl;
+  for (auto const &a : props->DeviceClass)
+    {
+      fileSim << *a.second << endl;
+      attSucDc[a.first] = 0;
+      attDenDc[a.first] = 0;
+    }
+
+  fileSim << endl << "AccessWay:" << endl;
+  for (auto const &a : props->AccessWay)
+    {
+      fileSim << *a.second << endl;
+      attSucAw[a.first] = 0;
+      attDenAw[a.first] = 0;
+    }
+
+  fileSim << endl << "Localization:" << endl;
+  for (auto const &a : props->Localization)
+    {
+      fileSim << *a.second << endl;
+      attSucLoc[a.first] = 0;
+      attDenLoc[a.first] = 0;
+    }
+
+  fileSim << endl << "TimeClass:" << endl;
+  for (auto const &a : props->TimeClass)
+    {
+      fileSim << *a.second << endl;
+      attSucTime[a.first] = 0;
+      attDenTime[a.first] = 0;
+    }
+
+  fileSim << endl << "Age:" << endl;
+  for (auto const &a : props->Age)
+    {
+      fileSim << *a.second << endl;
+      attSucAge[a.first] = 0;
+      attDenAge[a.first] = 0;
+    }
+
+  fileSim << endl << "Group:" << endl;
+  for (auto const &a : props->Group)
+    {
+      fileSim << *a.second << endl;
+      attSucGrp[a.first] = 0;
+      attDenGrp[a.first] = 0;
+    }
+}
+
+void
 AuditComponent::appendFile (string file, string msg)
 {
   ofstream stream;
@@ -110,6 +179,62 @@ AuditComponent::deviceEnforcerCallback (string path, Address sourceIp, Address d
 
   // Save received messages individually by IP address
   // appendFile (convert.str (), msg.str ());
+}
+
+void
+AuditComponent::printDenProf ()
+{
+  fileLog << "Denied Impersonations Profile:" << endl;
+  for (auto const &x : attDenUl)
+    {
+      fileLog << "User Level: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenAct)
+    {
+      fileLog << "Action: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenDc)
+    {
+      fileLog << "Device Class: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenTime)
+    {
+      fileLog << "Time: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenLoc)
+    {
+      fileLog << "Localization: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenAge)
+    {
+      fileLog << "Age: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenGrp)
+    {
+      fileLog << "Group: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenAw)
+    {
+      fileLog << "Access Way: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenDev)
+    {
+      fileLog << "Device: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
+  for (auto const &x : attDenUser)
+    {
+      fileLog << "User: " << x.first << " = " << x.second << "("
+              << percentage (x.second, deniedImpersonations) << ")" << endl;
+    }
 }
 
 void
@@ -371,7 +496,7 @@ AuditComponent::calculateTrust (enums::Enum *accessWay, enums::Enum *localizatio
 }
 
 void
-AuditComponent::calculatePossibilities (enums::Properties *props, AuditComponent *auditModule)
+AuditComponent::calculatePossibilities (enums::Properties *props)
 {
   double passed = 0;
   double total = 0;
@@ -458,14 +583,12 @@ AuditComponent::calculatePossibilities (enums::Properties *props, AuditComponent
             }
         }
     }
-  auditModule->fileSim << endl
-                       << "----------------------------------------------------------" << endl
-                       << endl;
-  auditModule->fileSim << "Percentage of passed = " << passed / total * 100 << endl;
-  auditModule->fileSim << "highestExpected = " << highestExpected << endl;
-  auditModule->fileSim << "lowestExpected = " << lowestExpected << endl;
-  auditModule->fileSim << "highestCalculated = " << highestCalculated << endl;
-  auditModule->fileSim << "lowestCalculated = " << lowestCalculated << endl << endl;
+  fileSim << endl << "----------------------------------------------------------" << endl << endl;
+  fileSim << "Percentage of passed = " << passed / total * 100 << endl;
+  fileSim << "highestExpected = " << highestExpected << endl;
+  fileSim << "lowestExpected = " << lowestExpected << endl;
+  fileSim << "highestCalculated = " << highestCalculated << endl;
+  fileSim << "lowestCalculated = " << lowestCalculated << endl << endl;
 }
 
 void

@@ -17,6 +17,7 @@ bool
 ActivityComponent::verifyActivity (Request *req, function<bool (Request *)> explicitAuthentication)
 {
   *auditComponent->zashOutput << "Activity Component" << endl;
+  // cout << "Activity Component" << endl;
   vector<int> lastState = dataComponent->lastState;
   vector<int> currentState = dataComponent->currentState;
   // if (lastState.size () != currentState.size ())

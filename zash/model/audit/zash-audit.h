@@ -147,6 +147,8 @@ public:
    */
   void printEvents (vector<AuditEvent *> events, string currDateStr, string type);
 
+  void printEnums (enums::Properties *props);
+
   /*
    * Append file with given message
    * \param file name of the file
@@ -164,6 +166,8 @@ public:
    */
   void deviceEnforcerCallback (string path, Address sourceIp, Address destinyIP, string message);
 
+  void printDenProf();
+
   void outputMetrics ();
 
   void countTime (double z_reqTime, bool z_proof, bool isBlocked);
@@ -173,7 +177,7 @@ public:
   int calculateTrust (enums::Enum *accessWay, enums::Enum *localization, enums::Enum *time,
                       enums::Enum *age, enums::Enum *group);
 
-  void calculatePossibilities (enums::Properties *props, AuditComponent *auditModule);
+  void calculatePossibilities (enums::Properties *props);
 };
 } // namespace ns3
 

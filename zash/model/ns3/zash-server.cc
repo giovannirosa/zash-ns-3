@@ -337,6 +337,8 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
   // NS_LOG_FUNCTION(this << buffer);
   if (!buffer.empty ())
     {
+      // deviceComponent->auditComponent->printDenProf ();
+      // cout << buffer << endl;
       buffer = buffer.substr (1);
       buffer = buffer.substr (0, buffer.size () - 1);
       vector<string> tokens = strTokenize (buffer);
@@ -387,9 +389,10 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
                            ->users[stoi (tokens[2])];
           enums::Properties *props =
               deviceComponent->authorizationComponent->configurationComponent->props;
-          Context *context =
-              new Context (props->AccessWay.at (tokens[3]), props->Localization.at (tokens[4]),
-                           props->Group.at (tokens[5]), props->AccessWay.at (props->accessWays[0]));
+          Context *context = new Context (
+              props->AccessWay.at (tokens[3]), props->Localization.at (tokens[4]),
+              props->Group.at (tokens[5]),
+              props->TimeClass.at (props->timeClasses[props->timeClasses.size () - 1]));
           enums::Enum *action = props->Action.at (tokens[6]);
           int attackId = stoi (tokens[8]);
           time_t currentDate = strToTime (tokens[7].c_str ());

@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <map>
 #include <random>
+#include <algorithm>
 
 #include "ns3/zash-enums.h"
 #include "ns3/zash-models.h"
@@ -37,7 +38,7 @@ class AlterationManager
 public:
   vector<Alteration *> alterations;
   AlterationManager (mt19937 gen, int n, vector<Device *> devices, vector<int> dayRange,
-                     vector<int> monthRange);
+                     vector<int> monthRange, vector<string> datesList);
 
   void printAlterations (stringstream &stream);
 };

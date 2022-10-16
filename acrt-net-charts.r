@@ -83,7 +83,8 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
   theme_ipsum_rc() +
   labs(x="",
        y="Milliseconds",
-       title = "ACRT - 100Mbps/1ms (G) vs. 10Mbps/50ms (P)") +
+       title = "Access Control Response Time (ACRT) - 100Mbps/1ms (G) vs. 10Mbps/50ms (P)",
+       fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 
         text = element_text(size = 14),
@@ -93,5 +94,5 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
         axis.ticks.x = element_line(color="black", size = 0.1),
         axis.ticks.y = element_line(color="black", size = 0.1))
 
-b <- boxplot(acrtpListS)
-b$stats
+# b <- boxplot(acrtpListS)
+# b$stats
