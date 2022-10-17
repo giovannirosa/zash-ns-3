@@ -28,6 +28,9 @@ for (i in 1:length(files)) {
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
+  datarate = as.numeric(unlist(regmatches(datarate,
+                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
+  )      )
   
   isHard = grepl("hard", configFile, fixed = TRUE)
   attacks = as.numeric(unlist(regmatches(genAttacks,
@@ -41,13 +44,13 @@ for (i in 1:length(files)) {
                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",stl))
   )      )
   
-  if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     stlList10 <- append(stlList10, stlVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 25 & alterations == 5) {
+  } else if (isHard & datarate == 100 & attacks == 25 & alterations == 5) {
     stlList25 <- append(stlList25, stlVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 50 & alterations == 5) {
+  } else if (isHard & datarate == 100 & attacks == 50 & alterations == 5) {
     stlList50 <- append(stlList50, stlVals)
-  } else if (isHard & length(datarate) > 0 & attacks == 10 & alterations == 5) {
+  } else if (isHard & datarate == 10 & attacks == 10 & alterations == 5) {
     stlListP <- append(stlListP, stlVals)
   }
 }
@@ -78,7 +81,7 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
   geom_jitter(color="black", size=0.4, alpha=0.9) +
   theme_ipsum_rc() +
   labs(x="",
-       y="Milliseconds",
+       y="Value",
        title = "Spatial and Temporal Locality (STL)",
        fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 

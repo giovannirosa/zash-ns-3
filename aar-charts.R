@@ -58,6 +58,12 @@ sibList20A = c()
 sipList20A = c()
 aarList20A = c()
 
+dibListP = c()
+dixListP = c()
+sibListP = c()
+sipListP = c()
+aarListP = c()
+
 for (i in 1:length(files)) {
   #print(files[i])
   scenarioFile = paste(substr(files[i], 0, nchar(files[i])-44), "zash_simulation_scenario", substr(files[i], nchar(files[i])-20, nchar(files[i])), sep="")
@@ -72,6 +78,9 @@ for (i in 1:length(files)) {
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
+  datarate = as.numeric(unlist(regmatches(datarate,
+                                              gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
+  )      )
   
   isHard = grepl("hard", configFile, fixed = TRUE)
   attacks = as.numeric(unlist(regmatches(genAttacks,
@@ -97,54 +106,60 @@ for (i in 1:length(files)) {
                                         gregexpr("[[:digit:]]+\\.*[[:digit:]]*",aar))
   )      )
   
-  if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     dibList10 <- append(dibList10, dibVals)
     dixList10 <- append(dixList10, dixVals)
     sibList10 <- append(sibList10, sibVals)
     sipList10 <- append(sipList10, sipVals)
     aarList10 <- append(aarList10, aarVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 25 & alterations == 5) {
+  } else if (isHard & datarate == 100 & attacks == 25 & alterations == 5) {
     dibList25 <- append(dibList25, dibVals)
     dixList25 <- append(dixList25, dixVals)
     sibList25 <- append(sibList25, sibVals)
     sipList25 <- append(sipList25, sipVals)
     aarList25 <- append(aarList25, aarVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 50 & alterations == 5) {
+  } else if (isHard & datarate == 100 & attacks == 50 & alterations == 5) {
     dibList50 <- append(dibList50, dibVals)
     dixList50 <- append(dixList50, dixVals)
     sibList50 <- append(sibList50, sibVals)
     sipList50 <- append(sipList50, sipVals)
     aarList50 <- append(aarList50, aarVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 10) {
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 10) {
     dibList10A <- append(dibList10A, dibVals)
     dixList10A <- append(dixList10A, dixVals)
     sibList10A <- append(sibList10A, sibVals)
     sipList10A <- append(sipList10A, sipVals)
     aarList10A <- append(aarList10A, aarVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 20) {
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 20) {
     dibList20A <- append(dibList20A, dibVals)
     dixList20A <- append(dixList20A, dixVals)
     sibList20A <- append(sibList20A, sibVals)
     sipList20A <- append(sipList20A, sipVals)
     aarList20A <- append(aarList20A, aarVals)
-  } else if (!isHard & length(datarate) == 0 & attacks == 10 & alterations == 5) {
+  } else if (!isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     dibList10S <- append(dibList10S, dibVals)
     dixList10S <- append(dixList10S, dixVals)
     sibList10S <- append(sibList10S, sibVals)
     sipList10S <- append(sipList10S, sipVals)
     aarList10S <- append(aarList10S, aarVals)
-  } else if (!isHard & length(datarate) == 0 & attacks == 25 & alterations == 5) {
+  } else if (!isHard & datarate == 100 & attacks == 25 & alterations == 5) {
     dibList25S <- append(dibList25S, dibVals)
     dixList25S <- append(dixList25S, dixVals)
     sibList25S <- append(sibList25S, sibVals)
     sipList25S <- append(sipList25S, sipVals)
     aarList25S <- append(aarList25S, aarVals)
-  } else if (!isHard & length(datarate) == 0 & attacks == 50 & alterations == 5) {
+  } else if (!isHard & datarate == 100 & attacks == 50 & alterations == 5) {
     dibList50S <- append(dibList50S, dibVals)
     dixList50S <- append(dixList50S, dixVals)
     sibList50S <- append(sibList50S, sibVals)
     sipList50S <- append(sipList50S, sipVals)
     aarList50S <- append(aarList50S, aarVals)
+  } else if (isHard & datarate == 10 & attacks == 10 & alterations == 5) {
+    dibListP <- append(dibListP, dibVals)
+    dixListP <- append(dixListP, dixVals)
+    sibListP <- append(sibListP, sibVals)
+    sipListP <- append(sipListP, sipVals)
+    aarListP <- append(aarListP, aarVals)
   }
 }
 
