@@ -32,6 +32,9 @@ for (i in 1:length(files)) {
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
+  datarate = as.numeric(unlist(regmatches(datarate,
+                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
+  )      )
   
   isHard = grepl("hard", configFile, fixed = TRUE)
   attacks = as.numeric(unlist(regmatches(genAttacks,
@@ -60,7 +63,7 @@ for (i in 1:length(files)) {
                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",ace))
   )      )
   
-  if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     racList <- append(racList, racVals)
     hacList <- append(hacList, hacVals)
     pacList <- append(pacList, pacVals)
@@ -104,8 +107,8 @@ my_sum <- d %>%
 
 
 ggplot(my_sum) +
-  geom_bar( aes(x=factor(grp, levels = c('|PAW|','|HAW|','|RAW|','|NI|','|I|')), y=mean, fill=grp), stat="identity", alpha=0.5) +
-  geom_errorbar( aes(x=grp, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.5) +
+  geom_bar( aes(x=factor(grp, levels = c('|PAW|','|HAW|','|RAW|','|NI|','|I|')), y=mean, fill=grp), colour="black", stat="identity", alpha=0.5) +
+  geom_errorbar( aes(x=grp, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3) +
   scale_fill_viridis(discrete=TRUE, option="D") +
   theme_ipsum_rc() +
   labs(x="",

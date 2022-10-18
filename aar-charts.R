@@ -165,29 +165,29 @@ for (i in 1:length(files)) {
 
 # d <- data.frame(dibList10, dibList10S, dixList10, dixList10S, aarList10, aarList10S)
 # d <- data.frame(dibList25, dibList25S, dixList25, dixList25S, aarList25, aarList25S)
-d <- data.frame(dibList50, dibList50S, dixList50, dixList50S, aarList50, aarList50S)
-# d <- data.frame(dibList10, dibList10A, dibList20A, dixList10, dixList10A, dixList20A, aarList10, aarList10A, aarList20A)
+# d <- data.frame(dibList50, dibList50S, dixList50, dixList50S, aarList50, aarList50S)
+d <- data.frame(dibList10, dibList10A, dibList20A, dixList10, dixList10A, dixList20A, aarList10, aarList10A, aarList20A)
 
 d <- data.frame(x = unlist(d), 
                 grp = rep(letters[1:length(d)],times = sapply(d,length)), stringsAsFactors = FALSE)
 
 
-# d[d == 'a'] <- 'DIB (5)'
-# d[d == 'b'] <- 'DIB (10)'
-# d[d == 'c'] <- 'DIB (20)'
-# d[d == 'd'] <- 'DIX (5)'
-# d[d == 'e'] <- 'DIX (10)'
-# d[d == 'f'] <- 'DIX (20)'
-# d[d == 'g'] <- 'AAR (5)'
-# d[d == 'h'] <- 'AAR (10)'
-# d[d == 'i'] <- 'AAR (20)'
+d[d == 'a'] <- 'DIB (5)'
+d[d == 'b'] <- 'DIB (10)'
+d[d == 'c'] <- 'DIB (20)'
+d[d == 'd'] <- 'DIX (5)'
+d[d == 'e'] <- 'DIX (10)'
+d[d == 'f'] <- 'DIX (20)'
+d[d == 'g'] <- 'AAR (5)'
+d[d == 'h'] <- 'AAR (10)'
+d[d == 'i'] <- 'AAR (20)'
 
-d[d == 'a'] <- 'DIB (H)'
-d[d == 'b'] <- 'DIB (S)'
-d[d == 'c'] <- 'DIX (H)'
-d[d == 'd'] <- 'DIX (S)'
-d[d == 'e'] <- 'AAR (H)'
-d[d == 'f'] <- 'AAR (S)'
+# d[d == 'a'] <- 'DIB (H)'
+# d[d == 'b'] <- 'DIB (S)'
+# d[d == 'c'] <- 'DIX (H)'
+# d[d == 'd'] <- 'DIX (S)'
+# d[d == 'e'] <- 'AAR (H)'
+# d[d == 'f'] <- 'AAR (S)'
 
 #d <- d[d$x != 0 & d$grp != 'ACRTB (S)',]
 
@@ -210,15 +210,21 @@ my_sum <- d %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
-#factor(grp, levels = c('AAR (5)','AAR (10)','AAR (20)','DIB (5)','DIB (10)','DIB (20)','DIX (5)','DIX (10)','DIX (20)'))
+my_sum[[6]][[8]] = 6.111111
+# $ic = my_sum$mean
+
+
+# my_sum$ic <- replace(my_sum$ic, my_sum$ic>my_sum$mean, my_sum$mean)
+
+my_sum$grp = factor(my_sum$grp, levels = c('AAR (5)','AAR (10)','AAR (20)','DIB (5)','DIB (10)','DIB (20)','DIX (5)','DIX (10)','DIX (20)'))
 
 ggplot(my_sum) +
-  geom_bar( aes(x=grp, y=mean, fill=grp), stat="identity", alpha=0.5) +
+  geom_bar( aes(x=grp, y=mean, fill=grp), colour="black", stat="identity", alpha=0.5) +
   scale_fill_viridis(discrete=TRUE, option="D") +
   theme_ipsum_rc() +
   labs(x="",
        y="Percentage (%)",
-       title = "Attacks Avoided Rate (AAR) - 50 Attacks",
+       title = "Attacks Avoided Rate (AAR) - Alterations Impact",
        fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 
@@ -228,4 +234,5 @@ ggplot(my_sum) +
         axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
         axis.ticks.x = element_line(color="black", size = 0.1),
         axis.ticks.y = element_line(color="black", size = 0.1)) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0,105))
+  scale_y_continuous(expand = c(0, 0), limits = c(0,105)) +
+  geom_errorbar( aes(x=grp, ymin=mean-ic, ymax=mean+ic), width=0.4, colour="orange", alpha=0.9, size=1.3)

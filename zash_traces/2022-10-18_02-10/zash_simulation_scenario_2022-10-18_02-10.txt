@@ -1,0 +1,180 @@
+**** ZASH file ****
+
+Date: 2022-10-18_02-10
+
+Datarate: 100Mbps
+Latency: 1ms
+Enums config file is: data/enums_hard.csv
+Enums are:
+
+Action:
+CONTROL[2,20]
+MANAGE[1,40]
+VIEW[3,10]
+
+UserLevel:
+ADMIN[1,70]
+ADULT[2,50]
+CHILD[3,30]
+VISITOR[4,10]
+
+DeviceClass:
+CRITICAL[1,30]
+NONCRITICAL[2,10]
+
+AccessWay:
+HOUSE[2,20]
+PERSONAL[3,10]
+REQUESTED[1,30]
+
+Localization:
+EXTERNAL[2,0]
+INTERNAL[1,20]
+
+TimeClass:
+COMMON[1,20]
+INDEFINITE[3,0]
+UNCOMMON[2,0]
+
+Age:
+ADULT[1,20]
+KID[3,0]
+TEEN[2,10]
+
+Group:
+ALONE[2,0]
+TOGETHER[1,10]
+
+----------------------------------------------------------
+
+Percentage of passed = 38.696
+highestExpected = 100
+lowestExpected = 20
+highestCalculated = 100
+lowestCalculated = 10
+
+Wifi standard is 802.11n
+Number of servers is 1
+Number of APs is 1
+Number of STAs is 29
+Server IP is fe80::200:ff:fe00:1
+AP IP is fe80::200:ff:fe00:3
+STA IP start with fe80::200:ff:fe00:4
+
+Users of simulation are 5:
+User[1,ADMIN,ADULT]
+User[2,ADULT,ADULT]
+User[3,CHILD,TEEN]
+User[4,CHILD,KID]
+User[5,VISITOR,ADULT]
+
+Devices of simulation are 29:
+Device[1,Wardrobe,NONCRITICAL,1,0]
+Device[2,TV,NONCRITICAL,4,0]
+Device[3,Oven,CRITICAL,3,0]
+Device[4,Office Light,NONCRITICAL,5,0]
+Device[5,Office Door Lock,CRITICAL,5,0]
+Device[6,Office Door,NONCRITICAL,5,0]
+Device[7,Office Carpet,NONCRITICAL,5,0]
+Device[8,Office,NONCRITICAL,5,0]
+Device[9,Main Door Lock,CRITICAL,6,0]
+Device[10,Main Door,NONCRITICAL,6,0]
+Device[11,Living Light,NONCRITICAL,4,0]
+Device[12,Living Carpet,NONCRITICAL,4,0]
+Device[13,Kitchen Light,NONCRITICAL,3,0]
+Device[14,Kitchen Door Lock,CRITICAL,3,0]
+Device[15,Kitchen Door,NONCRITICAL,3,0]
+Device[16,Kitchen Carpet,NONCRITICAL,3,0]
+Device[17,Hallway Light,NONCRITICAL,6,0]
+Device[18,Fridge,CRITICAL,3,0]
+Device[19,Couch,NONCRITICAL,4,0]
+Device[20,Bedroom Light,NONCRITICAL,1,0]
+Device[21,Bedroom Door Lock,CRITICAL,1,0]
+Device[22,Bedroom Door,NONCRITICAL,1,0]
+Device[23,Bedroom Carpet,NONCRITICAL,1,0]
+Device[24,Bed Table Lamp,NONCRITICAL,1,0]
+Device[25,Bed,NONCRITICAL,1,0]
+Device[26,Bathroom Light,NONCRITICAL,2,0]
+Device[27,Bathroom Door Lock,CRITICAL,2,0]
+Device[28,Bathroom Door,NONCRITICAL,2,0]
+Device[29,Bathroom Carpet,NONCRITICAL,2,0]
+
+Ontologies of simulation are 8:
+Ontology[VISITOR,CRITICAL,[]]
+Ontology[CHILD,CRITICAL,[VIEW]]
+Ontology[ADULT,CRITICAL,[CONTROL,VIEW]]
+Ontology[ADMIN,CRITICAL,[MANAGE,CONTROL,VIEW]]
+Ontology[VISITOR,NONCRITICAL,[VIEW,CONTROL]]
+Ontology[CHILD,NONCRITICAL,[VIEW,CONTROL]]
+Ontology[ADULT,NONCRITICAL,[MANAGE,VIEW,CONTROL]]
+Ontology[ADMIN,NONCRITICAL,[MANAGE,VIEW,CONTROL]]
+
+Other configuration parameters of simulation are:
+Block Threshold: 3
+Block Interval: 24
+Build Interval: 30
+Markov Threshold: 0.2
+Random seed is: 1666071778827668
+
+Devices interaction have the following properties: 
+User: 0
+Access Way: Random from [REQUESTED,HOUSE,PERSONAL]
+Localization: INTERNAL
+Group: Random from [TOGETHER,ALONE]
+Action: CONTROL
+
+Generated attacks are 10
+Attack[1,2016-03-12 01:35:30,INTERNAL,PERSONAL,CONTROL,3,2]
+Attack[2,2016-02-28 03:58:21,INTERNAL,HOUSE,CONTROL,4,26]
+Attack[3,2016-02-21 05:00:28,EXTERNAL,REQUESTED,CONTROL,3,27]
+Attack[4,2016-03-05 00:26:48,EXTERNAL,PERSONAL,VIEW,4,0]
+Attack[5,2016-03-03 07:11:51,EXTERNAL,HOUSE,CONTROL,4,16]
+Attack[6,2016-03-24 10:40:47,EXTERNAL,PERSONAL,VIEW,4,1]
+Attack[7,2016-03-10 15:48:10,EXTERNAL,PERSONAL,CONTROL,4,0]
+Attack[8,2016-03-07 03:52:30,EXTERNAL,PERSONAL,VIEW,0,15]
+Attack[9,2016-03-03 08:35:34,EXTERNAL,PERSONAL,VIEW,3,24]
+Attack[10,2016-03-12 10:55:42,EXTERNAL,PERSONAL,VIEW,4,3]
+
+Generated alterations are 40
+Alteration[1,2016-02-04 21:28:28,15]
+Alteration[2,2016-02-13 02:23:41,28]
+Alteration[3,2016-03-17 14:03:16,1]
+Alteration[4,2016-02-18 02:44:50,3]
+Alteration[5,2016-02-28 03:58:21,26]
+Alteration[6,2016-03-21 00:26:29,5]
+Alteration[7,2016-03-15 18:16:02,15]
+Alteration[8,2016-02-05 00:28:32,20]
+Alteration[9,2016-03-10 00:41:06,20]
+Alteration[10,2016-02-11 15:02:26,23]
+Alteration[11,2016-03-19 22:08:09,23]
+Alteration[12,2016-03-09 05:15:34,13]
+Alteration[13,2016-02-18 04:51:25,1]
+Alteration[14,2016-02-15 20:59:39,3]
+Alteration[15,2016-03-16 13:25:40,27]
+Alteration[16,2016-03-04 18:45:15,22]
+Alteration[17,2016-03-23 00:18:58,6]
+Alteration[18,2016-02-24 08:52:39,18]
+Alteration[19,2016-03-16 00:21:11,0]
+Alteration[20,2016-03-06 12:41:33,19]
+Alteration[21,2016-03-16 21:23:27,23]
+Alteration[22,2016-03-03 08:35:34,10]
+Alteration[23,2016-02-06 12:32:59,17]
+Alteration[24,2016-02-23 08:56:25,12]
+Alteration[25,2016-03-21 15:33:57,26]
+Alteration[26,2016-02-28 22:02:13,20]
+Alteration[27,2016-02-25 01:01:14,13]
+Alteration[28,2016-03-05 08:09:07,19]
+Alteration[29,2016-02-06 11:28:46,6]
+Alteration[30,2016-02-28 01:21:07,26]
+Alteration[31,2016-03-06 08:55:52,20]
+Alteration[32,2016-02-12 10:01:38,15]
+Alteration[33,2016-02-08 09:18:14,17]
+Alteration[34,2016-03-12 11:11:19,9]
+Alteration[35,2016-02-27 05:37:06,27]
+Alteration[36,2016-03-08 12:34:33,5]
+Alteration[37,2016-03-25 16:39:12,5]
+Alteration[38,2016-03-21 23:08:39,3]
+Alteration[39,2016-02-23 06:33:31,21]
+Alteration[40,2016-03-13 16:40:53,22]
+
+**** End of ZASH file ****

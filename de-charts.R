@@ -27,6 +27,9 @@ for (i in 1:length(files)) {
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
+  datarate = as.numeric(unlist(regmatches(datarate,
+                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
+  )      )
   
   isHard = grepl("hard", configFile, fixed = TRUE)
   attacks = as.numeric(unlist(regmatches(genAttacks,
@@ -40,11 +43,11 @@ for (i in 1:length(files)) {
                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",de))
   )      )
   
-  if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     deList5 <- append(deList5, deVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 10) {
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 10) {
     deList10 <- append(deList10, deVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 20) {
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 20) {
     deList20 <- append(deList20, deVals)
   }
 }
@@ -77,7 +80,7 @@ ggplot(d, aes(x=reorder(grp, x), y=x, fill=grp)) +
   geom_jitter(color="black", size=0.4, alpha=0.9) +
   theme_ipsum_rc() +
   labs(x="",
-       y="Difference of number of devices",
+       y="Difference in the number of devices",
        title = "Device Extensibility (DE)",
        fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 

@@ -7,9 +7,9 @@ library(dplyr)
 library(stringr)
 
 
-# files <- list.files(path="/home/grosa/Dev/ns-allinone-3.36.1/ns-3.36.1/zash_traces", pattern="zash_simulation_metrics_*", full.names=TRUE, recursive=TRUE)
+files <- list.files(path="/home/grosa/Dev/ns-allinone-3.36.1/ns-3.36.1/zash_traces", pattern="zash_simulation_metrics_*", full.names=TRUE, recursive=TRUE)
 
-files <- list.files(path="/home/grosa/Dev/zash-ns-3/zash_traces", pattern="zash_simulation_metrics_*", full.names=TRUE, recursive=TRUE)
+# files <- list.files(path="/home/grosa/Dev/zash-ns-3/zash_traces", pattern="zash_simulation_metrics_*", full.names=TRUE, recursive=TRUE)
 
 #print(files)
 
@@ -65,6 +65,9 @@ for (i in 1:length(files)) {
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
+  datarate = as.numeric(unlist(regmatches(datarate,
+                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
+  )      )
   
   isHard = grepl("hard", configFile, fixed = TRUE)
   attacks = as.numeric(unlist(regmatches(genAttacks,
@@ -74,7 +77,7 @@ for (i in 1:length(files)) {
                                              gregexpr("[[:digit:]]+\\.*[[:digit:]]*",genAlter))
   )      )
   
-  if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     
     uslVals = as.numeric(unlist(regmatches(usl,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",usl))
@@ -428,13 +431,35 @@ my_sum = my_sum[order(as.character(my_sum$cat),as.character(my_sum$grp)),]
 my_sum$grp = factor(my_sum$grp, levels = c('ADMIN','ADULT','CHILD','VISITOR','MANAGE','CONTROL','VIEW','CRITICAL','NONCRITICAL','COMMON','INDEFINITE','UNCOMMON','EXTERNAL','INTERNAL','ADULT AGE','KID','TEEN','ALONE','TOGETHER','HOUSE','PERSONAL','REQUESTED'))
 
 
-ggplot(my_sum) +
-  geom_bar( aes(x=cat, y=mean, fill=grp), stat="identity", alpha=0.5) +
+# ggplot(my_sum) +
+#   geom_bar( aes(x=cat, y=mean, fill=grp), colour="black", stat="identity", alpha=0.5) +
+#   scale_fill_viridis(discrete=TRUE, option="D") +
+#   theme_ipsum_rc() +
+#   labs(x="",
+#        y="Percentage (%)",
+#        title = "Profile of Denied Attacks",
+#        fill = "Properties") +
+#   theme(axis.title.x = element_text(hjust = 0.5, size = 14),
+#         axis.title.y = element_text(hjust = 0.5, size = 14),
+#         text = element_text(size = 14),
+#         axis.text.x = element_text(size = 14, margin = margin(t = 5), angle = 90, vjust = 0.5, hjust=1),
+#         axis.text.y = element_text(size = 14, margin = margin(r = 5)),
+#         axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
+#         axis.ticks.x = element_line(color="black", size = 0.1),
+#         axis.ticks.y = element_line(color="black", size = 0.1)) +
+#   scale_y_continuous(expand = c(0, 0), limits = c(0,105)) +
+#   geom_col() +
+#   geom_text(aes(y=mean, label=grp),position=position_stack(vjust=0.5),color = "black",
+#             show.legend = FALSE, size=3)
+
+my_sum <- my_sum %>% filter_at(vars(starts_with("mean")), any_vars(. != 0))
+
+ggplot(my_sum, aes(x=cat, y=mean, fill=grp)) +
   scale_fill_viridis(discrete=TRUE, option="D") +
   theme_ipsum_rc() +
   labs(x="",
        y="Percentage (%)",
-       title = "Profile of Denied Attacks",
+       title = "Profile of Denied Attacks - 10 Attacks",
        fill = "Properties") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 
@@ -444,4 +469,7 @@ ggplot(my_sum) +
         axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
         axis.ticks.x = element_line(color="black", size = 0.1),
         axis.ticks.y = element_line(color="black", size = 0.1)) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0,105))
+  scale_y_continuous(expand = c(0, 0), limits = c(0,105)) +
+  geom_bar(colour="black", stat="identity", alpha=0.5) +
+  geom_text(aes(y=mean, label=grp, fontface = "bold"),position=position_stack(vjust=0.5),color = "black",
+            show.legend = FALSE, size=3)

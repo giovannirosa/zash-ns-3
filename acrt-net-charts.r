@@ -28,6 +28,9 @@ for (i in 1:length(files)) {
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
+  datarate = as.numeric(unlist(regmatches(datarate,
+                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
+  )      )
   
   isHard = grepl("hard", configFile, fixed = TRUE)
   attacks = as.numeric(unlist(regmatches(genAttacks,
@@ -42,7 +45,7 @@ for (i in 1:length(files)) {
                                         gregexpr("[[:digit:]]+\\.*[[:digit:]]*",acrt))
     )      )
     
-    if (length(datarate) == 0) {
+    if (datarate == 100) {
       acrtList <- append(acrtList, vals[1])
       acrtpList <- append(acrtpList, vals[2])
       acrtnpList <- append(acrtnpList, vals[3])
@@ -75,6 +78,11 @@ d[d == 'h'] <- 'ACRTB (P)'
 
 #d[nrow(d) + 1,] = c(0.0,"ACRTB (S)")
 
+df_mean <- d %>% 
+  group_by(grp) %>% 
+  summarize(average = mean(x)) %>%
+  ungroup()
+
 
 ggplot(d, aes(x=grp, y=x, fill=grp)) + 
   geom_boxplot(alpha=0.5) +
@@ -92,7 +100,11 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
         axis.text.y = element_text(size = 14, margin = margin(r = 5)),
         axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
         axis.ticks.x = element_line(color="black", size = 0.1),
-        axis.ticks.y = element_line(color="black", size = 0.1))
+        axis.ticks.y = element_line(color="black", size = 0.1)) +
+  geom_point(data = df_mean, 
+             mapping = aes(x = grp, y = average),
+             color="red")
+
 
 # b <- boxplot(acrtpListS)
 # b$stats
