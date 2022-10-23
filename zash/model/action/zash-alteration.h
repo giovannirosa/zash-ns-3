@@ -38,7 +38,7 @@ class AlterationManager
 public:
   vector<Alteration *> alterations;
   AlterationManager (mt19937 gen, int n, vector<Device *> devices, vector<int> dayRange,
-                     vector<int> monthRange, vector<string> datesList);
+                     vector<int> monthRange, vector<string> *datesList);
 
   void printAlterations (stringstream &stream);
 };

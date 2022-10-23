@@ -598,15 +598,19 @@ scheduleMessages (NodeContainer staNodes, vector<Device *> devices, vector<User 
   vector<string> datesList = {};
 
   AttackManager *attackManager = new AttackManager (
-      gen, attacks, props, users, devices, vector<int>{2, 28}, vector<int>{2, 3}, datesList);
+      gen, attacks, props, users, devices, vector<int>{2, 28}, vector<int>{2, 3}, &datesList);
   auditModule->attackManager = attackManager;
   auditModule->totalImpersonations = attackManager->attacks.size ();
+
+  // cout << vecToStr(datesList) << endl;
 
   // cout << "aqui2" << endl;
 
   AlterationManager *alterationManager = new AlterationManager (
-      gen, alterations, devices, vector<int>{2, 28}, vector<int>{2, 3}, datesList);
+      gen, alterations, devices, vector<int>{2, 28}, vector<int>{2, 3}, &datesList);
   auditModule->alterationManager = alterationManager;
+
+  // cout << vecToStr(datesList) << endl;
 
   // cout << "aqui3" << endl;
 
@@ -927,7 +931,7 @@ main (int argc, char *argv[])
   enums::Properties *props = buildEnums (auditModule, mode);
 
   auditModule->printEnums (props);
-  auditModule->printDenProf ();
+  // auditModule->printDenProf ();
   auditModule->calculatePossibilities (props);
 
   // std::chrono::time_point<std::chrono::system_clock> endT = std::chrono::system_clock::now();

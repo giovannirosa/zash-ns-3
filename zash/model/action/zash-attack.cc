@@ -15,7 +15,7 @@ Attack::Attack (int i, string t, string l, string aw, string a, int iu, int d)
 
 AttackManager::AttackManager (mt19937 gen, int n, enums::Properties *props, vector<User *> users,
                               vector<Device *> devices, vector<int> dayRange,
-                              vector<int> monthRange, vector<string> datesList)
+                              vector<int> monthRange, vector<string> *datesList)
 {
   discrete_distribution<> distL ({10, 90});
   discrete_distribution<> distAW ({10, 10, 80});
@@ -52,9 +52,9 @@ AttackManager::AttackManager (mt19937 gen, int n, enums::Properties *props, vect
                      string (2 - hour.size (), '0').append (hour) + ":" +
                      string (2 - minute.size (), '0').append (minute) + ":" +
                      string (2 - second.size (), '0').append (second);
-      } while (find (datesList.begin (), datesList.end (), dateTime) != datesList.end ());
+      } while (find ((*datesList).begin (), (*datesList).end (), dateTime) != (*datesList).end ());
 
-      datesList.push_back (dateTime);
+      (*datesList).push_back (dateTime);
 
       Attack *attack = new Attack (i + 1, dateTime, props->localizations[locationIndex],
                                    props->accessWays[accessWayIndex], props->actions[actionIndex],

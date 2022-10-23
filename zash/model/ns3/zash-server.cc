@@ -415,7 +415,7 @@ ZashServer::HandlePacket (string buffer, Ptr<Socket> socket)
 
           if (req->attackId)
             {
-              deviceComponent->processAttack (req, false);
+              deviceComponent->processAttack (req, response);
             }
 
           string respStr =

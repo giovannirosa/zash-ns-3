@@ -1,0 +1,6 @@
+**** ZASH file ****
+
+Date: 2022-10-19_14-19
+
+2016-03-03 09:41:19 - Attack[25,2016-03-03 09:41:19,EXTERNAL,PERSONAL,VIEW,4,24]
+**** End of ZASH file ****

@@ -46,7 +46,7 @@ public:
   vector<Attack *> attacks;
   AttackManager (mt19937 gen, int n, enums::Properties *props, vector<User *> users,
                  vector<Device *> devices, vector<int> dayRange, vector<int> monthRange,
-                 vector<string> datesList);
+                 vector<string> *datesList);
 
   void printAttacks (stringstream &stream);
 };

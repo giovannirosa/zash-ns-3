@@ -11,7 +11,7 @@ Alteration::Alteration (int i, string t, int d)
 
 AlterationManager::AlterationManager (mt19937 gen, int n, vector<Device *> devices,
                                       vector<int> dayRange, vector<int> monthRange,
-                                      vector<string> datesList)
+                                      vector<string> *datesList)
 {
   uniform_int_distribution<mt19937::result_type> distA (0, 1);
   uniform_int_distribution<mt19937::result_type> distD (0, devices.size () - 1);
@@ -41,9 +41,9 @@ AlterationManager::AlterationManager (mt19937 gen, int n, vector<Device *> devic
                      string (2 - hour.size (), '0').append (hour) + ":" +
                      string (2 - minute.size (), '0').append (minute) + ":" +
                      string (2 - second.size (), '0').append (second);
-      } while (find (datesList.begin (), datesList.end (), dateTime) != datesList.end ());
+      } while (find ((*datesList).begin (), (*datesList).end (), dateTime) != (*datesList).end ());
 
-      datesList.push_back (dateTime);
+      (*datesList).push_back (dateTime);
 
       Alteration *alteration = new Alteration (i + 1, dateTime, deviceIndex);
       alterations.push_back (alteration);
