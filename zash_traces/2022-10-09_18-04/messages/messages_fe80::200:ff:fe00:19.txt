@@ -1,6 +1,0 @@
-**** ZASH file ****
-
-Date: 2022-10-09_18-04
-
-9	fe80::200:ff:fe00:19	fe80::200:ff:fe00:1	Socket connect
-**** End of ZASH file ****

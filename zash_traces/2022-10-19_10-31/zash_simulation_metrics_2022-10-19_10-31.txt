@@ -1,0 +1,168 @@
+**** ZASH file ****
+
+Date: 2022-10-19_10-31
+
+Number of admin users (|AU|) = 1
+Number of critical devices (|CD|) = 7
+Privacy Risk (PR) = 7
+
+Access Control Response Time (ACRT) = 153.316 ms
+Access Control Response Time Proof (ACRTP) = 200.735 ms
+Access Control Response Time No Proof (ACRTNP) = 153.316 ms
+Access Control Response Time Blocked (ACRTB) = 0 ms
+
+Access Control Distance (ACD) = 2 hops
+
+Spatial and Temporal Locality (STL) = 306.632
+
+Number of user levels (|UL|) = 4
+Number of device classes (|DC|) = 2
+Number of actions (|A|) = 3
+Resources Isolation (RI) = 24
+
+Maximum number of devices (Dmax) = 29
+Minimum number of devices (Dmin) = 26
+Device Extensibility (DE) = 3
+
+Number of requests of requested access way (|RAC|) = 6781
+Number of requests of home access way (|HAC|) = 6874
+Number of requests of personal access way (|PAC|) = 6766
+Number of requests without intermediaries (|NI|) = 6781
+Number of requests with intermediaries (|I|) = 13640
+Access Control Enforcement (ACE) = 0.497141
+
+Total Impersonations (TI) = 10
+Successful Impersonations (SI) = 3
+Denied Impersonations (DI) = 7
+Denied Impersonations Building (DIB) = 57.142857%
+Denied Impersonations Blocked (DIX) = 14.285714%
+Successful Impersonations Building (SIB) = 0.000000%
+Successful Impersonations Proof (SIP) = 0.000000%
+Attacks Avoided Rate (AAR) = 70.000000%
+
+Denied Impersonations Profile:
+User Level: ADMIN = 0(0.000000%)
+User Level: ADULT = 0(0.000000%)
+User Level: CHILD = 3(42.857143%)
+User Level: VISITOR = 4(57.142857%)
+Action: CONTROL = 1(14.285714%)
+Action: MANAGE = 0(0.000000%)
+Action: VIEW = 6(85.714286%)
+Device Class: CRITICAL = 5(71.428571%)
+Device Class: NONCRITICAL = 2(28.571429%)
+Time: COMMON = 1(14.285714%)
+Time: INDEFINITE = 4(57.142857%)
+Time: UNCOMMON = 2(28.571429%)
+Localization: EXTERNAL = 7(100.000000%)
+Localization: INTERNAL = 0(0.000000%)
+Age: ADULT = 4(57.142857%)
+Age: KID = 2(28.571429%)
+Age: TEEN = 1(14.285714%)
+Group: ALONE = 7(100.000000%)
+Group: TOGETHER = 0(0.000000%)
+Access Way: HOUSE = 2(28.571429%)
+Access Way: PERSONAL = 5(71.428571%)
+Access Way: REQUESTED = 0(0.000000%)
+Device: 1 = 0(0.000000%)
+Device: 2 = 0(0.000000%)
+Device: 3 = 0(0.000000%)
+Device: 4 = 0(0.000000%)
+Device: 5 = 1(14.285714%)
+Device: 6 = 0(0.000000%)
+Device: 7 = 0(0.000000%)
+Device: 8 = 0(0.000000%)
+Device: 9 = 1(14.285714%)
+Device: 10 = 0(0.000000%)
+Device: 11 = 0(0.000000%)
+Device: 12 = 1(14.285714%)
+Device: 13 = 0(0.000000%)
+Device: 14 = 0(0.000000%)
+Device: 15 = 0(0.000000%)
+Device: 16 = 1(14.285714%)
+Device: 17 = 0(0.000000%)
+Device: 18 = 0(0.000000%)
+Device: 19 = 0(0.000000%)
+Device: 20 = 0(0.000000%)
+Device: 21 = 3(42.857143%)
+Device: 22 = 0(0.000000%)
+Device: 23 = 0(0.000000%)
+Device: 24 = 0(0.000000%)
+Device: 25 = 0(0.000000%)
+Device: 26 = 0(0.000000%)
+Device: 27 = 0(0.000000%)
+Device: 28 = 0(0.000000%)
+Device: 29 = 0(0.000000%)
+User: 1 = 0(0.000000%)
+User: 2 = 0(0.000000%)
+User: 3 = 1(14.285714%)
+User: 4 = 2(28.571429%)
+User: 5 = 4(57.142857%)
+
+Successful Impersonations Profile:
+User Level: ADMIN = 0(0.000000%)
+User Level: ADULT = 0(0.000000%)
+User Level: CHILD = 0(0.000000%)
+User Level: VISITOR = 3(100.000000%)
+Action: CONTROL = 0(0.000000%)
+Action: MANAGE = 0(0.000000%)
+Action: VIEW = 3(100.000000%)
+Device Class: CRITICAL = 0(0.000000%)
+Device Class: NONCRITICAL = 3(100.000000%)
+Time: COMMON = 3(100.000000%)
+Time: INDEFINITE = 0(0.000000%)
+Time: UNCOMMON = 0(0.000000%)
+Localization: EXTERNAL = 3(100.000000%)
+Localization: INTERNAL = 0(0.000000%)
+Age: ADULT = 3(100.000000%)
+Age: KID = 0(0.000000%)
+Age: TEEN = 0(0.000000%)
+Group: ALONE = 3(100.000000%)
+Group: TOGETHER = 0(0.000000%)
+Access Way: HOUSE = 0(0.000000%)
+Access Way: PERSONAL = 3(100.000000%)
+Access Way: REQUESTED = 0(0.000000%)
+Device: 1 = 0(0.000000%)
+Device: 2 = 0(0.000000%)
+Device: 3 = 0(0.000000%)
+Device: 4 = 1(33.333333%)
+Device: 5 = 0(0.000000%)
+Device: 6 = 0(0.000000%)
+Device: 7 = 0(0.000000%)
+Device: 8 = 0(0.000000%)
+Device: 9 = 0(0.000000%)
+Device: 10 = 0(0.000000%)
+Device: 11 = 0(0.000000%)
+Device: 12 = 0(0.000000%)
+Device: 13 = 1(33.333333%)
+Device: 14 = 0(0.000000%)
+Device: 15 = 1(33.333333%)
+Device: 16 = 0(0.000000%)
+Device: 17 = 0(0.000000%)
+Device: 18 = 0(0.000000%)
+Device: 19 = 0(0.000000%)
+Device: 20 = 0(0.000000%)
+Device: 21 = 0(0.000000%)
+Device: 22 = 0(0.000000%)
+Device: 23 = 0(0.000000%)
+Device: 24 = 0(0.000000%)
+Device: 25 = 0(0.000000%)
+Device: 26 = 0(0.000000%)
+Device: 27 = 0(0.000000%)
+Device: 28 = 0(0.000000%)
+Device: 29 = 0(0.000000%)
+User: 1 = 0(0.000000%)
+User: 2 = 0(0.000000%)
+User: 3 = 0(0.000000%)
+User: 4 = 0(0.000000%)
+User: 5 = 3(100.000000%)
+
+REQUESTS NUMBER = 19295
+REQUESTS GRANTED = 19288
+REQUESTS DENIED = 7
+ONTOLOGY FAILS = 4 (0.020731%)
+CONTEXT FAILS = 10639 (55.138637%)
+ACTIVITY FAILS = 1263 (6.545737%)
+VALID PROOFS = 336 (97.959184%)
+INVALID PROOFS = 7 (2.040816%)
+BLOCKS = 1
+**** End of ZASH file ****
