@@ -16,6 +16,8 @@ deList10 = c()
 
 deList20 = c()
 
+deList40 = c()
+
 for (i in 1:length(files)) {
   #print(files[i])
   scenarioFile = paste(substr(files[i], 0, nchar(files[i])-44), "zash_simulation_scenario", substr(files[i], nchar(files[i])-20, nchar(files[i])), sep="")
@@ -49,10 +51,12 @@ for (i in 1:length(files)) {
     deList10 <- append(deList10, deVals)
   } else if (isHard & datarate == 100 & attacks == 10 & alterations == 20) {
     deList20 <- append(deList20, deVals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 40) {
+    deList40 <- append(deList40, deVals)
   }
 }
 
-d <- data.frame(deList5, deList10, deList20)
+d <- data.frame(deList5, deList10, deList20, deList40)
 
 d <- data.frame(x = unlist(d), 
                 grp = rep(letters[1:length(d)],times = sapply(d,length)), stringsAsFactors = FALSE)
@@ -61,6 +65,7 @@ d <- data.frame(x = unlist(d),
 d[d == 'a'] <- 'DE (5)'
 d[d == 'b'] <- 'DE (10)'
 d[d == 'c'] <- 'DE (20)'
+d[d == 'd'] <- 'DE (40)'
 
 #d <- d[d$x != 0 & d$grp != 'ACRTB (S)',]
 

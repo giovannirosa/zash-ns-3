@@ -5,7 +5,6 @@ library(hrbrthemes)
 library(viridis)
 library(dplyr)
 
-
 files <- list.files(path="/home/grosa/Dev/ns-allinone-3.36.1/ns-3.36.1/zash_traces", pattern="zash_simulation_metrics_*", full.names=TRUE, recursive=TRUE)
 
 #print(files)
@@ -57,6 +56,12 @@ dixList20A = c()
 sibList20A = c()
 sipList20A = c()
 aarList20A = c()
+
+dibList40A = c()
+dixList40A = c()
+sibList40A = c()
+sipList40A = c()
+aarList40A = c()
 
 dibListP = c()
 dixListP = c()
@@ -136,6 +141,12 @@ for (i in 1:length(files)) {
     sibList20A <- append(sibList20A, sibVals)
     sipList20A <- append(sipList20A, sipVals)
     aarList20A <- append(aarList20A, aarVals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 40) {
+    dibList40A <- append(dibList40A, dibVals)
+    dixList40A <- append(dixList40A, dixVals)
+    sibList40A <- append(sibList40A, sibVals)
+    sipList40A <- append(sipList40A, sipVals)
+    aarList40A <- append(aarList40A, aarVals)
   } else if (!isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     dibList10S <- append(dibList10S, dibVals)
     dixList10S <- append(dixList10S, dixVals)
@@ -163,31 +174,61 @@ for (i in 1:length(files)) {
   }
 }
 
-# d <- data.frame(dibList10, dibList10S, dixList10, dixList10S, aarList10, aarList10S)
-# d <- data.frame(dibList25, dibList25S, dixList25, dixList25S, aarList25, aarList25S)
-# d <- data.frame(dibList50, dibList50S, dixList50, dixList50S, aarList50, aarList50S)
-d <- data.frame(dibList10, dibList10A, dibList20A, dixList10, dixList10A, dixList20A, aarList10, aarList10A, aarList20A)
+mode = 'ALT'
+
+if (mode == 10) {
+  title = "Attacks Avoided Rate (AAR) - 10 Attacks"
+  d <- data.frame(dibList10, dibList10S, dixList10, dixList10S, sibList10, sibList10S, sipList10, sipList10S, aarList10, aarList10S)
+} else if (mode == 25) {
+  title = "Attacks Avoided Rate (AAR) - 25 Attacks"
+  d <- data.frame(dibList25, dibList25S, dixList25, dixList25S, sibList25, sibList25S, sipList25, sipList25S, aarList25, aarList25S)
+} else if (mode == 50) {
+  title = "Attacks Avoided Rate (AAR) - 50 Attacks"
+  d <- data.frame(dibList50, dibList50S, dixList50, dixList50S, sibList50, sibList50S, sipList50, sipList50S, aarList50, aarList50S)
+} else if (mode == 'ALT') {
+  title = "Attacks Avoided Rate (AAR) - Alterations Impact"
+  d <- data.frame(dibList10, dibList10A, dibList20A, dibList40A, dixList10, dixList10A, dixList20A, dixList40A, sibList10, sibList10A, sibList20A, sibList40A, sipList10, sipList10A, sipList20A, sipList40A, aarList10, aarList10A, aarList20A, aarList40A)
+}
 
 d <- data.frame(x = unlist(d), 
                 grp = rep(letters[1:length(d)],times = sapply(d,length)), stringsAsFactors = FALSE)
 
 
-d[d == 'a'] <- 'DIB (5)'
-d[d == 'b'] <- 'DIB (10)'
-d[d == 'c'] <- 'DIB (20)'
-d[d == 'd'] <- 'DIX (5)'
-d[d == 'e'] <- 'DIX (10)'
-d[d == 'f'] <- 'DIX (20)'
-d[d == 'g'] <- 'AAR (5)'
-d[d == 'h'] <- 'AAR (10)'
-d[d == 'i'] <- 'AAR (20)'
+if (mode == 'ALT') {
+  d[d == 'a'] <- 'DIB (5)'
+  d[d == 'b'] <- 'DIB (10)'
+  d[d == 'c'] <- 'DIB (20)'
+  d[d == 'd'] <- 'DIB (40)'
+  d[d == 'e'] <- 'DIX (5)'
+  d[d == 'f'] <- 'DIX (10)'
+  d[d == 'g'] <- 'DIX (20)'
+  d[d == 'h'] <- 'DIX (40)'
+  d[d == 'i'] <- 'SIB (5)'
+  d[d == 'j'] <- 'SIB (10)'
+  d[d == 'k'] <- 'SIB (20)'
+  d[d == 'l'] <- 'SIB (40)'
+  d[d == 'm'] <- 'SIP (5)'
+  d[d == 'n'] <- 'SIP (10)'
+  d[d == 'o'] <- 'SIP (20)'
+  d[d == 'p'] <- 'SIP (40)'
+  d[d == 'q'] <- 'AAR (5)'
+  d[d == 'r'] <- 'AAR (10)'
+  d[d == 's'] <- 'AAR (20)'
+  d[d == 't'] <- 'AAR (40)'
+} else {
+  d[d == 'a'] <- 'DIB (H)'
+  d[d == 'b'] <- 'DIB (S)'
+  d[d == 'c'] <- 'DIX (H)'
+  d[d == 'd'] <- 'DIX (S)'
+  d[d == 'e'] <- 'SIB (H)'
+  d[d == 'f'] <- 'SIB (S)'
+  d[d == 'g'] <- 'SIP (H)'
+  d[d == 'h'] <- 'SIP (S)'
+  d[d == 'i'] <- 'AAR (H)'
+  d[d == 'j'] <- 'AAR (S)'
+}
 
-# d[d == 'a'] <- 'DIB (H)'
-# d[d == 'b'] <- 'DIB (S)'
-# d[d == 'c'] <- 'DIX (H)'
-# d[d == 'd'] <- 'DIX (S)'
-# d[d == 'e'] <- 'AAR (H)'
-# d[d == 'f'] <- 'AAR (S)'
+
 
 #d <- d[d$x != 0 & d$grp != 'ACRTB (S)',]
 
@@ -210,13 +251,16 @@ my_sum <- d %>%
   mutate( se=sd/sqrt(n))  %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
-my_sum[[6]][[8]] = 6.111111
+# my_sum[[6]][[9]] = 3.333333
 # $ic = my_sum$mean
 
 
 # my_sum$ic <- replace(my_sum$ic, my_sum$ic>my_sum$mean, my_sum$mean)
 
-my_sum$grp = factor(my_sum$grp, levels = c('AAR (5)','AAR (10)','AAR (20)','DIB (5)','DIB (10)','DIB (20)','DIX (5)','DIX (10)','DIX (20)'))
+if (mode == 'ALT') {
+  my_sum$grp = factor(my_sum$grp, levels = c('AAR (5)','AAR (10)','AAR (20)','AAR (40)','DIB (5)','DIB (10)','DIB (20)','DIB (40)','DIX (5)','DIX (10)','DIX (20)','DIX (40)','SIB (5)','SIB (10)','SIB (20)','SIB (40)','SIP (5)','SIP (10)','SIP (20)','SIP (40)'))
+}
+
 
 ggplot(my_sum) +
   geom_bar( aes(x=grp, y=mean, fill=grp), colour="black", stat="identity", alpha=0.5) +
@@ -224,15 +268,16 @@ ggplot(my_sum) +
   theme_ipsum_rc() +
   labs(x="",
        y="Percentage (%)",
-       title = "Attacks Avoided Rate (AAR) - Alterations Impact",
+       title = title,
        fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 
         text = element_text(size = 14),
-        axis.text.x = element_text(size = 14, margin = margin(t = 5)),
+        axis.text.x = element_text(size = 14, margin = margin(t = 5), angle = 90),
         axis.text.y = element_text(size = 14, margin = margin(r = 5)),
         axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
         axis.ticks.x = element_line(color="black", size = 0.1),
         axis.ticks.y = element_line(color="black", size = 0.1)) +
   scale_y_continuous(expand = c(0, 0), limits = c(0,105)) +
-  geom_errorbar( aes(x=grp, ymin=mean-ic, ymax=mean+ic), width=0.4, colour="orange", alpha=0.9, size=1.3)
+  geom_errorbar( aes(x=grp, ymin=ifelse(mean-ic < 0, 0, mean-ic), ymax=mean+ic), width=0.4, colour="orange", alpha=0.9, size=1.3) +
+  guides(fill=guide_legend(ncol=2))

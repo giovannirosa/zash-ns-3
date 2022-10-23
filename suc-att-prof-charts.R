@@ -74,7 +74,7 @@ for (i in 1:length(files)) {
                                              gregexpr("[[:digit:]]+\\.*[[:digit:]]*",genAlter))
   )      )
   
-  #if (isHard) { #& datarate == 100 & attacks == 10 & alterations == 40) {
+  #if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     usl = grep("User Level", readLines(files[i]), value = TRUE)
     act = grep("Action", readLines(files[i]), value = TRUE)
     dcs = grep("Device Class", readLines(files[i]), value = TRUE)
@@ -89,33 +89,44 @@ for (i in 1:length(files)) {
     uslVals = as.numeric(unlist(regmatches(usl,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",usl))
     )      )
+    uslVals = split(uslVals, ceiling(seq_along(uslVals)/(length(uslVals)/2)))[[2]]
     actVals = as.numeric(unlist(regmatches(act,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",act))
     )      )
+    
+    actVals = split(actVals, ceiling(seq_along(actVals)/(length(actVals)/2)))[[2]]
     dcsVals = as.numeric(unlist(regmatches(dcs,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",dcs))
     )      )
+    dcsVals = split(dcsVals, ceiling(seq_along(dcsVals)/(length(dcsVals)/2)))[[2]]
     timVals = as.numeric(unlist(regmatches(tim,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",tim))
     )      )
+    timVals = split(timVals, ceiling(seq_along(timVals)/(length(timVals)/2)))[[2]]
     locVals = as.numeric(unlist(regmatches(loc,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",loc))
     )      )
+    locVals = split(locVals, ceiling(seq_along(locVals)/(length(locVals)/2)))[[2]]
     ageVals = as.numeric(unlist(regmatches(age,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",age))
     )      )
+    ageVals = split(ageVals, ceiling(seq_along(ageVals)/(length(ageVals)/2)))[[2]]
     grpVals = as.numeric(unlist(regmatches(grp,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",grp))
     )      )
+    grpVals = split(grpVals, ceiling(seq_along(grpVals)/(length(grpVals)/2)))[[2]]
     acwVals = as.numeric(unlist(regmatches(acw,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",acw))
     )      )
+    acwVals = split(acwVals, ceiling(seq_along(acwVals)/(length(acwVals)/2)))[[2]]
     dvcVals = as.numeric(unlist(regmatches(dvc,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",dvc))
     )      )
+    dvcVals = split(dvcVals, ceiling(seq_along(dvcVals)/(length(dvcVals)/2)))[[2]]
     usrVals = as.numeric(unlist(regmatches(usr,
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",usr))
     )      )
+    usrVals = split(usrVals, ceiling(seq_along(usrVals)/(length(usrVals)/2)))[[2]]
     
     # print("-------------------------------")
     # for (v in uslVals) {
@@ -130,7 +141,6 @@ for (i in 1:length(files)) {
     index = 1
     for (x in 1:length(uslVals)) {
       # print(uslVals[[x]])
-      col = c()
       if (x %% 2 == 0) {
         if (index > length(uslList)) {
           uslList[[index]] = list()
@@ -153,7 +163,6 @@ for (i in 1:length(files)) {
     index = 1
     for (x in 1:length(actVals)) {
       # print(actVals[[x]])
-      col = c()
       if (x %% 2 == 0) {
         if (index > length(actList)) {
           actList[[index]] = list()
@@ -175,7 +184,6 @@ for (i in 1:length(files)) {
     index = 1
     for (x in 1:length(dcsVals)) {
       # print(dcsVals[[x]])
-      col = c()
       if (x %% 2 == 0) {
         if (index > length(dcsList)) {
           dcsList[[index]] = list()
@@ -197,7 +205,6 @@ for (i in 1:length(files)) {
     index = 1
     for (x in 1:length(acwVals)) {
       # print(acwVals[[x]])
-      col = c()
       if (x %% 2 == 0) {
         if (index > length(acwList)) {
           acwList[[index]] = list()
@@ -219,7 +226,6 @@ for (i in 1:length(files)) {
     index = 1
     for (x in 1:length(locVals)) {
       # print(locVals[[x]])
-      col = c()
       if (x %% 2 == 0) {
         if (index > length(locList)) {
           locList[[index]] = list()
@@ -241,7 +247,6 @@ for (i in 1:length(files)) {
     index = 1
     for (x in 1:length(timVals)) {
       # print(timVals[[x]])
-      col = c()
       if (x %% 2 == 0) {
         if (index > length(timList)) {
           timList[[index]] = list()
@@ -263,7 +268,6 @@ for (i in 1:length(files)) {
     index = 1
     for (x in 1:length(ageVals)) {
       # print(ageVals[[x]])
-      col = c()
       if (x %% 2 == 0) {
         if (index > length(ageList)) {
           ageList[[index]] = list()
@@ -289,7 +293,6 @@ for (i in 1:length(files)) {
     index = 1
     for (x in 1:length(grpVals)) {
       # print(grpVals[[x]])
-      col = c()
       if (x %% 2 == 0) {
         if (index > length(grpList)) {
           grpList[[index]] = list()
@@ -443,7 +446,7 @@ ggplot(my_sum, aes(x=cat, y=mean, fill=grp)) +
   theme_ipsum_rc() +
   labs(x="",
        y="Percentage (%)",
-       title = "Profile of Denied Attacks",
+       title = "Profile of Successful Attacks",
        fill = "Properties") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 
@@ -453,8 +456,8 @@ ggplot(my_sum, aes(x=cat, y=mean, fill=grp)) +
         axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
         axis.ticks.x = element_line(color="black", size = 0.1),
         axis.ticks.y = element_line(color="black", size = 0.1)) +
-  # scale_y_continuous(expand = c(0, 0), limits = c(0,105)) +
+  #scale_y_continuous(expand = c(0, 0), limits = c(0,105)) +
   geom_bar(colour="black", stat="identity", alpha=0.5) +
-  geom_text(aes(y=mean, label=grp, fontface = "bold"),position=position_stack(vjust=0.5),color = "black",
+  geom_text(data=subset(my_sum, mean>5),aes(y=mean, label=grp, fontface = "bold"),position=position_stack(vjust=0.5),color = "black",
             show.legend = FALSE, size=3) +
   guides(fill=guide_legend(ncol=2))

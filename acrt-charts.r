@@ -5,6 +5,8 @@ library(hrbrthemes)
 library(viridis)
 library(dplyr)
 
+attacksN = 50
+
 files <- list.files(path="/home/grosa/Dev/ns-allinone-3.36.1/ns-3.36.1/zash_traces", pattern="zash_simulation_metrics_*", full.names=TRUE, recursive=TRUE)
 
 #print(files)
@@ -40,7 +42,7 @@ for (i in 1:length(files)) {
                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",genAlter))
   )      )
   
-  if (attacks == 50 & alterations == 5 & datarate == 100) {
+  if (attacks == attacksN & alterations == 5 & datarate == 100) {
     vals = as.numeric(unlist(regmatches(acrt,
                                         gregexpr("[[:digit:]]+\\.*[[:digit:]]*",acrt))
     )      )
@@ -91,7 +93,7 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
   theme_ipsum_rc() +
   labs(x="",
        y="Milliseconds",
-       title = "Access Control Response Time (ACRT) - 50 Attacks",
+       title = paste("Access Control Response Time (ACRT) - ",attacksN," Attacks"),
        fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 
