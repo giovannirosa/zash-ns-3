@@ -16,6 +16,7 @@ denList10 = c()
 ontoList10 = c()
 contList10 = c()
 actList10 = c()
+proofsList10 = c()
 valList10 = c()
 invalList10 = c()
 blockList10 = c()
@@ -26,6 +27,7 @@ denList25 = c()
 ontoList25 = c()
 contList25 = c()
 actList25 = c()
+proofsList25 = c()
 valList25 = c()
 invalList25 = c()
 blockList25 = c()
@@ -36,6 +38,7 @@ denList50 = c()
 ontoList50 = c()
 contList50 = c()
 actList50 = c()
+proofsList50 = c()
 valList50 = c()
 invalList50 = c()
 blockList50 = c()
@@ -46,9 +49,21 @@ denListP = c()
 ontoListP = c()
 contListP = c()
 actListP = c()
+proofsListP = c()
 valListP = c()
 invalListP = c()
 blockListP = c()
+
+reqListU = c()
+grantListU = c()
+denListU = c()
+ontoListU = c()
+contListU = c()
+actListU = c()
+proofsListU = c()
+valListU = c()
+invalListU = c()
+blockListU = c()
 
 for (i in 1:length(files)) {
   #print(files[i])
@@ -67,7 +82,14 @@ for (i in 1:length(files)) {
   configFile = grep("Enums config file is", readLines(scenarioFile), value = TRUE)
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
+  users = grep("Users of simulation are", readLines(scenarioFile), value = TRUE)
+  users = as.numeric(unlist(regmatches(users,
+                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",users))
+  )      )
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
+  datarate = as.numeric(unlist(regmatches(datarate,
+                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
+  )      )
   
   isHard = grepl("hard", configFile, fixed = TRUE)
   attacks = as.numeric(unlist(regmatches(genAttacks,
@@ -105,56 +127,71 @@ for (i in 1:length(files)) {
                                            gregexpr("[[:digit:]]+\\.*[[:digit:]]*",block))
   )      )
   
-  print(reqVals)
-  print(reqGVals)
-  print(reqDVals)
-  print(ontoVals[1])
-  print(contVals[1])
-  print(actVals[1])
-  print(validVals[1])
-  print(invalVals[1])
-  print(blockVals)
+  # print(reqVals)
+  # print(reqGVals)
+  # print(reqDVals)
+  # print(ontoVals[1])
+  # print(contVals[1])
+  # print(actVals[1])
+  # print(validVals[1])
+  # print(invalVals[1])
+  # print(blockVals)
   
-  if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 5) {
     reqList10 <- append(reqList10, reqVals)
-    grantList10 <- append(grantList10, reqGVals)
-    denList10 <- append(denList10, reqDVals)
-    ontoList10 <- append(ontoList10, ontoVals[1])
-    contList10 <- append(contList10, contVals[1])
-    actList10 <- append(actList10, actVals[1])
-    valList10 <- append(valList10, validVals[1])
-    invalList10 <- append(invalList10, invalVals[1])
+    grantList10 <- append(grantList10, reqGVals / reqVals * 100)
+    denList10 <- append(denList10, reqDVals / reqVals * 100)
+    ontoList10 <- append(ontoList10, ontoVals[2])
+    contList10 <- append(contList10, contVals[2])
+    actList10 <- append(actList10, actVals[2])
+    proofsList10 <- append(proofsList10, validVals[1] + invalVals[1])
+    valList10 <- append(valList10, validVals[2])
+    invalList10 <- append(invalList10, invalVals[2])
     blockList10 <- append(blockList10, blockVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 10) {
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 10 & users == 5) {
     reqList25 <- append(reqList25, reqVals)
-    grantList25 <- append(grantList25, reqGVals)
-    denList25 <- append(denList25, reqDVals)
-    ontoList25 <- append(ontoList25, ontoVals[1])
-    contList25 <- append(contList25, contVals[1])
-    actList25 <- append(actList25, actVals[1])
-    valList25 <- append(valList25, validVals[1])
-    invalList25 <- append(invalList25, invalVals[1])
+    grantList25 <- append(grantList25, reqGVals / reqVals * 100)
+    denList25 <- append(denList25, reqDVals / reqVals * 100)
+    ontoList25 <- append(ontoList25, ontoVals[2])
+    contList25 <- append(contList25, contVals[2])
+    actList25 <- append(actList25, actVals[2])
+    proofsList25 <- append(proofsList25, validVals[1] + invalVals[1])
+    valList25 <- append(valList25, validVals[2])
+    invalList25 <- append(invalList25, invalVals[2])
     blockList25 <- append(blockList25, blockVals)
-  } else if (isHard & length(datarate) == 0 & attacks == 10 & alterations == 20) {
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 20 & users == 5) {
     reqList50 <- append(reqList50, reqVals)
-    grantList50 <- append(grantList50, reqGVals)
-    denList50 <- append(denList50, reqDVals)
-    ontoList50 <- append(ontoList50, ontoVals[1])
-    contList50 <- append(contList50, contVals[1])
-    actList50 <- append(actList50, actVals[1])
-    valList50 <- append(valList50, validVals[1])
-    invalList50 <- append(invalList50, invalVals[1])
+    grantList50 <- append(grantList50, reqGVals / reqVals * 100)
+    denList50 <- append(denList50, reqDVals / reqVals * 100)
+    ontoList50 <- append(ontoList50, ontoVals[2])
+    contList50 <- append(contList50, contVals[2])
+    actList50 <- append(actList50, actVals[2])
+    proofsList50 <- append(proofsList50, validVals[1] + invalVals[1])
+    valList50 <- append(valList50, validVals[2])
+    invalList50 <- append(invalList50, invalVals[2])
     blockList50 <- append(blockList50, blockVals)
-  } else if (isHard & length(datarate) > 0 & attacks == 10 & alterations == 5) {
+  } else if (isHard & datarate == 10 & attacks == 10 & alterations == 5 & users == 5) {
     reqListP <- append(reqListP, reqVals)
-    grantListP <- append(grantListP, reqGVals)
-    denListP <- append(denListP, reqDVals)
-    ontoListP <- append(ontoListP, ontoVals[1])
-    contListP <- append(contListP, contVals[1])
-    actListP <- append(actListP, actVals[1])
-    valListP <- append(valListP, validVals[1])
-    invalListP <- append(invalListP, invalVals[1])
+    grantListP <- append(grantListP, reqGVals / reqVals * 100)
+    denListP <- append(denListP, reqDVals / reqVals * 100)
+    ontoListP <- append(ontoListP, ontoVals[2])
+    contListP <- append(contListP, contVals[2])
+    actListP <- append(actListP, actVals[2])
+    proofsListP <- append(proofsListP, validVals[1] + invalVals[1])
+    valListP <- append(valListP, validVals[2])
+    invalListP <- append(invalListP, invalVals[2])
     blockListP <- append(blockListP, blockVals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 2) {
+    reqListU <- append(reqListU, reqVals)
+    grantListU <- append(grantListU, reqGVals / reqVals * 100)
+    denListU <- append(denListU, reqDVals / reqVals * 100)
+    ontoListU <- append(ontoListU, ontoVals[2])
+    contListU <- append(contListU, contVals[2])
+    actListU <- append(actListU, actVals[2])
+    proofsListU <- append(proofsListU, validVals[1] + invalVals[1])
+    valListU <- append(valListU, validVals[2])
+    invalListU <- append(invalListU, invalVals[2])
+    blockListU <- append(blockListU, blockVals)
   }
   # 
   # if (attacks == 50 & alterations == 5 & length(datarate) == 0) {
@@ -176,12 +213,13 @@ for (i in 1:length(files)) {
   # }
 }
 
-data10 <- data.frame(reqList10, grantList10, denList10, ontoList10, contList10, actList10, valList10, invalList10, blockList10)
-data25 <- data.frame(reqList25, grantList25, denList25, ontoList25, contList25, actList25, valList25, invalList25, blockList25)
-data50 <- data.frame(reqList50, grantList50, denList50, ontoList50, contList50, actList50, valList50, invalList50, blockList50)
-dataP <- data.frame(reqListP, grantListP, denListP, ontoListP, contListP, actListP, valListP, invalListP, blockListP)
+data10 <- data.frame(reqList10, grantList10, denList10, ontoList10, contList10, actList10, proofsList10, valList10, invalList10, blockList10)
+data25 <- data.frame(reqList25, grantList25, denList25, ontoList25, contList25, actList25, proofsList25, valList25, invalList25, blockList25)
+data50 <- data.frame(reqList50, grantList50, denList50, ontoList50, contList50, actList50, proofsList50, valList50, invalList50, blockList50)
+dataP <- data.frame(reqListP, grantListP, denListP, ontoListP, contListP, actListP, proofsListP, valListP, invalListP, blockListP)
+dataU <- data.frame(reqListU, grantListU, denListU, ontoListU, contListU, actListU, proofsListU, valListU, invalListU, blockListU)
 
-d <- data.frame(x = unlist(data50), 
+d <- data.frame(x = unlist(data10), 
                 grp = rep(letters[1:length(data50)],times = sapply(data50,length)), stringsAsFactors = FALSE)
 
 
@@ -199,34 +237,34 @@ d <- data.frame(x = unlist(data50),
 #d[nrow(d) + 1,] = c(0.0,"ACRTB (S)")
 
 
-ggplot(d, aes(x=grp, y=x, fill=grp)) + 
-  geom_boxplot(alpha=0.5) +
-  scale_fill_viridis(discrete=TRUE, option="D") +
-  geom_jitter(color="black", size=0.4, alpha=0.9) +
-  theme_ipsum_rc() +
-  labs(x="",
-       y="Milliseconds",
-       title = "ACRT - 25 Attacks") +
-  theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
-        axis.title.y = element_text(hjust = 0.5, size = 14), 
-        text = element_text(size = 14),
-        axis.text.x = element_text(size = 14, margin = margin(t = 5)),
-        axis.text.y = element_text(size = 14, margin = margin(r = 5)),
-        axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
-        axis.ticks.x = element_line(color="black", size = 0.1),
-        axis.ticks.y = element_line(color="black", size = 0.1))
+# ggplot(d, aes(x=grp, y=x, fill=grp)) + 
+#   geom_boxplot(alpha=0.5) +
+#   scale_fill_viridis(discrete=TRUE, option="D") +
+#   geom_jitter(color="black", size=0.4, alpha=0.9) +
+#   theme_ipsum_rc() +
+#   labs(x="",
+#        y="Milliseconds",
+#        title = "ACRT - 25 Attacks") +
+#   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
+#         axis.title.y = element_text(hjust = 0.5, size = 14), 
+#         text = element_text(size = 14),
+#         axis.text.x = element_text(size = 14, margin = margin(t = 5)),
+#         axis.text.y = element_text(size = 14, margin = margin(r = 5)),
+#         axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
+#         axis.ticks.x = element_line(color="black", size = 0.1),
+#         axis.ticks.y = element_line(color="black", size = 0.1))
 
 
-boxplot(reqList10)$stats[3]
+# boxplot(reqList10)$stats[3]
 
 # create dummy data
-data <- data.frame(
-  name=letters[1:5],
-  value=sample(seq(4,15),5),
-  sd=c(1,0.2,3,2,4)
-)
-
-data <- iris %>% select(Species, Sepal.Length) 
+# data <- data.frame(
+#   name=letters[1:5],
+#   value=sample(seq(4,15),5),
+#   sd=c(1,0.2,3,2,4)
+# )
+# 
+# data <- iris %>% select(Species, Sepal.Length) 
 
 my_sum <- d %>%
   group_by(grp) %>%

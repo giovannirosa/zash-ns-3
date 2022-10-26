@@ -270,13 +270,15 @@ buildEnums (AuditComponent *auditModule, string mode)
 }
 
 DeviceComponent *
-buildServerStructure (AuditComponent *auditModule, enums::Properties *props, string mode)
+buildServerStructure (AuditComponent *auditModule, enums::Properties *props, string mode,
+                      int usersNumber)
 {
   vector<User *> users = {new User (1, props->UserLevel.at ("ADMIN"), props->Age.at ("ADULT")),
                           new User (2, props->UserLevel.at ("ADULT"), props->Age.at ("ADULT")),
                           new User (3, props->UserLevel.at ("CHILD"), props->Age.at ("TEEN")),
                           new User (4, props->UserLevel.at ("CHILD"), props->Age.at ("KID")),
                           new User (5, props->UserLevel.at ("VISITOR"), props->Age.at ("ADULT"))};
+  users = {users.begin (), users.end () + (usersNumber - 5)};
 
   auditModule->fileSim << endl << "Users of simulation are " << users.size () << ":" << endl;
   for (User *user : users)
@@ -867,6 +869,7 @@ main (int argc, char *argv[])
   uint32_t endDay = 0; /* End day of the simulation. */
   uint32_t attacks = 10; /* Number of attacks. */
   uint32_t alterations = 5; /* Number of alterations. */
+  uint32_t usersNumber = 5; /* Restriction mode for the system. */
 
   // Allow the user to override any of the defaults and the above
   // Config::SetDefault()s at run-time, via command-line arguments
@@ -882,6 +885,7 @@ main (int argc, char *argv[])
   cmd.AddValue ("end", "End day of the simulation", endDay);
   cmd.AddValue ("attacks", "Number of attacks", attacks);
   cmd.AddValue ("alterations", "Number of alterations", alterations);
+  cmd.AddValue ("usersNumber", "Number of users", usersNumber);
   cmd.Parse (argc, argv);
 
   if (startDay != 0 && startDay < 1)
@@ -897,6 +901,11 @@ main (int argc, char *argv[])
   if (mode != "H" && mode != "S")
     {
       cout << "ZASH - Error: mode must be H (Hard) or S (Soft)" << endl;
+      return EXIT_FAILURE;
+    }
+  if (usersNumber < 1 || usersNumber > 5)
+    {
+      cout << "ZASH - Error: usersNumber must be between 1 and 5" << endl;
       return EXIT_FAILURE;
     }
 
@@ -1065,7 +1074,7 @@ main (int argc, char *argv[])
   // ZASH Application Logic
   //----------------------------------------------------------------------------------
 
-  DeviceComponent *deviceComponent = buildServerStructure (auditModule, props, mode);
+  DeviceComponent *deviceComponent = buildServerStructure (auditModule, props, mode, usersNumber);
 
   // NS_LOG_INFO(deviceComponent);
 

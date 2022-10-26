@@ -63,26 +63,41 @@ for (i in 1:length(files)) {
                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",ace))
   )      )
   
-  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
+  #if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
     racList <- append(racList, racVals)
     hacList <- append(hacList, hacVals)
     pacList <- append(pacList, pacVals)
     niList <- append(niList, niVals)
     itList <- append(itList, itVals)
-    aceList <- append(aceList, aceVals)}
+    aceList <- append(aceList, aceVals)
+  #}
 }
 
-d <- data.frame(racList, hacList, pacList, niList, itList)
+mode = ''
+
+if (mode == 'metrics') {
+  d <- data.frame(racList, hacList, pacList, niList, itList)
+} else {
+  d <- data.frame(aceList)
+}
+
 
 d <- data.frame(x = unlist(d), 
                 grp = rep(letters[1:length(d)],times = sapply(d,length)), stringsAsFactors = FALSE)
 
 
-d[d == 'a'] <- '|RAW|'
-d[d == 'b'] <- '|HAW|'
-d[d == 'c'] <- '|PAW|'
-d[d == 'd'] <- '|NI|'
-d[d == 'e'] <- '|I|'
+if (mode == 'metrics') {
+  d[d == 'a'] <- '|RAW|'
+  d[d == 'b'] <- '|HAW|'
+  d[d == 'c'] <- '|PAW|'
+  d[d == 'd'] <- '|NI|'
+  d[d == 'e'] <- '|I|'
+  title = "Access Control Enforcement (ACE) - Metrics"
+  d$grp = factor(d$grp, levels = c('|PAW|','|HAW|','|RAW|','|NI|','|I|'))
+} else {
+  d[d == 'a'] <- 'ACE'
+  title = "Access Control Enforcement (ACE)"
+}
 
 #d <- d[d$x != 0 & d$grp != 'ACRTB (S)',]
 
@@ -95,31 +110,63 @@ d[d == 'e'] <- '|I|'
 # 
 # legend_ord <- levels(with(d, reorder(grp, x)))
 
-my_sum <- d %>%
-  group_by(grp) %>%
-  summarise( 
-    n=n(),
-    mean=mean(x),
-    sd=sd(x)
-  ) %>%
-  mutate( se=sd/sqrt(n))  %>%
-  mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
-ggplot(my_sum) +
-  geom_bar( aes(x=factor(grp, levels = c('|PAW|','|HAW|','|RAW|','|NI|','|I|')), y=mean, fill=grp), colour="black", stat="identity", alpha=0.5) +
-  geom_errorbar( aes(x=grp, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3) +
-  scale_fill_viridis(discrete=TRUE, option="D") +
-  theme_ipsum_rc() +
-  labs(x="",
-       y="Number of requests",
-       title = "Access Control Enforcement (ACE)",
-       fill = "Scenarios") +
-  theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
-        axis.title.y = element_text(hjust = 0.5, size = 14), 
-        text = element_text(size = 14),
-        axis.text.x = element_text(size = 14, margin = margin(t = 5)),
-        axis.text.y = element_text(size = 14, margin = margin(r = 5)),
-        axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
-        axis.ticks.x = element_line(color="black", size = 0.1),
-        axis.ticks.y = element_line(color="black", size = 0.1))
+if (mode == 'metrics') {
+  my_sum <- d %>%
+    group_by(grp) %>%
+    summarise( 
+      n=n(),
+      mean=mean(x),
+      sd=sd(x)
+    ) %>%
+    mutate( se=sd/sqrt(n))  %>%
+    mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
+  
+  ggplot(my_sum) +
+    geom_bar( aes(x=grp, y=mean, fill=grp), colour="black", stat="identity", alpha=0.5) +
+    geom_errorbar( aes(x=grp, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.3) +
+    scale_fill_viridis(discrete=TRUE, option="D") +
+    theme_ipsum_rc() +
+    labs(x="",
+         y="Number of requests",
+         title = title,
+         fill = "Metrics") +
+    theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
+          axis.title.y = element_text(hjust = 0.5, size = 14), 
+          text = element_text(size = 14),
+          axis.text.x = element_text(size = 14, margin = margin(t = 5)),
+          axis.text.y = element_text(size = 14, margin = margin(r = 5)),
+          axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
+          axis.ticks.x = element_line(color="black", size = 0.1),
+          axis.ticks.y = element_line(color="black", size = 0.1))
+} else {
+  df_mean <- d %>% 
+    group_by(grp) %>% 
+    summarize(average = mean(x)) %>%
+    ungroup()
+  
+  ggplot(d, aes(x=grp, y=x, fill=grp)) + 
+    geom_boxplot(alpha=0.5) +
+    scale_fill_viridis(discrete=TRUE, option="D") +
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    theme_ipsum_rc() +
+    labs(x="",
+         y="Value",
+         title = title,
+         fill = "Metric") +
+    theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
+          axis.title.y = element_text(hjust = 0.5, size = 14), 
+          text = element_text(size = 14),
+          axis.text.x = element_text(size = 14, margin = margin(t = 5)),
+          axis.text.y = element_text(size = 14, margin = margin(r = 5)),
+          axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
+          axis.ticks.x = element_line(color="black", size = 0.1),
+          axis.ticks.y = element_line(color="black", size = 0.1)) +
+    geom_point(data = df_mean, 
+               mapping = aes(x = grp, y = average),
+               color="red")
+}
+
+
+

@@ -20,7 +20,15 @@ AttackManager::AttackManager (mt19937 gen, int n, enums::Properties *props, vect
   discrete_distribution<> distL ({10, 90});
   discrete_distribution<> distAW ({10, 10, 80});
   discrete_distribution<> distA ({10, 40, 50});
-  discrete_distribution<> distU ({5, 10, 20, 25, 40});
+  discrete_distribution<> distU;
+  if (users.size () != 5)
+    {
+      distU = discrete_distribution<> ({20, 80});
+    }
+  else
+    {
+      distU = discrete_distribution<> ({5, 10, 20, 25, 40});
+    }
   uniform_int_distribution<mt19937::result_type> distD (0, devices.size () - 1);
   uniform_int_distribution<mt19937::result_type> distDay (dayRange[0], dayRange[1]);
   uniform_int_distribution<mt19937::result_type> distMonth (monthRange[0], monthRange[1]);
