@@ -13,61 +13,67 @@ dibList10 = c()
 dixList10 = c()
 sibList10 = c()
 sipList10 = c()
-aarList10 = c()
+adrList10 = c()
 
 dibList25 = c()
 dixList25 = c()
 sibList25 = c()
 sipList25 = c()
-aarList25 = c()
+adrList25 = c()
 
 dibList50 = c()
 dixList50 = c()
 sibList50 = c()
 sipList50 = c()
-aarList50 = c()
+adrList50 = c()
 
 dibList10S = c()
 dixList10S = c()
 sibList10S = c()
 sipList10S = c()
-aarList10S = c()
+adrList10S = c()
 
 dibList25S = c()
 dixList25S = c()
 sibList25S = c()
 sipList25S = c()
-aarList25S = c()
+adrList25S = c()
 
 dibList50S = c()
 dixList50S = c()
 sibList50S = c()
 sipList50S = c()
-aarList50S = c()
+adrList50S = c()
 
 dibList10A = c()
 dixList10A = c()
 sibList10A = c()
 sipList10A = c()
-aarList10A = c()
+adrList10A = c()
 
 dibList20A = c()
 dixList20A = c()
 sibList20A = c()
 sipList20A = c()
-aarList20A = c()
+adrList20A = c()
 
 dibList40A = c()
 dixList40A = c()
 sibList40A = c()
 sipList40A = c()
-aarList40A = c()
+adrList40A = c()
 
 dibListP = c()
 dixListP = c()
 sibListP = c()
 sipListP = c()
-aarListP = c()
+adrListP = c()
+
+dibListU = c()
+dixListU = c()
+sibListU = c()
+sipListU = c()
+adrListU = c()
 
 for (i in 1:length(files)) {
   #print(files[i])
@@ -77,11 +83,15 @@ for (i in 1:length(files)) {
   dix = grep("Denied Impersonations Blocked", readLines(files[i]), value = TRUE)
   sib = grep("Successful Impersonations Building", readLines(files[i]), value = TRUE)
   sip = grep("Successful Impersonations Proof", readLines(files[i]), value = TRUE)
-  aar = grep("Attacks Avoided Rate", readLines(files[i]), value = TRUE)
+  adr = grep("Attacks Avoided Rate", readLines(files[i]), value = TRUE)
   
   configFile = grep("Enums config file is", readLines(scenarioFile), value = TRUE)
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
+  users = grep("Users of simulation are", readLines(scenarioFile), value = TRUE)
+  users = as.numeric(unlist(regmatches(users,
+                                       gregexpr("[[:digit:]]+\\.*[[:digit:]]*",users))
+  )      )
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
   datarate = as.numeric(unlist(regmatches(datarate,
                                               gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
@@ -107,87 +117,96 @@ for (i in 1:length(files)) {
   sipVals = as.numeric(unlist(regmatches(sip,
                                         gregexpr("[[:digit:]]+\\.*[[:digit:]]*",sip))
   )      )
-  aarVals = as.numeric(unlist(regmatches(aar,
-                                        gregexpr("[[:digit:]]+\\.*[[:digit:]]*",aar))
+  adrVals = as.numeric(unlist(regmatches(adr,
+                                        gregexpr("[[:digit:]]+\\.*[[:digit:]]*",adr))
   )      )
   
-  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 5) {
     dibList10 <- append(dibList10, dibVals)
     dixList10 <- append(dixList10, dixVals)
     sibList10 <- append(sibList10, sibVals)
     sipList10 <- append(sipList10, sipVals)
-    aarList10 <- append(aarList10, aarVals)
-  } else if (isHard & datarate == 100 & attacks == 25 & alterations == 5) {
+    adrList10 <- append(adrList10, adrVals)
+  } else if (isHard & datarate == 100 & attacks == 25 & alterations == 5 & users == 5) {
     dibList25 <- append(dibList25, dibVals)
     dixList25 <- append(dixList25, dixVals)
     sibList25 <- append(sibList25, sibVals)
     sipList25 <- append(sipList25, sipVals)
-    aarList25 <- append(aarList25, aarVals)
-  } else if (isHard & datarate == 100 & attacks == 50 & alterations == 5) {
+    adrList25 <- append(adrList25, adrVals)
+  } else if (isHard & datarate == 100 & attacks == 50 & alterations == 5 & users == 5) {
     dibList50 <- append(dibList50, dibVals)
     dixList50 <- append(dixList50, dixVals)
     sibList50 <- append(sibList50, sibVals)
     sipList50 <- append(sipList50, sipVals)
-    aarList50 <- append(aarList50, aarVals)
-  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 10) {
+    adrList50 <- append(adrList50, adrVals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 10 & users == 5) {
     dibList10A <- append(dibList10A, dibVals)
     dixList10A <- append(dixList10A, dixVals)
     sibList10A <- append(sibList10A, sibVals)
     sipList10A <- append(sipList10A, sipVals)
-    aarList10A <- append(aarList10A, aarVals)
-  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 20) {
+    adrList10A <- append(adrList10A, adrVals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 20 & users == 5) {
     dibList20A <- append(dibList20A, dibVals)
     dixList20A <- append(dixList20A, dixVals)
     sibList20A <- append(sibList20A, sibVals)
     sipList20A <- append(sipList20A, sipVals)
-    aarList20A <- append(aarList20A, aarVals)
-  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 40) {
+    adrList20A <- append(adrList20A, adrVals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 40 & users == 5) {
     dibList40A <- append(dibList40A, dibVals)
     dixList40A <- append(dixList40A, dixVals)
     sibList40A <- append(sibList40A, sibVals)
     sipList40A <- append(sipList40A, sipVals)
-    aarList40A <- append(aarList40A, aarVals)
-  } else if (!isHard & datarate == 100 & attacks == 10 & alterations == 5) {
+    adrList40A <- append(adrList40A, adrVals)
+  } else if (!isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 5) {
     dibList10S <- append(dibList10S, dibVals)
     dixList10S <- append(dixList10S, dixVals)
     sibList10S <- append(sibList10S, sibVals)
     sipList10S <- append(sipList10S, sipVals)
-    aarList10S <- append(aarList10S, aarVals)
-  } else if (!isHard & datarate == 100 & attacks == 25 & alterations == 5) {
+    adrList10S <- append(adrList10S, adrVals)
+  } else if (!isHard & datarate == 100 & attacks == 25 & alterations == 5 & users == 5) {
     dibList25S <- append(dibList25S, dibVals)
     dixList25S <- append(dixList25S, dixVals)
     sibList25S <- append(sibList25S, sibVals)
     sipList25S <- append(sipList25S, sipVals)
-    aarList25S <- append(aarList25S, aarVals)
-  } else if (!isHard & datarate == 100 & attacks == 50 & alterations == 5) {
+    adrList25S <- append(adrList25S, adrVals)
+  } else if (!isHard & datarate == 100 & attacks == 50 & alterations == 5 & users == 5) {
     dibList50S <- append(dibList50S, dibVals)
     dixList50S <- append(dixList50S, dixVals)
     sibList50S <- append(sibList50S, sibVals)
     sipList50S <- append(sipList50S, sipVals)
-    aarList50S <- append(aarList50S, aarVals)
-  } else if (isHard & datarate == 10 & attacks == 10 & alterations == 5) {
+    adrList50S <- append(adrList50S, adrVals)
+  } else if (isHard & datarate == 10 & attacks == 10 & alterations == 5 & users == 5) {
     dibListP <- append(dibListP, dibVals)
     dixListP <- append(dixListP, dixVals)
     sibListP <- append(sibListP, sibVals)
     sipListP <- append(sipListP, sipVals)
-    aarListP <- append(aarListP, aarVals)
+    adrListP <- append(adrListP, adrVals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 2) {
+    dibListU <- append(dibListU, dibVals)
+    dixListU <- append(dixListU, dixVals)
+    sibListU <- append(sibListU, sibVals)
+    sipListU <- append(sipListU, sipVals)
+    adrListU <- append(adrListU, adrVals)
   }
 }
 
-mode = 'ALT'
+mode = 'USR'
 
 if (mode == 10) {
-  title = "Attacks Avoided Rate (AAR) - 10 Attacks"
-  d <- data.frame(dibList10, dibList10S, dixList10, dixList10S, sibList10, sibList10S, sipList10, sipList10S, aarList10, aarList10S)
+  title = "Attacks Denied Rate (ADR) - 10 Attacks"
+  d <- data.frame(dibList10, dibList10S, dixList10, dixList10S, sibList10, sibList10S, sipList10, sipList10S, adrList10, adrList10S)
 } else if (mode == 25) {
-  title = "Attacks Avoided Rate (AAR) - 25 Attacks"
-  d <- data.frame(dibList25, dibList25S, dixList25, dixList25S, sibList25, sibList25S, sipList25, sipList25S, aarList25, aarList25S)
+  title = "Attacks Denied Rate (ADR) - 25 Attacks"
+  d <- data.frame(dibList25, dibList25S, dixList25, dixList25S, sibList25, sibList25S, sipList25, sipList25S, adrList25, adrList25S)
 } else if (mode == 50) {
-  title = "Attacks Avoided Rate (AAR) - 50 Attacks"
-  d <- data.frame(dibList50, dibList50S, dixList50, dixList50S, sibList50, sibList50S, sipList50, sipList50S, aarList50, aarList50S)
+  title = "Attacks Denied Rate (ADR) - 50 Attacks"
+  d <- data.frame(dibList50, dibList50S, dixList50, dixList50S, sibList50, sibList50S, sipList50, sipList50S, adrList50, adrList50S)
 } else if (mode == 'ALT') {
-  title = "Attacks Avoided Rate (AAR) - Alterations Impact"
-  d <- data.frame(dibList10, dibList10A, dibList20A, dibList40A, dixList10, dixList10A, dixList20A, dixList40A, sibList10, sibList10A, sibList20A, sibList40A, sipList10, sipList10A, sipList20A, sipList40A, aarList10, aarList10A, aarList20A, aarList40A)
+  title = "Attacks Denied Rate (ADR) - Alterations Impact"
+  d <- data.frame(dibList10, dibList10A, dibList20A, dibList40A, dixList10, dixList10A, dixList20A, dixList40A, sibList10, sibList10A, sibList20A, sibList40A, sipList10, sipList10A, sipList20A, sipList40A, adrList10, adrList10A, adrList20A, adrList40A)
+} else if (mode == 'USR') {
+  title = "Attacks Denied Rate (ADR) - Users Impact"
+  d <- data.frame(dibList10, dibListU, dixList10, dixListU, sibList10, sibListU, sipList10, sipListU, adrList10, adrListU)
 }
 
 d <- data.frame(x = unlist(d), 
@@ -211,10 +230,21 @@ if (mode == 'ALT') {
   d[d == 'n'] <- 'SIP (10)'
   d[d == 'o'] <- 'SIP (20)'
   d[d == 'p'] <- 'SIP (40)'
-  d[d == 'q'] <- 'AAR (5)'
-  d[d == 'r'] <- 'AAR (10)'
-  d[d == 's'] <- 'AAR (20)'
-  d[d == 't'] <- 'AAR (40)'
+  d[d == 'q'] <- 'ADR (5)'
+  d[d == 'r'] <- 'ADR (10)'
+  d[d == 's'] <- 'ADR (20)'
+  d[d == 't'] <- 'ADR (40)'
+} else if (mode == 'USR') {
+  d[d == 'a'] <- 'DIB (5)'
+  d[d == 'b'] <- 'DIB (2)'
+  d[d == 'c'] <- 'DIX (5)'
+  d[d == 'd'] <- 'DIX (2)'
+  d[d == 'e'] <- 'SIB (5)'
+  d[d == 'f'] <- 'SIB (2)'
+  d[d == 'g'] <- 'SIP (5)'
+  d[d == 'h'] <- 'SIP (2)'
+  d[d == 'i'] <- 'ADR (5)'
+  d[d == 'j'] <- 'ADR (2)'
 } else {
   d[d == 'a'] <- 'DIB (H)'
   d[d == 'b'] <- 'DIB (S)'
@@ -224,8 +254,8 @@ if (mode == 'ALT') {
   d[d == 'f'] <- 'SIB (S)'
   d[d == 'g'] <- 'SIP (H)'
   d[d == 'h'] <- 'SIP (S)'
-  d[d == 'i'] <- 'AAR (H)'
-  d[d == 'j'] <- 'AAR (S)'
+  d[d == 'i'] <- 'ADR (H)'
+  d[d == 'j'] <- 'ADR (S)'
 }
 
 
@@ -258,7 +288,7 @@ my_sum <- d %>%
 # my_sum$ic <- replace(my_sum$ic, my_sum$ic>my_sum$mean, my_sum$mean)
 
 if (mode == 'ALT') {
-  my_sum$grp = factor(my_sum$grp, levels = c('AAR (5)','AAR (10)','AAR (20)','AAR (40)','DIB (5)','DIB (10)','DIB (20)','DIB (40)','DIX (5)','DIX (10)','DIX (20)','DIX (40)','SIB (5)','SIB (10)','SIB (20)','SIB (40)','SIP (5)','SIP (10)','SIP (20)','SIP (40)'))
+  my_sum$grp = factor(my_sum$grp, levels = c('ADR (5)','ADR (10)','ADR (20)','ADR (40)','DIB (5)','DIB (10)','DIB (20)','DIB (40)','DIX (5)','DIX (10)','DIX (20)','DIX (40)','SIB (5)','SIB (10)','SIB (20)','SIB (40)','SIP (5)','SIP (10)','SIP (20)','SIP (40)'))
 }
 
 
@@ -279,5 +309,5 @@ ggplot(my_sum) +
         axis.ticks.x = element_line(color="black", size = 0.1),
         axis.ticks.y = element_line(color="black", size = 0.1)) +
   scale_y_continuous(expand = c(0, 0), limits = c(0,105)) +
-  geom_errorbar( aes(x=grp, ymin=ifelse(mean-ic < 0, 0, mean-ic), ymax=mean+ic), width=0.4, colour="orange", alpha=0.9, size=1.3) +
+  geom_errorbar( aes(x=grp, ymin=ifelse(mean-ic < 0, 0, mean-ic), ymax=ifelse(mean+ic > 100, 100, mean+ic)), width=0.4, colour="orange", alpha=0.9, size=1.3) +
   guides(fill=guide_legend(ncol=2))

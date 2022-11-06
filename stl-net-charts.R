@@ -10,11 +10,7 @@ files <- list.files(path="/home/grosa/Dev/ns-allinone-3.36.1/ns-3.36.1/zash_trac
 
 #print(files)
 
-stlList10 = c()
-
-stlList25 = c()
-
-stlList50 = c()
+stlListG = c()
 
 stlListP = c()
 
@@ -27,6 +23,10 @@ for (i in 1:length(files)) {
   configFile = grep("Enums config file is", readLines(scenarioFile), value = TRUE)
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
+  users = grep("Users of simulation are", readLines(scenarioFile), value = TRUE)
+  users = as.numeric(unlist(regmatches(users,
+                                       gregexpr("[[:digit:]]+\\.*[[:digit:]]*",users))
+  )      )
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
   datarate = as.numeric(unlist(regmatches(datarate,
                                           gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
@@ -44,26 +44,21 @@ for (i in 1:length(files)) {
                                          gregexpr("[[:digit:]]+\\.*[[:digit:]]*",stl))
   )      )
   
-  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
-    stlList10 <- append(stlList10, stlVals)
-  } else if (isHard & datarate == 100 & attacks == 25 & alterations == 5) {
-    stlList25 <- append(stlList25, stlVals)
-  } else if (isHard & datarate == 100 & attacks == 50 & alterations == 5) {
-    stlList50 <- append(stlList50, stlVals)
-  } else if (isHard & datarate == 10 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 5) {
+    stlListG <- append(stlListG, stlVals)
+  } else if (isHard & datarate == 10 & attacks == 10 & alterations == 5 & users == 5) {
     stlListP <- append(stlListP, stlVals)
   }
 }
 
-d <- data.frame(stlList10, stlList25, stlList50)
+d <- data.frame(stlListG, stlListP)
 
 d <- data.frame(x = unlist(d), 
                 grp = rep(letters[1:length(d)],times = sapply(d,length)), stringsAsFactors = FALSE)
 
 
-d[d == 'a'] <- 'STL (10)'
-d[d == 'b'] <- 'STL (25)'
-d[d == 'c'] <- 'STL (50)'
+d[d == 'a'] <- 'STL (G)'
+d[d == 'b'] <- 'STL (P)'
 
 #d <- d[d$x != 0 & d$grp != 'ACRTB (S)',]
 
@@ -82,7 +77,7 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
   theme_ipsum_rc() +
   labs(x="",
        y="Value",
-       title = "STL - Attacks",
+       title = "STL - Network",
        fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 

@@ -4,6 +4,7 @@ library(dplyr)
 library(hrbrthemes)
 library(viridis)
 library(plotly)
+library(fmsb)
 
 ulList <- c(1, 2, 4)
 
@@ -30,8 +31,10 @@ for (ul in ulList) {
   }
 }
 
-prData <- data.frame(ulCol, dcCol, aCol, riCol)
+prData <- data.frame(ulCol, dcCol, aCol)
+
+radarchart(prData)
 
 
-plot_ly(x=ulCol, y=dcCol, z=aCol, type="scatter3d", mode="markers", color=riCol)
+# plot_ly(x=ulCol, y=dcCol, z=aCol, type="scatter3d", mode="markers", color=riCol)
 

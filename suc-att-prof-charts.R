@@ -61,6 +61,10 @@ for (i in 1:length(files)) {
   configFile = grep("Enums config file is", readLines(scenarioFile), value = TRUE)
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
+  users = grep("Users of simulation are", readLines(scenarioFile), value = TRUE)
+  users = as.numeric(unlist(regmatches(users,
+                                       gregexpr("[[:digit:]]+\\.*[[:digit:]]*",users))
+  )      )
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
   datarate = as.numeric(unlist(regmatches(datarate,
                                           gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
@@ -74,7 +78,7 @@ for (i in 1:length(files)) {
                                              gregexpr("[[:digit:]]+\\.*[[:digit:]]*",genAlter))
   )      )
   
-  #if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 2) {
     usl = grep("User Level", readLines(files[i]), value = TRUE)
     act = grep("Action", readLines(files[i]), value = TRUE)
     dcs = grep("Device Class", readLines(files[i]), value = TRUE)
@@ -333,7 +337,7 @@ for (i in 1:length(files)) {
       }
       count = count + 1
     }
-  #}
+  }
 }
 
 d <- data.frame(uslList, actList, dcsList, timList, locList, ageList, grpList, acwList)

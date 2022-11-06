@@ -137,7 +137,7 @@ for (i in 1:length(files)) {
   # print(invalVals[1])
   # print(blockVals)
   
-  if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 5) {
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 2) {
     reqList10 <- append(reqList10, reqVals)
     grantList10 <- append(grantList10, reqGVals / reqVals * 100)
     denList10 <- append(denList10, reqDVals / reqVals * 100)
@@ -148,7 +148,7 @@ for (i in 1:length(files)) {
     valList10 <- append(valList10, validVals[2])
     invalList10 <- append(invalList10, invalVals[2])
     blockList10 <- append(blockList10, blockVals)
-  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 10 & users == 5) {
+  } else if (isHard & datarate == 100 & attacks == 25 & alterations == 5 & users == 5) {
     reqList25 <- append(reqList25, reqVals)
     grantList25 <- append(grantList25, reqGVals / reqVals * 100)
     denList25 <- append(denList25, reqDVals / reqVals * 100)
@@ -159,7 +159,7 @@ for (i in 1:length(files)) {
     valList25 <- append(valList25, validVals[2])
     invalList25 <- append(invalList25, invalVals[2])
     blockList25 <- append(blockList25, blockVals)
-  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 20 & users == 5) {
+  } else if (isHard & datarate == 100 & attacks == 50 & alterations == 5 & users == 5) {
     reqList50 <- append(reqList50, reqVals)
     grantList50 <- append(grantList50, reqGVals / reqVals * 100)
     denList50 <- append(denList50, reqDVals / reqVals * 100)
@@ -220,17 +220,21 @@ dataP <- data.frame(reqListP, grantListP, denListP, ontoListP, contListP, actLis
 dataU <- data.frame(reqListU, grantListU, denListU, ontoListU, contListU, actListU, proofsListU, valListU, invalListU, blockListU)
 
 d <- data.frame(x = unlist(data10), 
-                grp = rep(letters[1:length(data50)],times = sapply(data50,length)), stringsAsFactors = FALSE)
+                grp = rep(letters[1:length(data10)],times = sapply(data10,length)), stringsAsFactors = FALSE)
 
 
-# d[d == 'a'] <- 'ACRT (H)'
-# d[d == 'b'] <- 'ACRT (S)'
-# d[d == 'c'] <- 'ACRTP (H)'
-# d[d == 'd'] <- 'ACRTP (S)'
-# d[d == 'e'] <- 'ACRTNP (H)'
-# d[d == 'f'] <- 'ACRTNP (S)'
-# d[d == 'g'] <- 'ACRTB (H)'
-# d[d == 'h'] <- 'ACRTB (S)'
+d[d == 'a'] <- 'R'
+d[d == 'b'] <- 'RG'
+d[d == 'c'] <- 'RD'
+d[d == 'd'] <- 'OF'
+d[d == 'e'] <- 'CF'
+d[d == 'f'] <- 'AF'
+d[d == 'g'] <- 'P'
+d[d == 'h'] <- 'VP'
+d[d == 'i'] <- 'NP'
+d[d == 'j'] <- 'B'
+
+d$grp = factor(d$grp, levels = c('R','RG','RD','OF','CF','AF','P','VP','NP','B'))
 
 #d <- d[d$x != 0 & d$grp != 'ACRTB (S)',]
 
@@ -277,7 +281,7 @@ my_sum <- d %>%
   mutate( ic=se * qt((1-0.05)/2 + .5, n-1))
 
 
-ggplot(my_sum) +
-  geom_bar( aes(x=grp, y=mean), stat="identity", fill="forestgreen", alpha=0.5) +
-  geom_errorbar( aes(x=grp, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.5) +
-  ggtitle("using standard deviation")
+# ggplot(my_sum) +
+#   geom_bar( aes(x=grp, y=mean), stat="identity", fill="forestgreen", alpha=0.5) +
+#   geom_errorbar( aes(x=grp, ymin=mean-sd, ymax=mean+sd), width=0.4, colour="orange", alpha=0.9, size=1.5) +
+#   ggtitle("using standard deviation")

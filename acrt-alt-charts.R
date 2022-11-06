@@ -10,23 +10,27 @@ files <- list.files(path="/home/grosa/Dev/ns-allinone-3.36.1/ns-3.36.1/zash_trac
 
 #print(files)
 
-stlList10 = c()
+acrtList5 = c()
 
-stlList25 = c()
+acrtList10 = c()
 
-stlList50 = c()
+acrtList20 = c()
 
-stlListP = c()
+acrtList40 = c()
 
 for (i in 1:length(files)) {
   #print(files[i])
   scenarioFile = paste(substr(files[i], 0, nchar(files[i])-44), "zash_simulation_scenario", substr(files[i], nchar(files[i])-20, nchar(files[i])), sep="")
   
-  stl = grep("(STL)", readLines(files[i]), value = TRUE)
+  acrt = grep("(ACRT)", readLines(files[i]), value = TRUE)
   
   configFile = grep("Enums config file is", readLines(scenarioFile), value = TRUE)
   genAttacks = grep("Generated attacks are", readLines(scenarioFile), value = TRUE)
   genAlter = grep("Generated alterations are", readLines(scenarioFile), value = TRUE)
+  users = grep("Users of simulation are", readLines(scenarioFile), value = TRUE)
+  users = as.numeric(unlist(regmatches(users,
+                                       gregexpr("[[:digit:]]+\\.*[[:digit:]]*",users))
+  )      )
   datarate = grep("Datarate", readLines(scenarioFile), value = TRUE)
   datarate = as.numeric(unlist(regmatches(datarate,
                                           gregexpr("[[:digit:]]+\\.*[[:digit:]]*",datarate))
@@ -40,30 +44,31 @@ for (i in 1:length(files)) {
                                              gregexpr("[[:digit:]]+\\.*[[:digit:]]*",genAlter))
   )      )
   
-  stlVals = as.numeric(unlist(regmatches(stl,
-                                         gregexpr("[[:digit:]]+\\.*[[:digit:]]*",stl))
+  vals = as.numeric(unlist(regmatches(acrt,
+                                      gregexpr("[[:digit:]]+\\.*[[:digit:]]*",acrt))
   )      )
   
-  if (isHard & datarate == 100 & attacks == 10 & alterations == 5) {
-    stlList10 <- append(stlList10, stlVals)
-  } else if (isHard & datarate == 100 & attacks == 25 & alterations == 5) {
-    stlList25 <- append(stlList25, stlVals)
-  } else if (isHard & datarate == 100 & attacks == 50 & alterations == 5) {
-    stlList50 <- append(stlList50, stlVals)
-  } else if (isHard & datarate == 10 & attacks == 10 & alterations == 5) {
-    stlListP <- append(stlListP, stlVals)
+  if (isHard & datarate == 100 & attacks == 10 & alterations == 5 & users == 5) {
+    acrtList5 <- append(acrtList5, vals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 10 & users == 5) {
+    acrtList10 <- append(acrtList10, vals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 20 & users == 5) {
+    acrtList20 <- append(acrtList20, vals)
+  } else if (isHard & datarate == 100 & attacks == 10 & alterations == 40 & users == 5) {
+    acrtList40 <- append(acrtList40, vals)
   }
 }
 
-d <- data.frame(stlList10, stlList25, stlList50)
+acrtData <- data.frame(acrtList5, acrtList10, acrtList20, acrtList40)
 
-d <- data.frame(x = unlist(d), 
-                grp = rep(letters[1:length(d)],times = sapply(d,length)), stringsAsFactors = FALSE)
+d <- data.frame(x = unlist(acrtData), 
+                grp = rep(letters[1:length(acrtData)],times = sapply(acrtData,length)), stringsAsFactors = FALSE)
 
 
-d[d == 'a'] <- 'STL (10)'
-d[d == 'b'] <- 'STL (25)'
-d[d == 'c'] <- 'STL (50)'
+d[d == 'a'] <- 'ACRT (5)'
+d[d == 'b'] <- 'ACRT (10)'
+d[d == 'c'] <- 'ACRT (20)'
+d[d == 'd'] <- 'ACRT (40)'
 
 #d <- d[d$x != 0 & d$grp != 'ACRTB (S)',]
 
@@ -75,14 +80,17 @@ df_mean <- d %>%
   ungroup()
 
 
+d$grp = factor(d$grp, levels = c('ACRT (5)','ACRT (10)','ACRT (20)','ACRT (40)'))
+
+
 ggplot(d, aes(x=grp, y=x, fill=grp)) + 
   geom_boxplot(alpha=0.5) +
   scale_fill_viridis(discrete=TRUE, option="D") +
   geom_jitter(color="black", size=0.4, alpha=0.9) +
   theme_ipsum_rc() +
   labs(x="",
-       y="Value",
-       title = "STL - Attacks",
+       y="Milliseconds",
+       title = "Access Control Response Time (ACRT) - Alterations Impact",
        fill = "Scenarios") +
   theme(axis.title.x = element_text(hjust = 0.5, size = 14), 
         axis.title.y = element_text(hjust = 0.5, size = 14), 
@@ -92,6 +100,7 @@ ggplot(d, aes(x=grp, y=x, fill=grp)) +
         axis.line = element_line(color="black", size = 0.1, arrow = arrow(type='open', length = unit(8,'pt'))),
         axis.ticks.x = element_line(color="black", size = 0.1),
         axis.ticks.y = element_line(color="black", size = 0.1)) +
+  scale_y_continuous(limits = c(0, 8.5)) +
   geom_point(data = df_mean, 
              mapping = aes(x = grp, y = average),
              color="red") +
