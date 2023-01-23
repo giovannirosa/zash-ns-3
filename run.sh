@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
-    echo "Please enter the mode, the number of rounds, number of attacks, number of alterations, datarate, and latency. e.g.: ./run.sh H 12 10 5 100Mbps 1ms"
+    echo "Please enter the mode, the number of rounds, number of attacks, number of alterations, number of users, datarate, and latency. e.g.: ./run.sh H 12 10 5 5 100Mbps 1ms"
     exit 1
 fi
 
@@ -25,14 +25,19 @@ if [ ! -z "$4" ]; then
     ALTERATIONS=$4
 fi
 
-DATARATE="100Mbps"
+USERS="5"
 if [ ! -z "$5" ]; then
-    DATARATE=$5
+    USERS=$5
+fi
+
+DATARATE="100Mbps"
+if [ ! -z "$6" ]; then
+    DATARATE=$6
 fi
 
 LATENCY="1ms"
-if [ ! -z "$6" ]; then
-    LATENCY=$6
+if [ ! -z "$7" ]; then
+    LATENCY=$7
 fi
 
 MODE="H"
@@ -50,5 +55,5 @@ fi
 for (( counter=1; counter <= $2; counter++ ))
 do
     echo "Executing $MODE Mode ($counter)..."
-    time ./ns3 run "scratch/zash-simulator --mode=$MODE --attacks=$3 --alterations=$ALTERATIONS --dataRate=$DATARATE --latency=$LATENCY"
+    time ./ns3 run "scratch/zash-simulator --mode=$MODE --attacks=$3 --alterations=$ALTERATIONS --usersNumber=$USERS --dataRate=$DATARATE --latency=$LATENCY"
 done
