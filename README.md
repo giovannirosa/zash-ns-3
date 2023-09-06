@@ -12,9 +12,9 @@ There are two scripts to help execute the code:
 
 While and after executing the simulation, logs are generated under zash_traces/ in the date and time it started.
 
-It's possible to visualize data using the chart's R scripts.
+It's possible to visualize data using the chart's R scripts. For that, I recommend using [R Studio](https://posit.co/download/rstudio-desktop/).
 
 # Paper
 
-For more information and details about this work, please refer to the dissertation: 
+For more information and details about this work, please refer to the [dissertation](./_ME_Giovanni__Dissertação_final.pdf).
 
