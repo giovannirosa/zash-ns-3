@@ -8,7 +8,7 @@ To attend to those requirements, we propose the ZASH (Zero-Aware Smart Home) sys
 
 At first, an initial test of algorithms with a synthetic dataset demonstrated the system’s capability to dynamically adapt to new users’ behaviors withal blocking impersonation attacks. Finally, we implemented ZASH in the ns-3 network simulator and analyzed its robustness, efficiency, extensibility, and performance. According to our analysis, it protects users’ privacy, responds quickly (around 4.16 ms), copes with adding and removing devices, blocks most impersonation attacks (up to 99% with a proper configuration), isolates smart devices, and enforces access control for all interactions.
 
-{% include youtube.html id="ZmUjD6Vnwd4" %}
+{% include youtube.html id="KczUDNNKmW8" %}
 
 ## Accomplishments
 
@@ -24,7 +24,7 @@ At first, an initial test of algorithms with a synthetic dataset demonstrated th
 
 # Code
 
-Copyright 2024 Giovanni Silva
+Copyright 2024 Giovanni Rosa da Silva
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
