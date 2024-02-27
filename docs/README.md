@@ -1,6 +1,6 @@
 # ZASH (Zero-Aware Smart Home System)
 
-![zash](/docs/assets/zash.png)
+![zash](./assets/zash.png)
 
 Although smart homes have become popular recently, people are still highly concerned about **security, safety, and privacy issues**. Studies revealed that issues in people’s privacy generate physiological and financial harm because smart homes are intimate living environments. Further, our research disclosed that **impersonation attacks** are one of the most severe threats against smart homes because they compromise **confidentiality, authenticity, integrity, and non-repudiation**. 
 
@@ -48,7 +48,7 @@ It's possible to visualize data using the chart's R scripts. For that, I recomme
 
 # Paper
 
-For more information and details about this work, please refer to the [dissertation](./docs/_ME_Giovanni__Dissertação_final.pdf).
+For more information and details about this work, please refer to the [dissertation](./assets/_ME_Giovanni__Dissertação_final.pdf).
 
 ## Publications
 
