@@ -48,7 +48,7 @@ It's possible to visualize data using the chart's R scripts. For that, I recomme
 
 # Paper
 
-For more information and details about this work, please refer to the [dissertation](./assets/_ME_Giovanni__Dissertação_final.pdf).
+For more information and details about this work, please refer to the [dissertation](./assets/dissertation.pdf).
 
 ## Publications
 
