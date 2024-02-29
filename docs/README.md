@@ -1,6 +1,7 @@
 <head>
     <link rel="shortcut icon" type="image/png" href="./assets/zash.png">
 </head>
+
 # ZASH (Zero-Aware Smart Home System)
 
 <p align="center">
