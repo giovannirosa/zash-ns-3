@@ -1,4 +1,4 @@
-# ZASH (Zero-Aware Smart Home System)
+# ZASH (Zero-Aware Smart Home)
 
 <p align="center">
   <img width="100" height="100" src="./assets/zash.png">
@@ -13,6 +13,8 @@ To attend to those requirements, we propose the **ZASH (Zero-Aware Smart Home)**
 At first, an initial test of algorithms with a synthetic dataset demonstrated the system’s capability to dynamically adapt to new users’ behaviors withal blocking impersonation attacks. Finally, we implemented ZASH in the ns-3 network simulator and analyzed its robustness, efficiency, extensibility, and performance. According to our analysis, it **protects users’ privacy, responds quickly (around 4.16 ms), copes with adding and removing devices, blocks most impersonation attacks (up to 99% with a proper configuration), isolates smart devices, and enforces access control for all interactions**.
 
 {% include youtube.html id="KczUDNNKmW8" %}
+
+{% include youtube.html id="6CT9vW9TZK8" %}
 
 ## Accomplishments
 
