@@ -14,8 +14,6 @@ At first, an initial test of algorithms with a synthetic dataset demonstrated th
 
 {% include youtube.html id="KczUDNNKmW8" %}
 
-{% include youtube.html id="6CT9vW9TZK8" %}
-
 ## Accomplishments
 
 1. A thorough exploration of SHS security requirements, with a detailed comparison to existing works; 
@@ -50,9 +48,13 @@ While and after executing the simulation, logs are generated under zash_traces/ 
 
 It's possible to visualize data using the chart's R scripts. For that, I recommend using [R Studio](https://posit.co/download/rstudio-desktop/).
 
-# Paper
+# Dissertation
 
 For more information and details about this work, please refer to the [dissertation](./assets/dissertation.pdf).
+
+## Master's Defense
+
+{% include youtube.html id="6CT9vW9TZK8" %}
 
 ## Publications
 
