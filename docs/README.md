@@ -72,3 +72,7 @@ We encourage you to cite our project if you have used them in your work. You can
   month        = feb,
   year         = 2024}
 ```
+
+## Acknowledgement
+
+The authors would like to thank the National Council for Scientific and Technological Development (CNPq) - grant \#313641/2020-0.
